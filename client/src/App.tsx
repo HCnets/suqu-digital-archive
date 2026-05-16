@@ -4,11 +4,12 @@ import { GisMap } from '@/components/map/GisMap'
 import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
 import { HudDashboard } from '@/components/ui/HudDashboard'
+import { IndoorBimMode } from '@/components/ui/IndoorBimMode'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle } = useAppStore()
+  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   
@@ -16,6 +17,9 @@ function App() {
   const [showIntro, setShowIntro] = useState(true)
 
   useEffect(() => {
+    // 从后端加载数据
+    fetchArchives()
+    
     // 3秒后移除开场黑屏遮罩
     const timer = setTimeout(() => {
       setShowIntro(false)
@@ -126,6 +130,9 @@ function App() {
       
       {/* 独立的全屏模态框层 */}
       <ArchiveDetailModal />
+
+      {/* 室内 BIM 下钻层 */}
+      {isIndoorMode && <IndoorBimMode />}
 
       {/* 开场太空坠入幕布 */}
       {showIntro && (

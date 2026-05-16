@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { X, Calendar, MapPin, Image as ImageIcon } from 'lucide-react'
+import { X, Calendar, MapPin, Image as ImageIcon, Play, ExternalLink, Layers } from 'lucide-react'
 
 export const ArchiveDetailModal: React.FC = () => {
-  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen } = useAppStore()
+  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, isIndoorMode } = useAppStore()
   
   if (!isDetailModalOpen || !selectedPoiId) return null
   
@@ -98,6 +98,27 @@ export const ArchiveDetailModal: React.FC = () => {
               
               <div className="mt-8 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm">
                 <strong>数字化注记：</strong> 该档案条目基于 MapLibre 空间坐标引擎与 Liquid Glass 界面协议构建，支持在 3D 地形下自动锚定与动态展示。
+              </div>
+
+              {/* Tags & Actions */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm border border-blue-500/30">
+                  数字沙盘点位
+                </span>
+                
+                {/* Indoor BIM Action */}
+                {archive.type === 'government' && (
+                  <button 
+                    onClick={() => {
+                      setDetailModalOpen(false)
+                      setIndoorMode(true)
+                    }}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-colors ml-auto animate-pulse"
+                  >
+                    <Layers size={16} />
+                    进入室内 BIM 下钻模式
+                  </button>
+                )}
               </div>
             </div>
           </div>
