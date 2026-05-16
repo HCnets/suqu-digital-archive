@@ -2,11 +2,12 @@ import React from 'react'
 import { UnifiedHeader } from '@/components/ui/UnifiedHeader'
 import { GisMap } from '@/components/map/GisMap'
 import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
+import { TimeSlider } from '@/components/ui/TimeSlider'
 import { useAppStore } from '@/store'
-import { Play } from 'lucide-react'
+import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring } = useAppStore()
+  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
 
@@ -14,7 +15,7 @@ function App() {
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       {/* GIS Map Layer */}
       <div className="absolute inset-0 z-0">
-        <GisMap />
+        <GisMap key={mapStyle} />
       </div>
 
       {/* UI Layer */}
@@ -28,8 +29,32 @@ function App() {
           onBack={() => console.log('Back button clicked')}
         />
 
+        {/* Map Style Switcher */}
+        <div className="absolute top-24 right-6 pointer-events-auto">
+          <div className="glass-panel p-1.5 rounded-2xl flex flex-col gap-2 shadow-2xl border border-white/10 bg-black/40 backdrop-blur-md">
+            <button
+              onClick={() => setMapStyle('dark')}
+              className={`p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                mapStyle === 'dark' ? 'bg-blue-500/80 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'hover:bg-white/10 text-white/50'
+              }`}
+              title="科技暗黑风"
+            >
+              <Layers size={22} />
+            </button>
+            <button
+              onClick={() => setMapStyle('satellite')}
+              className={`p-3 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                mapStyle === 'satellite' ? 'bg-amber-500/80 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'hover:bg-white/10 text-white/50'
+              }`}
+              title="高清卫星实景"
+            >
+              <Globe size={22} />
+            </button>
+          </div>
+        </div>
+
         {/* Dynamic Glass Panel for POI Info */}
-        <div className="flex-1 flex items-end justify-start p-6 pb-12">
+        <div className="flex-1 flex items-end justify-start p-6 pb-32">
           {activeArchive && (
             <div className="glass-panel p-6 rounded-3xl w-full max-w-md pointer-events-auto transform transition-all duration-500 translate-y-0 opacity-100 animate-in fade-in slide-in-from-bottom-8 shadow-2xl">
               <div className="flex justify-between items-start mb-4">
@@ -69,6 +94,9 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* 底部全局时间沙盘 */}
+        <TimeSlider />
       </div>
       
       {/* 独立的全屏模态框层 */}

@@ -5,7 +5,32 @@ import { useAppStore, type ArchiveData } from '@/store'
 import { cn } from '@/lib/utils'
 import { createRoot } from 'react-dom/client'
 
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+const MAP_STYLES = {
+  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  // 使用 ArcGIS World Imagery 作为卫星底图
+  satellite: {
+    version: 8,
+    sources: {
+      'esri-satellite': {
+        type: 'raster',
+        tiles: [
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        ],
+        tileSize: 256,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      }
+    },
+    layers: [
+      {
+        id: 'satellite-layer',
+        type: 'raster',
+        source: 'esri-satellite',
+        minzoom: 0,
+        maxzoom: 22
+      }
+    ]
+  } as maplibregl.StyleSpecification
+}
 
 const INITIAL_VIEW_STATE = {
   longitude: 115.3415,
@@ -68,8 +93,12 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
   const tourIntervalRef = useRef<number | null>(null)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring } = useAppStore()
-  const archives = getAllArchives()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle } = useAppStore()
+  
+  // 过滤出年份小于等于当前时间轴年份的档案
+  const archives = useMemo(() => {
+    return getAllArchives().filter(poi => poi.year <= currentYear)
+  }, [getAllArchives, currentYear])
 
   // 自动巡航逻辑
   useEffect(() => {
@@ -116,11 +145,12 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
 
   // 初始化地图
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return
+    if (!mapContainer.current) return
+    if (mapRef.current) return
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: MAP_STYLE,
+      style: MAP_STYLES[mapStyle],
       center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
       zoom: INITIAL_VIEW_STATE.zoom,
       pitch: INITIAL_VIEW_STATE.pitch,
@@ -141,40 +171,36 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       });
       map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 }); // exaggeration 是地形夸张系数
 
-      // 2. 插入 3D 建筑图层
-      map.addSource('openmaptiles', {
-        type: 'vector',
-        url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-      });
-      
-      const layers = map.getStyle().layers;
-      let labelLayerId;
-      for (let i = 0; i < layers.length; i++) {
-        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
-          labelLayerId = layers[i].id;
-          break;
+      // 添加 3D 建筑图层 (如果底图支持)
+      if (map.getSource('openmaptiles') || map.getSource('carto')) {
+        const layers = map.getStyle().layers;
+        let labelLayerId;
+        for (let i = 0; i < layers.length; i++) {
+          if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+            labelLayerId = layers[i].id;
+            break;
+          }
         }
-      }
 
-      // 如果有建筑多边形数据，则拉伸为 3D
-      map.addLayer({
-        'id': '3d-buildings',
-        'source': 'carto',
-        'source-layer': 'building',
-        'filter': ['==', 'extrude', 'true'],
-        'type': 'fill-extrusion',
-        'minzoom': 14,
-        'paint': {
-          'fill-extrusion-color': '#1e293b',
-          'fill-extrusion-height': ['get', 'height'],
-          'fill-extrusion-base': ['get', 'min_height'],
-          'fill-extrusion-opacity': 0.6
-        }
-      }, labelLayerId);
+        map.addLayer({
+          'id': '3d-buildings',
+          'source': 'carto',
+          'source-layer': 'building',
+          'filter': ['==', 'extrude', 'true'],
+          'type': 'fill-extrusion',
+          'minzoom': 14,
+          'paint': {
+            'fill-extrusion-color': '#1e293b',
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'min_height'],
+            'fill-extrusion-opacity': 0.6
+          }
+        }, labelLayerId);
+      }
     })
 
     map.on('click', () => {
-      setSelectedPoiId(null)
+      if (selectedPoiId) setSelectedPoiId(null)
     })
 
     mapRef.current = map
@@ -183,12 +209,77 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       map.remove()
       mapRef.current = null
     }
-  }, [])
+  }, [mapStyle])
 
   // 渲染/更新 Markers
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
+
+    // 添加苏区镇边界图层 (模拟数据)
+    if (!map.getSource('suqu-boundary')) {
+      // 模拟苏区镇的边界点，围绕中心点 115.3400, 23.3600
+      const boundaryData = {
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Polygon',
+              'coordinates': [
+                [
+                  [115.3200, 23.3400],
+                  [115.3600, 23.3350],
+                  [115.3750, 23.3550],
+                  [115.3650, 23.3800],
+                  [115.3350, 23.3850],
+                  [115.3150, 23.3650],
+                  [115.3200, 23.3400]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+
+      map.addSource('suqu-boundary', {
+        'type': 'geojson',
+        'data': boundaryData as any
+      });
+
+      // 边界填充半透明发光
+      map.addLayer({
+        'id': 'suqu-boundary-fill',
+        'type': 'fill',
+        'source': 'suqu-boundary',
+        'paint': {
+          'fill-color': '#3b82f6',
+          'fill-opacity': 0.1
+        }
+      });
+
+      // 边界线发光
+      map.addLayer({
+        'id': 'suqu-boundary-line',
+        'type': 'line',
+        'source': 'suqu-boundary',
+        'paint': {
+          'line-color': '#60a5fa',
+          'line-width': 2,
+          'line-opacity': 0.8
+        }
+      });
+    }
+
+    // 首先清理不再可见的 markers (时间回退的情况)
+    const currentArchiveIds = new Set(archives.map(a => a.id))
+    Object.keys(markersRef.current).forEach(id => {
+      if (!currentArchiveIds.has(id)) {
+        markersRef.current[id].remove()
+        delete markersRef.current[id]
+        if (selectedPoiId === id) setSelectedPoiId(null)
+      }
+    })
 
     archives.forEach(poi => {
       let marker = markersRef.current[poi.id]

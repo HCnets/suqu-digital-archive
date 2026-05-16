@@ -27,6 +27,8 @@ interface AppState {
   setCurrentYear: (year: number) => void
   isAutoTouring: boolean
   setAutoTouring: (isTouring: boolean) => void
+  mapStyle: 'dark' | 'satellite'
+  setMapStyle: (style: 'dark' | 'satellite') => void
 }
 
 // 扩展多媒体和时间维度
@@ -82,5 +84,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentYear: 2026,
   setCurrentYear: (year) => set({ currentYear: year }),
   isAutoTouring: false,
-  setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring })
+  setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring }),
+  mapStyle: 'dark',
+  setMapStyle: (style) => set({ mapStyle: style })
 }))
