@@ -9,11 +9,13 @@ import { RelicShowcaseMode } from '@/components/ui/RelicShowcaseMode'
 import { SwipeMode } from '@/components/ui/SwipeMode'
 import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { WeatherSystem } from '@/components/ui/WeatherSystem'
+import { RightDataPanel } from '@/components/ui/RightDataPanel'
+import { DirectorModeController } from '@/components/ui/DirectorModeController'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, isSwipeMode } = useAppStore()
+  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, isSwipeMode, setMainMapInstance } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   
@@ -35,7 +37,7 @@ function App() {
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       {/* GIS Map Layer */}
       <div className="absolute inset-0 z-0">
-        <GisMap key={mapStyle} />
+        <GisMap key={mapStyle} onMapLoad={(map) => setMainMapInstance(map)} />
       </div>
 
       {/* 天气粒子层 (模拟雾气/发光粉尘) */}
@@ -146,6 +148,12 @@ function App() {
 
       {/* 第一人称漫游覆盖层 */}
       <FpsOverlay />
+
+      {/* 右侧数据面板 */}
+      <RightDataPanel />
+
+      {/* 自动导演模式控制器 */}
+      <DirectorModeController />
 
       {/* 动态天气系统层 */}
       <WeatherSystem />

@@ -49,6 +49,9 @@ const SPACE_VIEW_STATE = {
 
 interface GisMapProps {
   className?: string
+  mapId?: string
+  initialStyle?: string
+  onMapLoad?: (map: maplibregl.Map) => void
 }
 
 // 单个发光点位组件 (HTML/CSS 模拟的光柱和热点)
@@ -94,7 +97,7 @@ const PoiMarker: React.FC<{ poi: ArchiveData; isSelected: boolean }> = ({ poi, i
   )
 }
 
-export const GisMap: React.FC<GisMapProps> = ({ className }) => {
+export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, onMapLoad }) => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
@@ -174,7 +177,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: MAP_STYLES[mapStyle],
+      style: initialStyle ? MAP_STYLES[initialStyle as keyof typeof MAP_STYLES] : MAP_STYLES[mapStyle],
       center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
       zoom: SPACE_VIEW_STATE.zoom, // 从高空开始
       pitch: SPACE_VIEW_STATE.pitch,
@@ -258,6 +261,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       })
       
       mapRef.current = map
+      if (onMapLoad) onMapLoad(map)
 
       return () => {
         map.remove()

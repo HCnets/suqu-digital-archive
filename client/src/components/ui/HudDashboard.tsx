@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route, MoveHorizontal, Clock, Crosshair } from 'lucide-react'
+import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route, MoveHorizontal, Clock, Crosshair, Film } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute, setSwipeMode, setFpsMode, isFpsMode } = useAppStore()
+  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute, setSwipeMode, setFpsMode, isFpsMode, isDirectorMode, setDirectorMode } = useAppStore()
   
   // 基于当前时间轴过滤数据
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
@@ -115,7 +115,20 @@ export const HudDashboard: React.FC = () => {
           <span className="text-sm font-medium">第一人称街景漫游</span>
         </button>
 
-        {/* Environmental Controls */}
+        <button 
+          onClick={() => setDirectorMode(!isDirectorMode)}
+          className={`w-full flex items-center justify-center gap-2 p-3 rounded border transition-all ${
+            isDirectorMode 
+              ? 'border-amber-500 bg-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.4)] animate-pulse'
+              : 'border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 shadow-[0_0_20px_rgba(220,38,38,0.2)]'
+          }`}
+        >
+          <Film size={16} />
+          <span className="text-sm font-medium">{isDirectorMode ? '⏹ 停止自动汇报' : '▶ 启动自动接待汇报'}</span>
+        </button>
+      </div>
+
+      {/* Environmental Controls */}
         <div className="flex items-center gap-2 text-blue-300 border-b border-white/10 pb-2 pt-2">
           <Activity size={16} />
           <h3 className="font-bold text-sm tracking-widest">ENV CONTROLS</h3>

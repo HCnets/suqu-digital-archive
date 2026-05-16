@@ -57,6 +57,12 @@ interface AppState {
 
   isFpsMode: boolean
   setFpsMode: (isFps: boolean) => void
+
+  isDirectorMode: boolean
+  setDirectorMode: (isDirector: boolean) => void
+
+  mainMapInstance: any
+  setMainMapInstance: (map: any) => void
 }
 
 const API_BASE = 'http://localhost:3001/api';
@@ -125,6 +131,12 @@ export const useAppStore = create<AppState>()(
     setSwipeMode: (isSwipe) => set({ isSwipeMode: isSwipe }),
 
     isFpsMode: false,
-    setFpsMode: (isFps) => set({ isFpsMode: isFps })
+    setFpsMode: (isFps) => set({ isFpsMode: isFps }),
+
+    isDirectorMode: false,
+    setDirectorMode: (isDirector) => set({ isDirectorMode: isDirector }),
+
+    mainMapInstance: null,
+    setMainMapInstance: (map) => set({ mainMapInstance: map })
   })
 )
