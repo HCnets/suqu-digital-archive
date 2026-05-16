@@ -100,7 +100,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
   const tourIntervalRef = useRef<number | null>(null)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, activeEvent } = useAppStore()
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -112,7 +112,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     if (!mapRef.current) return
     const map = mapRef.current
 
-    let orbitAnimationFrame: number
+    let orbitAnimationFrame: number = 0
     
     if (isAutoTouring) {
       let currentIndex = 0
@@ -206,7 +206,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
           map.scrollZoom.enable()
           map.boxZoom.enable()
           map.dragRotate.enable()
-          map.keyboardZoom.enable()
+          map.keyboard.enable()
           map.doubleClickZoom.enable()
           map.touchZoomRotate.enable()
         }, 4000)
@@ -225,7 +225,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
         const layers = map.getStyle().layers;
         let labelLayerId;
         for (let i = 0; i < layers.length; i++) {
-          if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+          if (layers[i].type === 'symbol' && (layers[i].layout as any)['text-field']) {
             labelLayerId = layers[i].id;
             break;
           }
@@ -349,6 +349,116 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
           }
         });
       }
+
+      // 3. 星火燎原：革命辐射拓扑网 (模拟从苏区镇向外辐射的连接线)
+      if (!map.getSource('spark-topology')) {
+        map.addSource('spark-topology', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              // 海陆丰方向
+              {
+                type: 'Feature',
+                properties: { target: '海丰' },
+                geometry: {
+                  type: 'LineString',
+                  coordinates: [[115.3415, 23.3610], [115.3300, 23.2000], [115.3500, 22.9500]]
+                }
+              },
+              // 广州方向
+              {
+                type: 'Feature',
+                properties: { target: '广州起义' },
+                geometry: {
+                  type: 'LineString',
+                  coordinates: [[115.3415, 23.3610], [114.5000, 23.4000], [113.2644, 23.1291]]
+                }
+              },
+              // 延安方向 (示意)
+              {
+                type: 'Feature',
+                properties: { target: '中央苏区' },
+                geometry: {
+                  type: 'LineString',
+                  coordinates: [[115.3415, 23.3610], [115.0000, 24.5000], [115.5000, 25.8000]]
+                }
+              }
+            ]
+          }
+        });
+
+        // 基础辐射线
+        map.addLayer({
+          'id': 'spark-topology-line',
+          'type': 'line',
+          'source': 'spark-topology',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#ef4444',
+            'line-width': 2,
+            'line-opacity': 0.3,
+          }
+        });
+        
+        // 辐射线上的流光 (通过虚线流动模拟)
+        map.addLayer({
+          'id': 'spark-topology-flow',
+          'type': 'line',
+          'source': 'spark-topology',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#fca5a5',
+            'line-width': 4,
+            'line-opacity': 0.8,
+            'line-dasharray': [0, 4, 3] // [起始, 虚线段, 间隔]
+          }
+        });
+      }
+
+      // 添加历史行军路线 (模拟数据)
+      if (!map.getSource('historical-route')) {
+        map.addSource('historical-route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [115.3100, 23.3300],
+                [115.3200, 23.3400],
+                [115.3350, 23.3550],
+                [115.3400, 23.3600],
+                [115.3500, 23.3650],
+                [115.3600, 23.3800]
+              ]
+            }
+          }
+        });
+
+        map.addLayer({
+          'id': 'historical-route-line',
+          'type': 'line',
+          'source': 'historical-route',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#ef4444',
+            'line-width': 4,
+            'line-opacity': 0, // 默认隐藏，由 useEffect 控制显隐和动画
+            'line-dasharray': [0, 2, 2] // 用于流光动画 [0, dash, gap]
+          }
+        });
+      }
     }
 
     if (map.isStyleLoaded()) {
@@ -357,6 +467,102 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       map.once('style.load', initSources)
     }
   }, [])
+
+  // 历史行军路线动画逻辑
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+    let animationFrameId: number
+
+    const animateDashArray = (step: number) => {
+      if (!map.getLayer('historical-route-line')) return
+
+      // MapLibre 的 line-dasharray 格式: [dashLength, gapLength]
+      // 我们可以通过不断改变数组的值来产生流动效果
+      // 这里采用一个小技巧：设置数组为 [0, dash, gap] 等，但由于版本限制，我们使用简单的不断增减
+      // 更好的方式是用 requestAnimationFrame 修改 line-dasharray，或者配合 step 
+      const dashLength = 2;
+      const gapLength = 2;
+      const opacity = 0.5 + 0.5 * Math.sin(step / 10);
+      
+      if (map.getLayer('historical-route-line')) {
+        map.setPaintProperty('historical-route-line', 'line-opacity', opacity);
+      }
+      
+      if (map.getLayer('spark-topology-flow')) {
+        // 让辐射流光也动起来
+        const sparkOpacity = 0.4 + 0.6 * Math.sin(step / 5);
+        map.setPaintProperty('spark-topology-flow', 'line-opacity', sparkOpacity);
+      }
+
+      animationFrameId = requestAnimationFrame(() => animateDashArray(step + 1))
+    }
+
+    const updateRouteVisibility = () => {
+      if (!map.getLayer('historical-route-line')) return
+      
+      if (showHistoricalRoute) {
+        map.setPaintProperty('historical-route-line', 'line-opacity', 0.8)
+        map.setPaintProperty('historical-route-line', 'line-dasharray', [2, 2])
+        animationFrameId = requestAnimationFrame(() => animateDashArray(0))
+        
+        // 飞行到路线区域
+        map.flyTo({
+          center: [115.3350, 23.3550],
+          zoom: 13.5,
+          pitch: 45,
+          duration: 2000
+        })
+      } else {
+        cancelAnimationFrame(animationFrameId)
+        map.setPaintProperty('historical-route-line', 'line-opacity', 0)
+      }
+    }
+
+    if (map.isStyleLoaded()) {
+      updateRouteVisibility()
+    } else {
+      map.once('style.load', updateRouteVisibility)
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [showHistoricalRoute])
+
+  // 全局环境光与编年史大事件剧场联动
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+
+    const updateEnvironment = () => {
+      if (!map.isStyleLoaded()) return
+      
+      // 根据大事件类型改变全局光照与氛围
+      if (activeEvent === '紫金苏维埃政权成立' || activeEvent === '血战炮子村') {
+        // 血与火的岁月：暗红环境
+        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.6)
+        map.setPaintProperty('satellite-layer', 'raster-saturation', -0.5)
+        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 320) // 偏红
+      } else if (activeEvent === '苏维埃兵工厂建立') {
+        // 兵工厂：暗金/昏黄
+        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.7)
+        map.setPaintProperty('satellite-layer', 'raster-saturation', 0.2)
+        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 40) // 偏黄
+      } else {
+        // 现代或默认：恢复正常
+        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 1.0)
+        map.setPaintProperty('satellite-layer', 'raster-saturation', 0)
+        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 0)
+      }
+    }
+
+    if (map.isStyleLoaded()) {
+      updateEnvironment()
+    } else {
+      map.once('style.load', updateEnvironment)
+    }
+  }, [activeEvent, mapStyle])
 
   // 渲染/更新 Markers 和 3D 白模
   useEffect(() => {

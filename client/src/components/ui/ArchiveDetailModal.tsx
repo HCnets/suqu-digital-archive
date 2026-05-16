@@ -1,14 +1,31 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { X, Calendar, MapPin, Image as ImageIcon, Play, ExternalLink, Layers } from 'lucide-react'
+import { X, Calendar, MapPin, Image as ImageIcon, Play, ExternalLink, Layers, Volume2, Square, Box } from 'lucide-react'
+import { useTTS } from '@/hooks/useTTS'
 
 export const ArchiveDetailModal: React.FC = () => {
-  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, isIndoorMode } = useAppStore()
+  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, isIndoorMode, setRelicMode } = useAppStore()
+  const { speak, stop, isPlaying } = useTTS()
   
+  // 当模态框关闭时停止语音
+  useEffect(() => {
+    if (!isDetailModalOpen) {
+      stop()
+    }
+  }, [isDetailModalOpen, stop])
+
   if (!isDetailModalOpen || !selectedPoiId) return null
   
   const archive = getArchiveData(selectedPoiId)
   if (!archive) return null
+
+  const handleToggleAudio = () => {
+    if (isPlaying) {
+      stop()
+    } else {
+      speak(`现在为您播报档案：${archive.title}。${archive.content || archive.description}`)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-auto animate-in fade-in duration-300">
@@ -22,8 +39,24 @@ export const ArchiveDetailModal: React.FC = () => {
       <div className="relative w-full max-w-5xl h-full max-h-[85vh] bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* 模态框头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20 relative overflow-hidden">
+          {/* Audio Waveform Effect (Only visible when playing) */}
+          {isPlaying && (
+            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none flex items-center justify-center gap-2">
+              {[...Array(20)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="w-2 bg-blue-400 rounded-full animate-pulse" 
+                  style={{ 
+                    height: `${Math.random() * 60 + 20}%`,
+                    animationDuration: `${Math.random() * 0.5 + 0.3}s` 
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 relative z-10">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
               archive.type === 'revolution' ? 'bg-red-500/20 text-red-400' :
               archive.type === 'government' ? 'bg-blue-500/20 text-blue-400' : 
@@ -41,12 +74,27 @@ export const ArchiveDetailModal: React.FC = () => {
               </div>
             </div>
           </div>
-          <button 
-            onClick={() => setDetailModalOpen(false)}
-            className="p-3 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
+          
+          <div className="flex items-center gap-4 relative z-10">
+            <button
+              onClick={handleToggleAudio}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border ${
+                isPlaying 
+                  ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {isPlaying ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
+              <span className="text-sm font-medium">{isPlaying ? '停止解说' : 'AI 智能解说'}</span>
+            </button>
+            
+            <button 
+              onClick={() => setDetailModalOpen(false)}
+              className="p-3 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* 模态框内容区 */}
@@ -117,6 +165,20 @@ export const ArchiveDetailModal: React.FC = () => {
                   >
                     <Layers size={16} />
                     进入室内 BIM 下钻模式
+                  </button>
+                )}
+
+                {/* Relic Showcase Action */}
+                {archive.type === 'revolution' && (
+                  <button 
+                    onClick={() => {
+                      setDetailModalOpen(false)
+                      setRelicMode(true)
+                    }}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 transition-colors ml-auto animate-pulse"
+                  >
+                    <Box size={16} />
+                    文物全息展台
                   </button>
                 )}
               </div>

@@ -41,6 +41,16 @@ interface AppState {
   
   isIndoorMode: boolean
   setIndoorMode: (isIndoor: boolean) => void
+  
+  weather: 'clear' | 'rain' | 'snow'
+  setWeather: (weather: 'clear' | 'rain' | 'snow') => void
+  showHistoricalRoute: boolean
+  setShowHistoricalRoute: (show: boolean) => void
+
+  isRelicMode: boolean
+  setRelicMode: (isRelic: boolean) => void
+  activeEvent: string | null
+  setActiveEvent: (eventTitle: string | null) => void
 }
 
 const API_BASE = 'http://localhost:3001/api';
@@ -93,6 +103,16 @@ export const useAppStore = create<AppState>()(
     setDraftCoords: (coords) => set({ draftCoords: coords }),
     
     isIndoorMode: false,
-    setIndoorMode: (isIndoor) => set({ isIndoorMode: isIndoor })
+    setIndoorMode: (isIndoor) => set({ isIndoorMode: isIndoor }),
+    
+    weather: 'clear',
+    setWeather: (weather) => set({ weather }),
+    showHistoricalRoute: false,
+    setShowHistoricalRoute: (show) => set({ showHistoricalRoute: show }),
+
+    isRelicMode: false,
+    setRelicMode: (isRelic) => set({ isRelicMode: isRelic }),
+    activeEvent: null,
+    setActiveEvent: (eventTitle) => set({ activeEvent: eventTitle })
   })
 )

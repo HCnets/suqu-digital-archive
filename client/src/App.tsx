@@ -5,6 +5,8 @@ import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
 import { HudDashboard } from '@/components/ui/HudDashboard'
 import { IndoorBimMode } from '@/components/ui/IndoorBimMode'
+import { RelicShowcaseMode } from '@/components/ui/RelicShowcaseMode'
+import { WeatherSystem } from '@/components/ui/WeatherSystem'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
@@ -133,6 +135,12 @@ function App() {
 
       {/* 室内 BIM 下钻层 */}
       {isIndoorMode && <IndoorBimMode />}
+
+      {/* 文物全息展台层 */}
+      <RelicShowcaseMode />
+
+      {/* 动态天气系统层 */}
+      <WeatherSystem />
 
       {/* 开场太空坠入幕布 */}
       {showIntro && (

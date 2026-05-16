@@ -1,8 +1,16 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppStore } from '@/store'
 
+// 编年史大事件剧场数据字典
+const HISTORICAL_EVENTS: Record<number, { title: string, subtitle: string, type: 'blood' | 'gold' | 'tech' }> = {
+  1927: { title: "紫金苏维埃政权成立", subtitle: "星火燎原，武装暴动", type: "blood" },
+  1928: { title: "血战炮子村", subtitle: "可歌可泣的苏区保卫战", type: "blood" },
+  1929: { title: "苏维埃兵工厂建立", subtitle: "后勤命脉，武装工农", type: "gold" },
+  2026: { title: "新时代数字苏区", subtitle: "红色基因，数字孪生", type: "tech" }
+}
+
 export const TimeSlider: React.FC = () => {
-  const { currentYear, setCurrentYear } = useAppStore()
+  const { currentYear, setCurrentYear, setActiveEvent } = useAppStore()
 
   // 设定时间轴的起止年份
   const minYear = 1920
@@ -11,9 +19,49 @@ export const TimeSlider: React.FC = () => {
   // 关键历史节点
   const marks = [1927, 1980, 2026]
 
+  // 检查是否触发了大事件
+  useEffect(() => {
+    if (HISTORICAL_EVENTS[currentYear]) {
+      setActiveEvent?.(HISTORICAL_EVENTS[currentYear].title)
+    } else {
+      setActiveEvent?.(null)
+    }
+  }, [currentYear, setActiveEvent])
+
   return (
-    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-3xl px-8 pointer-events-auto">
-      <div className="glass-panel p-6 rounded-3xl flex flex-col gap-4 shadow-2xl animate-in slide-in-from-bottom-10 duration-700">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-8 pointer-events-auto z-40">
+      {/* 编年史大事件全息投影提示 */}
+      {HISTORICAL_EVENTS[currentYear] && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-8 text-center pointer-events-none w-full animate-in slide-in-from-bottom-4 fade-in duration-500">
+          <div className={`inline-flex flex-col items-center p-6 rounded-3xl backdrop-blur-md border ${
+            HISTORICAL_EVENTS[currentYear].type === 'blood' ? 'bg-red-900/30 border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.3)]' :
+            HISTORICAL_EVENTS[currentYear].type === 'gold' ? 'bg-amber-900/30 border-amber-500/50 shadow-[0_0_50px_rgba(245,158,11,0.3)]' :
+            'bg-blue-900/30 border-blue-500/50 shadow-[0_0_50px_rgba(59,130,246,0.3)]'
+          }`}>
+            <h1 className={`text-4xl md:text-5xl font-black tracking-widest uppercase mb-2 ${
+              HISTORICAL_EVENTS[currentYear].type === 'blood' ? 'text-transparent bg-clip-text bg-gradient-to-b from-red-200 to-red-600' :
+              HISTORICAL_EVENTS[currentYear].type === 'gold' ? 'text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-amber-600' :
+              'text-transparent bg-clip-text bg-gradient-to-b from-blue-200 to-blue-600'
+            }`}>
+              {currentYear}
+            </h1>
+            <h2 className="text-2xl font-bold text-white tracking-wider">
+              {HISTORICAL_EVENTS[currentYear].title}
+            </h2>
+            <p className="text-white/60 text-sm mt-2 font-mono tracking-widest">
+              {HISTORICAL_EVENTS[currentYear].subtitle}
+            </p>
+          </div>
+          {/* 连接线 */}
+          <div className={`w-px h-8 mx-auto mt-2 ${
+            HISTORICAL_EVENTS[currentYear].type === 'blood' ? 'bg-gradient-to-b from-red-500/50 to-transparent' :
+            HISTORICAL_EVENTS[currentYear].type === 'gold' ? 'bg-gradient-to-b from-amber-500/50 to-transparent' :
+            'bg-gradient-to-b from-blue-500/50 to-transparent'
+          }`} />
+        </div>
+      )}
+
+      <div className="glass-panel p-6 rounded-3xl border border-white/10 shadow-2xl bg-black/60 backdrop-blur-xl flex flex-col gap-6">
         <div className="flex justify-between items-center text-white/80 font-mono">
           <span className="text-sm">{minYear}</span>
           <span className="text-3xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">

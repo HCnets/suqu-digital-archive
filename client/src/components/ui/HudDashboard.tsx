@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { Activity, Database, Flag, Landmark } from 'lucide-react'
+import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear } = useAppStore()
+  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute } = useAppStore()
   
   // 基于当前时间轴过滤数据
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
@@ -83,6 +83,59 @@ export const HudDashboard: React.FC = () => {
           
           <div className="absolute top-2 right-2 text-[10px] text-blue-400/50 font-mono">SYS.OK</div>
           <div className="absolute bottom-2 left-2 text-[10px] text-blue-400/50 font-mono">LNG: 115.34 LAT: 23.36</div>
+        </div>
+      </div>
+
+      {/* Environmental Controls */}
+      <div className="glass-panel p-4 rounded-xl border border-white/5 space-y-4">
+        <div className="flex items-center gap-2 text-blue-300 border-b border-white/10 pb-2">
+          <Activity size={16} />
+          <h3 className="font-bold text-sm tracking-widest">ENV CONTROLS</h3>
+        </div>
+        
+        <div className="flex flex-col gap-3">
+          <button 
+            onClick={() => setShowHistoricalRoute(!showHistoricalRoute)}
+            className={`flex items-center justify-between p-2 rounded border transition-colors ${
+              showHistoricalRoute ? 'bg-red-500/20 border-red-500/50 text-red-300' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Route size={14} />
+              <span className="text-xs">红军历史行军动线</span>
+            </div>
+            <div className={`w-2 h-2 rounded-full ${showHistoricalRoute ? 'bg-red-400 animate-pulse' : 'bg-white/20'}`} />
+          </button>
+
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setWeather('clear')}
+              className={`flex-1 flex flex-col items-center justify-center p-2 rounded border transition-colors ${
+                weather === 'clear' ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+              }`}
+            >
+              <Sun size={14} className="mb-1" />
+              <span className="text-[10px]">晴朗</span>
+            </button>
+            <button 
+              onClick={() => setWeather('rain')}
+              className={`flex-1 flex flex-col items-center justify-center p-2 rounded border transition-colors ${
+                weather === 'rain' ? 'bg-blue-500/20 border-blue-500/50 text-blue-300' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+              }`}
+            >
+              <CloudRain size={14} className="mb-1" />
+              <span className="text-[10px]">暴雨</span>
+            </button>
+            <button 
+              onClick={() => setWeather('snow')}
+              className={`flex-1 flex flex-col items-center justify-center p-2 rounded border transition-colors ${
+                weather === 'snow' ? 'bg-white/20 border-white/50 text-white' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+              }`}
+            >
+              <CloudSnow size={14} className="mb-1" />
+              <span className="text-[10px]">大雪</span>
+            </button>
+          </div>
         </div>
       </div>
 
