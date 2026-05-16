@@ -139,13 +139,26 @@ export const ArchiveDetailModal: React.FC = () => {
               <div className="w-1 h-4 bg-blue-500 rounded-full" />
               档案详述
             </h3>
-            <div className="prose prose-invert prose-slate max-w-none">
-              <p className="text-slate-300 leading-loose text-base md:text-lg">
-                {archive.content || archive.description}
-              </p>
-              
-              <div className="mt-8 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm">
-                <strong>数字化注记：</strong> 该档案条目基于 MapLibre 空间坐标引擎与 Liquid Glass 界面协议构建，支持在 3D 地形下自动锚定与动态展示。
+              <div className="prose prose-invert prose-red max-w-none">
+                <p className="text-red-100/90 leading-loose text-base md:text-lg font-medium">
+                  {archive.description}
+                </p>
+                
+                {archive.content && (
+                  <div className="mt-8 pt-6 border-t border-red-900/30">
+                    <h4 className="text-amber-400 font-bold mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      深度历史文献档案
+                    </h4>
+                    <div className="text-red-50/80 whitespace-pre-wrap leading-loose">
+                      {archive.content}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-8 p-4 rounded-xl bg-red-900/20 border border-red-500/20 text-red-200/60 text-sm">
+                  <strong>档案局注记：</strong> 此文献经过数字化多维拓扑重建。基于目前系统客观条件限制，地图空间中显示的 3D 建筑为 GIS 地理空间引擎生成的【程序化高程占位基座】，用以标记遗址坐标与范围，并非历史建筑的 1:1 倾斜摄影或手工 3D 还原模型。真实历史风貌请以现场文物或档案局馆藏老照片为准。
+                </div>
               </div>
 
               {/* Tags & Actions */}
