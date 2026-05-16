@@ -1,16 +1,26 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { UnifiedHeader } from '@/components/ui/UnifiedHeader'
 import { GisMap } from '@/components/map/GisMap'
 import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
-import { AdminDrawer } from '@/components/admin/AdminDrawer'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, setAdminOpen } = useAppStore()
+  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
+  
+  // 开场动画状态
+  const [showIntro, setShowIntro] = useState(true)
+
+  useEffect(() => {
+    // 3秒后移除开场黑屏遮罩
+    const timer = setTimeout(() => {
+      setShowIntro(false)
+    }, 3500)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
@@ -19,16 +29,19 @@ function App() {
         <GisMap key={mapStyle} />
       </div>
 
+      {/* 天气粒子层 (模拟雾气/发光粉尘) */}
+      <div className="absolute inset-0 z-0 pointer-events-none mix-blend-screen opacity-40" style={{
+        backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 60%)'
+      }} />
+
       {/* UI Layer */}
       <div className="absolute inset-0 z-10 pointer-events-none flex flex-col">
         {/* Top Header */}
         <UnifiedHeader 
           title="广东省苏区镇数字化档案" 
-          description="基于真实经纬度的 WebGIS 交互架构 (MapLibre + React)"
-          onOpenAdmin={() => setAdminOpen(true)}
+          description="大屏展示系统 - WebGIS 交互架构"
           onAutoTour={() => setAutoTouring(!isAutoTouring)}
           isTouring={isAutoTouring}
-          onBack={() => console.log('Back button clicked')}
         />
 
         {/* Map Style Switcher */}
@@ -104,8 +117,18 @@ function App() {
       {/* 独立的全屏模态框层 */}
       <ArchiveDetailModal />
 
-      {/* 录入中心抽屉层 */}
-      <AdminDrawer />
+      {/* 开场太空坠入幕布 */}
+      {showIntro && (
+        <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-out fade-out duration-1000 delay-[2500ms] fill-mode-forwards pointer-events-none">
+          <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-8" />
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-amber-300 tracking-widest animate-pulse">
+            苏区镇数字孪生沙盘
+          </h1>
+          <p className="text-slate-500 mt-4 font-mono text-sm uppercase tracking-[0.3em]">
+            Initializing Geospatial Engine...
+          </p>
+        </div>
+      )}
     </div>
   )
 }

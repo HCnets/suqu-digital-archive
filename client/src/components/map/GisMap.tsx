@@ -40,6 +40,13 @@ const INITIAL_VIEW_STATE = {
   bearing: -20,
 }
 
+// 模拟太空坠入的初始高空状态
+const SPACE_VIEW_STATE = {
+  zoom: 4,
+  pitch: 0,
+  bearing: 0
+}
+
 interface GisMapProps {
   className?: string
 }
@@ -152,10 +159,11 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       container: mapContainer.current,
       style: MAP_STYLES[mapStyle],
       center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
-      zoom: INITIAL_VIEW_STATE.zoom,
-      pitch: INITIAL_VIEW_STATE.pitch,
-      bearing: INITIAL_VIEW_STATE.bearing,
-      attributionControl: false
+      zoom: SPACE_VIEW_STATE.zoom, // 从高空开始
+      pitch: SPACE_VIEW_STATE.pitch,
+      bearing: SPACE_VIEW_STATE.bearing,
+      attributionControl: false,
+      interactive: false // 坠入期间禁止交互
     })
 
     map.addControl(new maplibregl.NavigationControl({
@@ -163,6 +171,30 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     }), 'bottom-right')
 
     map.on('load', () => {
+      // 执行太空坠入动画 (Space-to-Ground Fly-in)
+      setTimeout(() => {
+        map.flyTo({
+          center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
+          zoom: INITIAL_VIEW_STATE.zoom,
+          pitch: INITIAL_VIEW_STATE.pitch,
+          bearing: INITIAL_VIEW_STATE.bearing,
+          duration: 4000,
+          essential: true,
+          curve: 1.5,
+        })
+        
+        // 动画结束后恢复交互
+        setTimeout(() => {
+          map.dragPan.enable()
+          map.scrollZoom.enable()
+          map.boxZoom.enable()
+          map.dragRotate.enable()
+          map.keyboardZoom.enable()
+          map.doubleClickZoom.enable()
+          map.touchZoomRotate.enable()
+        }, 4000)
+      }, 500)
+
       // 1. 插入 3D 地形 (DEM)
       map.addSource('terrain-source', {
         type: 'raster-dem',
