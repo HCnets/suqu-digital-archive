@@ -93,7 +93,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
   const tourIntervalRef = useRef<number | null>(null)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords } = useAppStore()
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -199,17 +199,22 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       }
     })
 
-    map.on('click', () => {
-      if (selectedPoiId) setSelectedPoiId(null)
-    })
+    map.on('click', (e) => {
+        if (isAdminOpen) {
+          // 如果处于录入模式，则拾取坐标，不触发点位详情
+          setDraftCoords([e.lngLat.lng, e.lngLat.lat])
+        } else {
+          if (selectedPoiId) setSelectedPoiId(null)
+        }
+      })
+      
+      mapRef.current = map
 
-    mapRef.current = map
-
-    return () => {
-      map.remove()
-      mapRef.current = null
-    }
-  }, [mapStyle])
+      return () => {
+        map.remove()
+        mapRef.current = null
+      }
+    }, [mapStyle, isAdminOpen]) // 依赖 isAdminOpen 以便更新 click 事件
 
   // 渲染/更新 Markers
   useEffect(() => {

@@ -3,11 +3,12 @@ import { UnifiedHeader } from '@/components/ui/UnifiedHeader'
 import { GisMap } from '@/components/map/GisMap'
 import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
+import { AdminDrawer } from '@/components/admin/AdminDrawer'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle } = useAppStore()
+  const { selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, setAdminOpen } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
 
@@ -24,6 +25,7 @@ function App() {
         <UnifiedHeader 
           title="广东省苏区镇数字化档案" 
           description="基于真实经纬度的 WebGIS 交互架构 (MapLibre + React)"
+          onOpenAdmin={() => setAdminOpen(true)}
           onAutoTour={() => setAutoTouring(!isAutoTouring)}
           isTouring={isAutoTouring}
           onBack={() => console.log('Back button clicked')}
@@ -101,6 +103,9 @@ function App() {
       
       {/* 独立的全屏模态框层 */}
       <ArchiveDetailModal />
+
+      {/* 录入中心抽屉层 */}
+      <AdminDrawer />
     </div>
   )
 }

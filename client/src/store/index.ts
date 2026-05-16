@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface ArchiveData {
   id: string
@@ -17,6 +18,9 @@ export interface ArchiveData {
 }
 
 interface AppState {
+  archives: Record<string, ArchiveData>
+  addArchive: (archive: ArchiveData) => void
+  
   selectedPoiId: string | null
   setSelectedPoiId: (id: string | null) => void
   getArchiveData: (id: string) => ArchiveData | null
@@ -29,10 +33,15 @@ interface AppState {
   setAutoTouring: (isTouring: boolean) => void
   mapStyle: 'dark' | 'satellite'
   setMapStyle: (style: 'dark' | 'satellite') => void
+  
+  isAdminOpen: boolean
+  setAdminOpen: (isOpen: boolean) => void
+  draftCoords: [number, number] | null
+  setDraftCoords: (coords: [number, number] | null) => void
 }
 
 // 扩展多媒体和时间维度
-const mockArchives: Record<string, ArchiveData> = {
+const initialMockArchives: Record<string, ArchiveData> = {
   'suqu-gov': {
     id: 'suqu-gov',
     title: '苏区镇政府大楼',
@@ -74,17 +83,36 @@ const mockArchives: Record<string, ArchiveData> = {
   }
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  selectedPoiId: null,
-  setSelectedPoiId: (id) => set({ selectedPoiId: id }),
-  getArchiveData: (id) => mockArchives[id] || null,
-  getAllArchives: () => Object.values(mockArchives),
-  isDetailModalOpen: false,
-  setDetailModalOpen: (isOpen) => set({ isDetailModalOpen: isOpen }),
-  currentYear: 2026,
-  setCurrentYear: (year) => set({ currentYear: year }),
-  isAutoTouring: false,
-  setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring }),
-  mapStyle: 'dark',
-  setMapStyle: (style) => set({ mapStyle: style })
-}))
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      archives: initialMockArchives,
+      addArchive: (archive) => set((state) => ({
+        archives: { ...state.archives, [archive.id]: archive }
+      })),
+      
+      selectedPoiId: null,
+      setSelectedPoiId: (id) => set({ selectedPoiId: id }),
+      getArchiveData: (id) => get().archives[id] || null,
+      getAllArchives: () => Object.values(get().archives),
+      isDetailModalOpen: false,
+      setDetailModalOpen: (isOpen) => set({ isDetailModalOpen: isOpen }),
+      currentYear: 2026,
+      setCurrentYear: (year) => set({ currentYear: year }),
+      isAutoTouring: false,
+      setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring }),
+      mapStyle: 'dark',
+      setMapStyle: (style) => set({ mapStyle: style }),
+      
+      isAdminOpen: false,
+      setAdminOpen: (isOpen) => set({ isAdminOpen: isOpen, draftCoords: null }),
+      draftCoords: null,
+      setDraftCoords: (coords) => set({ draftCoords: coords })
+    }),
+    {
+      name: 'suqu-archive-storage',
+      // 只持久化档案数据，其他 UI 状态不保存
+      partialize: (state) => ({ archives: state.archives }),
+    }
+  )
+)
