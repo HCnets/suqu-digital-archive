@@ -51,6 +51,9 @@ interface AppState {
   setRelicMode: (isRelic: boolean) => void
   activeEvent: string | null
   setActiveEvent: (eventTitle: string | null) => void
+
+  isSwipeMode: boolean
+  setSwipeMode: (isSwipe: boolean) => void
 }
 
 const API_BASE = 'http://localhost:3001/api';
@@ -113,6 +116,9 @@ export const useAppStore = create<AppState>()(
     isRelicMode: false,
     setRelicMode: (isRelic) => set({ isRelicMode: isRelic }),
     activeEvent: null,
-    setActiveEvent: (eventTitle) => set({ activeEvent: eventTitle })
+    setActiveEvent: (eventTitle) => set({ activeEvent: eventTitle }),
+
+    isSwipeMode: false,
+    setSwipeMode: (isSwipe) => set({ isSwipeMode: isSwipe })
   })
 )

@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route } from 'lucide-react'
+import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route, MoveHorizontal, Clock } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute } = useAppStore()
+  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute, setSwipeMode } = useAppStore()
   
   // 基于当前时间轴过滤数据
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
@@ -86,9 +86,24 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Environmental Controls */}
+      {/* 时空穿梭与环境控制 */}
       <div className="glass-panel p-4 rounded-xl border border-white/5 space-y-4">
-        <div className="flex items-center gap-2 text-blue-300 border-b border-white/10 pb-2">
+        {/* 时空穿梭 */}
+        <div className="flex items-center gap-2 text-purple-300 border-b border-white/10 pb-2">
+          <Clock size={16} />
+          <h3 className="font-bold text-sm tracking-widest">TIME TRAVEL</h3>
+        </div>
+        
+        <button 
+          onClick={() => setSwipeMode(true)}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+        >
+          <MoveHorizontal size={16} />
+          <span className="text-sm font-medium">时空卷帘门</span>
+        </button>
+
+        {/* Environmental Controls */}
+        <div className="flex items-center gap-2 text-blue-300 border-b border-white/10 pb-2 pt-2">
           <Activity size={16} />
           <h3 className="font-bold text-sm tracking-widest">ENV CONTROLS</h3>
         </div>

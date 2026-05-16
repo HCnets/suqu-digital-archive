@@ -6,12 +6,13 @@ import { TimeSlider } from '@/components/ui/TimeSlider'
 import { HudDashboard } from '@/components/ui/HudDashboard'
 import { IndoorBimMode } from '@/components/ui/IndoorBimMode'
 import { RelicShowcaseMode } from '@/components/ui/RelicShowcaseMode'
+import { SwipeMode } from '@/components/ui/SwipeMode'
 import { WeatherSystem } from '@/components/ui/WeatherSystem'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
 function App() {
-  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode } = useAppStore()
+  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, isSwipeMode } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   
@@ -138,6 +139,9 @@ function App() {
 
       {/* 文物全息展台层 */}
       <RelicShowcaseMode />
+
+      {/* 时空卷帘门层 */}
+      <SwipeMode />
 
       {/* 动态天气系统层 */}
       <WeatherSystem />
