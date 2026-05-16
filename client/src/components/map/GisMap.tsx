@@ -351,6 +351,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     })
 
   // 渲染/更新 Markers 和 3D 白模
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+
     const currentArchiveIds = new Set(archives.map(a => a.id))
     Object.keys(markersRef.current).forEach(id => {
       if (!currentArchiveIds.has(id)) {
