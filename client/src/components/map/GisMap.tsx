@@ -270,7 +270,8 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     if (!mapRef.current) return
     const map = mapRef.current
 
-    // 添加苏区镇边界图层 (模拟数据)
+    const initSources = () => {
+      // 添加苏区镇边界图层 (模拟数据)
       if (!map.getSource('suqu-boundary')) {
         // 模拟苏区镇的边界点，围绕中心点 115.3400, 23.3600
         const boundaryData = {
@@ -348,7 +349,14 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
           }
         });
       }
-    })
+    }
+
+    if (map.isStyleLoaded()) {
+      initSources()
+    } else {
+      map.once('style.load', initSources)
+    }
+  }, [])
 
   // 渲染/更新 Markers 和 3D 白模
   useEffect(() => {
@@ -391,7 +399,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       }
     });
 
-    if (map.getSource('poi-3d-buildings')) {
+    if (map.isStyleLoaded() && map.getSource('poi-3d-buildings')) {
       (map.getSource('poi-3d-buildings') as maplibregl.GeoJSONSource).setData({
         type: 'FeatureCollection',
         features: buildingFeatures as any
