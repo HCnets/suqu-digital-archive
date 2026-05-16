@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-glass: rgba(255, 255, 255, 0.2);
+  --color-glass-border: rgba(255, 255, 255, 0.3);
+  --color-glass-bg: rgba(20, 20, 20, 0.6);
+}
+
+@layer base {
+  body {
+    @apply m-0 p-0 w-screen h-screen overflow-hidden bg-slate-900 text-slate-100 font-sans;
+  }
+}
+
+@layer utilities {
+  .liquid-glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-panel {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10;
+  }
+}
