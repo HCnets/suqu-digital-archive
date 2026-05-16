@@ -398,35 +398,38 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       let marker = markersRef.current[poi.id]
       
       const renderContent = (
-        <div onClick={(e) => {
-          e.stopPropagation()
-          setSelectedPoiId(poi.id)
-          map.flyTo({
-            center: [poi.longitude, poi.latitude],
-            zoom: 16,
-            pitch: 65,
-            duration: 1500
-          })
-        }}>
-          <PoiMarker poi={poi} isSelected={selectedPoiId === poi.id} />
-        </div>
+        <div 
+          className={`w-4 h-4 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-all duration-300 ${
+            poi.id === selectedPoiId ? 'scale-150 ring-4 ring-white/50' : 'hover:scale-125'
+          }`}
+          style={{
+            backgroundColor: poi.type === 'revolution' ? '#ef4444' : 
+                           poi.type === 'government' ? '#3b82f6' : '#f59e0b'
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setSelectedPoiId(poi.id)
+          }}
+        />
       )
 
       if (!marker) {
         const el = document.createElement('div')
         const root = createRoot(el)
         ;(el as any)._reactRoot = root
+
         root.render(renderContent)
-        
-        marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+
+        marker = new maplibregl.Marker({ element: el })
           .setLngLat([poi.longitude, poi.latitude])
           .addTo(map)
+          
         markersRef.current[poi.id] = marker
       } else {
-        const currentEl = marker.getElement()
-        const currentRoot = (currentEl as any)._reactRoot
-        if (currentRoot) {
-          currentRoot.render(renderContent)
+        // Update selected state style
+        const el = marker.getElement()
+        if ((el as any)._reactRoot) {
+          (el as any)._reactRoot.render(renderContent)
         }
       }
     })
