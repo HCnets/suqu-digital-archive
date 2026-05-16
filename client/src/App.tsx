@@ -7,6 +7,7 @@ import { HudDashboard } from '@/components/ui/HudDashboard'
 import { IndoorBimMode } from '@/components/ui/IndoorBimMode'
 import { RelicShowcaseMode } from '@/components/ui/RelicShowcaseMode'
 import { SwipeMode } from '@/components/ui/SwipeMode'
+import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { WeatherSystem } from '@/components/ui/WeatherSystem'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
@@ -142,6 +143,9 @@ function App() {
 
       {/* 时空卷帘门层 */}
       <SwipeMode />
+
+      {/* 第一人称漫游覆盖层 */}
+      <FpsOverlay />
 
       {/* 动态天气系统层 */}
       <WeatherSystem />

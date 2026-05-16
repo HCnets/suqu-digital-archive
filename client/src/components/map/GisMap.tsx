@@ -100,7 +100,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
   const tourIntervalRef = useRef<number | null>(null)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, activeEvent } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, activeEvent, isFpsMode } = useAppStore()
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -529,6 +529,37 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
       cancelAnimationFrame(animationFrameId)
     }
   }, [showHistoricalRoute])
+
+  // 监听 FPS 模式切换
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+
+    if (isFpsMode) {
+      // 进入第一人称模式：拉低视角，贴近地面
+      map.flyTo({
+        center: [115.3415, 23.3610], // 苏区镇中心
+        zoom: 18.5,                  // 极度放大
+        pitch: 85,                   // 几乎平视
+        bearing: 0,
+        duration: 3000,
+        essential: true
+      })
+      
+      // 可以开启键盘漫游更灵敏的设置 (MapLibre 默认支持键盘漫游，只是需要配置焦点)
+      map.getCanvas().focus()
+    } else {
+      // 退出第一人称模式：回到高空俯瞰
+      map.flyTo({
+        center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
+        zoom: INITIAL_VIEW_STATE.zoom,
+        pitch: INITIAL_VIEW_STATE.pitch,
+        bearing: INITIAL_VIEW_STATE.bearing,
+        duration: 3000,
+        essential: true
+      })
+    }
+  }, [isFpsMode])
 
   // 全局环境光与编年史大事件剧场联动
   useEffect(() => {

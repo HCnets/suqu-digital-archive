@@ -1,9 +1,9 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route, MoveHorizontal, Clock } from 'lucide-react'
+import { Activity, Database, Flag, Landmark, CloudRain, CloudSnow, Sun, Route, MoveHorizontal, Clock, Crosshair } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute, setSwipeMode } = useAppStore()
+  const { getAllArchives, currentYear, weather, setWeather, showHistoricalRoute, setShowHistoricalRoute, setSwipeMode, setFpsMode, isFpsMode } = useAppStore()
   
   // 基于当前时间轴过滤数据
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
@@ -100,6 +100,14 @@ export const HudDashboard: React.FC = () => {
         >
           <MoveHorizontal size={16} />
           <span className="text-sm font-medium">时空卷帘门</span>
+        </button>
+
+        <button 
+          onClick={() => setFpsMode(true)}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+        >
+          <Crosshair size={16} />
+          <span className="text-sm font-medium">第一人称街景漫游</span>
         </button>
 
         {/* Environmental Controls */}

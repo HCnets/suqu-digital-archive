@@ -54,6 +54,9 @@ interface AppState {
 
   isSwipeMode: boolean
   setSwipeMode: (isSwipe: boolean) => void
+
+  isFpsMode: boolean
+  setFpsMode: (isFps: boolean) => void
 }
 
 const API_BASE = 'http://localhost:3001/api';
@@ -119,6 +122,9 @@ export const useAppStore = create<AppState>()(
     setActiveEvent: (eventTitle) => set({ activeEvent: eventTitle }),
 
     isSwipeMode: false,
-    setSwipeMode: (isSwipe) => set({ isSwipeMode: isSwipe })
+    setSwipeMode: (isSwipe) => set({ isSwipeMode: isSwipe }),
+
+    isFpsMode: false,
+    setFpsMode: (isFps) => set({ isFpsMode: isFps })
   })
 )
