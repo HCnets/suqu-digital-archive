@@ -1,59 +1,22 @@
-import React, { useMemo } from 'react'
-import Map, { Marker, NavigationControl } from 'react-map-gl'
+import React, { useEffect, useRef, useMemo } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAppStore, ArchiveData } from '@/store'
+import { useAppStore, type ArchiveData } from '@/store'
 import { cn } from '@/lib/utils'
+import { createRoot } from 'react-dom/client'
 
-// 免费的科技风底图 (Carto Dark Matter)
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
 
-// 苏区镇大致中心坐标
 const INITIAL_VIEW_STATE = {
   longitude: 115.3415,
   latitude: 23.3610,
   zoom: 15,
-  pitch: 60, // 倾斜角度，产生 3D 纵深感
-  bearing: -20, // 旋转角度
+  pitch: 60,
+  bearing: -20,
 }
 
 interface GisMapProps {
   className?: string
-}
-
-export const GisMap: React.FC<GisMapProps> = ({ className }) => {
-  const { getAllArchives, setSelectedPoiId, selectedPoiId } = useAppStore()
-  const archives = getAllArchives()
-
-  return (
-    <div className={cn('w-full h-full relative', className)}>
-      <Map
-        mapLib={maplibregl}
-        initialViewState={INITIAL_VIEW_STATE}
-        mapStyle={MAP_STYLE}
-        interactiveLayerIds={['poi-labels']}
-        onClick={() => setSelectedPoiId(null)} // 点击空白处取消选中
-      >
-        <NavigationControl position="bottom-right" showCompass showZoom />
-
-        {/* 渲染所有档案点位 */}
-        {archives.map((poi) => (
-          <Marker
-            key={poi.id}
-            longitude={poi.longitude}
-            latitude={poi.latitude}
-            anchor="bottom"
-            onClick={(e) => {
-              e.originalEvent.stopPropagation()
-              setSelectedPoiId(poi.id)
-            }}
-          >
-            <PoiMarker poi={poi} isSelected={selectedPoiId === poi.id} />
-          </Marker>
-        ))}
-      </Map>
-    </div>
-  )
 }
 
 // 单个发光点位组件 (HTML/CSS 模拟的光柱和热点)
@@ -68,7 +31,7 @@ const PoiMarker: React.FC<{ poi: ArchiveData; isSelected: boolean }> = ({ poi, i
   }, [poi.type])
 
   return (
-    <div className="relative group cursor-pointer flex flex-col items-center">
+    <div className="relative group cursor-pointer flex flex-col items-center pointer-events-auto">
       {/* 悬停/选中时的光柱效果 */}
       <div 
         className={cn(
@@ -96,5 +59,91 @@ const PoiMarker: React.FC<{ poi: ArchiveData; isSelected: boolean }> = ({ poi, i
         {poi.title}
       </div>
     </div>
+  )
+}
+
+export const GisMap: React.FC<GisMapProps> = ({ className }) => {
+  const mapContainer = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  const markersRef = useRef<Record<string, maplibregl.Marker>>({})
+  
+  const { getAllArchives, setSelectedPoiId, selectedPoiId } = useAppStore()
+  const archives = getAllArchives()
+
+  // 初始化地图
+  useEffect(() => {
+    if (!mapContainer.current || mapRef.current) return
+
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: MAP_STYLE,
+      center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
+      zoom: INITIAL_VIEW_STATE.zoom,
+      pitch: INITIAL_VIEW_STATE.pitch,
+      bearing: INITIAL_VIEW_STATE.bearing,
+      attributionControl: false
+    })
+
+    map.addControl(new maplibregl.NavigationControl({
+      visualizePitch: true
+    }), 'bottom-right')
+
+    map.on('click', () => {
+      setSelectedPoiId(null)
+    })
+
+    mapRef.current = map
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+    }
+  }, [])
+
+  // 渲染/更新 Markers
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+
+    archives.forEach(poi => {
+      let marker = markersRef.current[poi.id]
+      
+      const renderContent = (
+        <div onClick={(e) => {
+          e.stopPropagation()
+          setSelectedPoiId(poi.id)
+          map.flyTo({
+            center: [poi.longitude, poi.latitude],
+            zoom: 16,
+            pitch: 65,
+            duration: 1500
+          })
+        }}>
+          <PoiMarker poi={poi} isSelected={selectedPoiId === poi.id} />
+        </div>
+      )
+
+      if (!marker) {
+        const el = document.createElement('div')
+        const root = createRoot(el)
+        ;(el as any)._reactRoot = root
+        root.render(renderContent)
+        
+        marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat([poi.longitude, poi.latitude])
+          .addTo(map)
+        markersRef.current[poi.id] = marker
+      } else {
+        const currentEl = marker.getElement()
+        const currentRoot = (currentEl as any)._reactRoot
+        if (currentRoot) {
+          currentRoot.render(renderContent)
+        }
+      }
+    })
+  }, [archives, selectedPoiId])
+
+  return (
+    <div ref={mapContainer} className={cn('w-full h-full relative', className)} />
   )
 }
