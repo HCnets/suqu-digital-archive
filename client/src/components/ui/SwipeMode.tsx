@@ -56,11 +56,11 @@ export const SwipeMode: React.FC = () => {
         {/* 右半部分：2026年现代 (默认) */}
         <div className="absolute inset-0">
           <iframe 
-            src="http://localhost:5174/" 
+            src="/" 
             className="w-full h-full border-0"
             title="2026-Modern"
           />
-          <div className="absolute top-8 right-8 glass-panel p-4 rounded-2xl border border-white/10 bg-blue-900/50 backdrop-blur-xl">
+          <div className="absolute top-8 right-8 glass-panel p-4 rounded-2xl border border-white/10 bg-blue-900/50 backdrop-blur-xl pointer-events-none">
             <div className="text-blue-200 font-mono text-xs uppercase tracking-[0.2em]">
               公元 2026
             </div>
@@ -75,9 +75,9 @@ export const SwipeMode: React.FC = () => {
           className="absolute inset-0 overflow-hidden"
           style={{ width: `${dividerX}%` }}
         >
-          <div className="w-full h-full relative">
+          <div className="w-[100vw] h-full relative">
             <iframe 
-              src="http://localhost:5174/" 
+              src="/" 
               className="w-full h-full border-0"
               title="1927-Historical"
             />
@@ -87,7 +87,7 @@ export const SwipeMode: React.FC = () => {
               mixBlendMode: 'multiply',
               filter: 'grayscale(60%) sepia(30%) contrast(1.2) saturate(0.3) brightness(0.9)'
             }} />
-            <div className="absolute top-8 left-8 glass-panel p-4 rounded-2xl border border-white/10 bg-red-900/50 backdrop-blur-xl">
+            <div className="absolute top-8 left-8 glass-panel p-4 rounded-2xl border border-white/10 bg-red-900/50 backdrop-blur-xl pointer-events-none">
               <div className="text-red-200 font-mono text-xs uppercase tracking-[0.2em]">
                 民国 16年
               </div>

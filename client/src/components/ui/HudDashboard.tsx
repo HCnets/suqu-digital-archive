@@ -14,7 +14,7 @@ export const HudDashboard: React.FC = () => {
   const culCount = currentArchives.filter(a => a.type === 'culture').length
 
   return (
-    <div className="absolute top-24 left-6 w-80 flex flex-col gap-6 pointer-events-auto animate-in slide-in-from-left duration-700 delay-500 fill-mode-forwards opacity-0 z-10">
+    <div className="absolute top-24 left-6 w-80 flex flex-col gap-6 pointer-events-auto z-40">
       
       {/* 核心指标看板 */}
       <div className="glass-panel p-5 rounded-3xl border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.15)] relative overflow-hidden">
