@@ -107,15 +107,17 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     return getAllArchives().filter(poi => poi.year <= currentYear)
   }, [getAllArchives, currentYear])
 
-  // 自动巡航逻辑
+  // 自动巡航逻辑 (Orbit Fly)
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
 
+    let orbitAnimationFrame: number
+    
     if (isAutoTouring) {
       let currentIndex = 0
       
-      const goToNext = () => {
+      const goToNextAndOrbit = () => {
         if (currentIndex >= archives.length) {
           setAutoTouring(false)
           return
@@ -124,29 +126,44 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
         const poi = archives[currentIndex]
         setSelectedPoiId(poi.id)
         
+        // 先飞过去
         map.flyTo({
           center: [poi.longitude, poi.latitude],
           zoom: 16.5,
           pitch: 70,
-          bearing: Math.random() * 90 - 45, // 随机旋转增加动感
+          bearing: 0,
           duration: 3000,
           essential: true
         })
         
+        // 飞行到位后开始盘旋
+        setTimeout(() => {
+          let currentBearing = map.getBearing()
+          const orbit = () => {
+            currentBearing += 0.1 // 盘旋速度
+            map.setBearing(currentBearing)
+            orbitAnimationFrame = requestAnimationFrame(orbit)
+          }
+          orbit()
+        }, 3000)
+        
         currentIndex++
       }
 
-      goToNext()
-      // 每 8 秒跳到下一个点
-      tourIntervalRef.current = window.setInterval(goToNext, 8000)
+      goToNextAndOrbit()
+      // 每 12 秒跳到下一个点 (3秒飞行 + 9秒盘旋)
+      tourIntervalRef.current = window.setInterval(() => {
+        cancelAnimationFrame(orbitAnimationFrame)
+        goToNextAndOrbit()
+      }, 12000)
     } else {
-      if (tourIntervalRef.current) {
-        clearInterval(tourIntervalRef.current)
-      }
+      if (tourIntervalRef.current) clearInterval(tourIntervalRef.current)
+      cancelAnimationFrame(orbitAnimationFrame)
     }
 
     return () => {
       if (tourIntervalRef.current) clearInterval(tourIntervalRef.current)
+      cancelAnimationFrame(orbitAnimationFrame)
     }
   }, [isAutoTouring, archives])
 
@@ -254,61 +271,86 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     const map = mapRef.current
 
     // 添加苏区镇边界图层 (模拟数据)
-    if (!map.getSource('suqu-boundary')) {
-      // 模拟苏区镇的边界点，围绕中心点 115.3400, 23.3600
-      const boundaryData = {
-        'type': 'FeatureCollection',
-        'features': [
-          {
-            'type': 'Feature',
-            'geometry': {
-              'type': 'Polygon',
-              'coordinates': [
-                [
-                  [115.3200, 23.3400],
-                  [115.3600, 23.3350],
-                  [115.3750, 23.3550],
-                  [115.3650, 23.3800],
-                  [115.3350, 23.3850],
-                  [115.3150, 23.3650],
-                  [115.3200, 23.3400]
+      if (!map.getSource('suqu-boundary')) {
+        // 模拟苏区镇的边界点，围绕中心点 115.3400, 23.3600
+        const boundaryData = {
+          'type': 'FeatureCollection',
+          'features': [
+            {
+              'type': 'Feature',
+              'geometry': {
+                'type': 'Polygon',
+                'coordinates': [
+                  [
+                    [115.3200, 23.3400],
+                    [115.3600, 23.3350],
+                    [115.3750, 23.3550],
+                    [115.3650, 23.3800],
+                    [115.3350, 23.3850],
+                    [115.3150, 23.3650],
+                    [115.3200, 23.3400]
+                  ]
                 ]
-              ]
+              }
             }
+          ]
+        }
+
+        map.addSource('suqu-boundary', {
+          'type': 'geojson',
+          'data': boundaryData as any
+        });
+
+        // 边界填充半透明发光
+        map.addLayer({
+          'id': 'suqu-boundary-fill',
+          'type': 'fill',
+          'source': 'suqu-boundary',
+          'paint': {
+            'fill-color': '#3b82f6',
+            'fill-opacity': 0.1
           }
-        ]
+        });
+
+        // 边界线发光
+        map.addLayer({
+          'id': 'suqu-boundary-line',
+          'type': 'line',
+          'source': 'suqu-boundary',
+          'paint': {
+            'line-color': '#60a5fa',
+            'line-width': 2,
+            'line-opacity': 0.8
+          }
+        });
       }
 
-      map.addSource('suqu-boundary', {
-        'type': 'geojson',
-        'data': boundaryData as any
-      });
+      // 添加程序化 3D 建筑白模图层 (用于突出档案点)
+      if (!map.getSource('poi-3d-buildings')) {
+        map.addSource('poi-3d-buildings', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        });
 
-      // 边界填充半透明发光
-      map.addLayer({
-        'id': 'suqu-boundary-fill',
-        'type': 'fill',
-        'source': 'suqu-boundary',
-        'paint': {
-          'fill-color': '#3b82f6',
-          'fill-opacity': 0.1
-        }
-      });
+        map.addLayer({
+          'id': 'poi-3d-buildings-layer',
+          'type': 'fill-extrusion',
+          'source': 'poi-3d-buildings',
+          'paint': {
+            // 使用 feature properties 里的颜色
+            'fill-extrusion-color': ['get', 'color'],
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': 0,
+            'fill-extrusion-opacity': 0.85
+          }
+        });
+      }
+    })
 
-      // 边界线发光
-      map.addLayer({
-        'id': 'suqu-boundary-line',
-        'type': 'line',
-        'source': 'suqu-boundary',
-        'paint': {
-          'line-color': '#60a5fa',
-          'line-width': 2,
-          'line-opacity': 0.8
-        }
-      });
-    }
-
-    // 首先清理不再可见的 markers (时间回退的情况)
+  // 渲染/更新 Markers 和 3D 白模
     const currentArchiveIds = new Set(archives.map(a => a.id))
     Object.keys(markersRef.current).forEach(id => {
       if (!currentArchiveIds.has(id)) {
@@ -317,6 +359,40 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
         if (selectedPoiId === id) setSelectedPoiId(null)
       }
     })
+
+    // 更新 3D 白模数据源
+    const buildingFeatures = archives.map(poi => {
+      // 围绕坐标点生成一个小正方形 (模拟建筑占地)
+      const offset = 0.0003;
+      const color = poi.type === 'revolution' ? '#ef4444' : 
+                    poi.type === 'government' ? '#3b82f6' : '#f59e0b';
+      
+      // 生成更高大且发光的建筑体
+      return {
+        type: 'Feature',
+        properties: {
+          color: color,
+          height: Math.random() * 50 + 100 // 100-150米高
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [poi.longitude - offset, poi.latitude - offset],
+            [poi.longitude + offset, poi.latitude - offset],
+            [poi.longitude + offset, poi.latitude + offset],
+            [poi.longitude - offset, poi.latitude + offset],
+            [poi.longitude - offset, poi.latitude - offset]
+          ]]
+        }
+      }
+    });
+
+    if (map.getSource('poi-3d-buildings')) {
+      (map.getSource('poi-3d-buildings') as maplibregl.GeoJSONSource).setData({
+        type: 'FeatureCollection',
+        features: buildingFeatures as any
+      });
+    }
 
     archives.forEach(poi => {
       let marker = markersRef.current[poi.id]

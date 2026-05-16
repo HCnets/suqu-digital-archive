@@ -3,6 +3,7 @@ import { UnifiedHeader } from '@/components/ui/UnifiedHeader'
 import { GisMap } from '@/components/map/GisMap'
 import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
+import { HudDashboard } from '@/components/ui/HudDashboard'
 import { useAppStore } from '@/store'
 import { Play, Layers, Globe } from 'lucide-react'
 
@@ -68,11 +69,20 @@ function App() {
           </div>
         </div>
 
+        {/* 左侧大屏 HUD */}
+        {!showIntro && <HudDashboard />}
+
         {/* Dynamic Glass Panel for POI Info */}
-        <div className="flex-1 flex items-end justify-start p-6 pb-32">
+        <div className="flex-1 flex items-end justify-end p-6 pb-32 z-20">
           {activeArchive && (
-            <div className="glass-panel p-6 rounded-3xl w-full max-w-md pointer-events-auto transform transition-all duration-500 translate-y-0 opacity-100 animate-in fade-in slide-in-from-bottom-8 shadow-2xl">
-              <div className="flex justify-between items-start mb-4">
+            <div className="glass-panel p-6 rounded-3xl w-full max-w-md pointer-events-auto transform transition-all duration-500 translate-y-0 opacity-100 animate-in fade-in slide-in-from-bottom-8 shadow-2xl border border-white/10 relative overflow-hidden">
+              {/* 面板装饰光晕 */}
+              <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-20 ${
+                activeArchive.type === 'revolution' ? 'bg-red-500' :
+                activeArchive.type === 'government' ? 'bg-blue-500' : 'bg-amber-500'
+              }`} />
+
+              <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-3">
                   <span className={`w-3 h-3 rounded-full ${
                     activeArchive.type === 'revolution' ? 'bg-red-500' :
