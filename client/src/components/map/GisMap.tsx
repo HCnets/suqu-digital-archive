@@ -66,9 +66,53 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
+  const tourIntervalRef = useRef<number | null>(null)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring } = useAppStore()
   const archives = getAllArchives()
+
+  // 自动巡航逻辑
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+
+    if (isAutoTouring) {
+      let currentIndex = 0
+      
+      const goToNext = () => {
+        if (currentIndex >= archives.length) {
+          setAutoTouring(false)
+          return
+        }
+        
+        const poi = archives[currentIndex]
+        setSelectedPoiId(poi.id)
+        
+        map.flyTo({
+          center: [poi.longitude, poi.latitude],
+          zoom: 16.5,
+          pitch: 70,
+          bearing: Math.random() * 90 - 45, // 随机旋转增加动感
+          duration: 3000,
+          essential: true
+        })
+        
+        currentIndex++
+      }
+
+      goToNext()
+      // 每 8 秒跳到下一个点
+      tourIntervalRef.current = window.setInterval(goToNext, 8000)
+    } else {
+      if (tourIntervalRef.current) {
+        clearInterval(tourIntervalRef.current)
+      }
+    }
+
+    return () => {
+      if (tourIntervalRef.current) clearInterval(tourIntervalRef.current)
+    }
+  }, [isAutoTouring, archives])
 
   // 初始化地图
   useEffect(() => {
@@ -87,6 +131,47 @@ export const GisMap: React.FC<GisMapProps> = ({ className }) => {
     map.addControl(new maplibregl.NavigationControl({
       visualizePitch: true
     }), 'bottom-right')
+
+    map.on('load', () => {
+      // 1. 插入 3D 地形 (DEM)
+      map.addSource('terrain-source', {
+        type: 'raster-dem',
+        url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json', // MapLibre 官方测试 DEM
+        tileSize: 256
+      });
+      map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 }); // exaggeration 是地形夸张系数
+
+      // 2. 插入 3D 建筑图层
+      map.addSource('openmaptiles', {
+        type: 'vector',
+        url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+      });
+      
+      const layers = map.getStyle().layers;
+      let labelLayerId;
+      for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+          labelLayerId = layers[i].id;
+          break;
+        }
+      }
+
+      // 如果有建筑多边形数据，则拉伸为 3D
+      map.addLayer({
+        'id': '3d-buildings',
+        'source': 'carto',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 14,
+        'paint': {
+          'fill-extrusion-color': '#1e293b',
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, labelLayerId);
+    })
 
     map.on('click', () => {
       setSelectedPoiId(null)
