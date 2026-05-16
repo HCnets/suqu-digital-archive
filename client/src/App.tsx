@@ -152,14 +152,23 @@ function App() {
 
       {/* 开场太空坠入幕布 */}
       {showIntro && (
-        <div className="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-out fade-out duration-1000 delay-[2500ms] fill-mode-forwards pointer-events-none">
-          <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-8" />
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-amber-300 tracking-widest animate-pulse">
-            苏区镇数字孪生沙盘
-          </h1>
-          <p className="text-slate-500 mt-4 font-mono text-sm uppercase tracking-[0.3em]">
-            Initializing Geospatial Engine...
-          </p>
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950 animate-out fade-out duration-1000 delay-[2500ms] fill-mode-forwards pointer-events-none">
+          <div className="text-center space-y-6 animate-in slide-in-from-bottom-8 duration-1000">
+            <div className="w-16 h-16 mx-auto mb-8 text-red-600 animate-pulse">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-400 to-red-700 tracking-[0.2em]" style={{ fontFamily: 'STZhongsong, "华文中宋", serif' }}>
+              广东省苏区镇数字化档案
+            </h1>
+            <h2 className="text-xl md:text-2xl text-amber-400 tracking-[0.5em] font-light mt-4">
+              传承红色基因 · 弘扬苏区精神
+            </h2>
+            <p className="text-red-900/50 mt-12 font-mono text-sm uppercase tracking-[0.3em] animate-pulse">
+              正在载入全域革命遗址数据...
+            </p>
+          </div>
         </div>
       )}
     </div>

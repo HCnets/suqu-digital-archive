@@ -169,7 +169,7 @@ export const ArchiveDetailModal: React.FC = () => {
                 )}
 
                 {/* Relic Showcase Action */}
-                {archive.type === 'revolution' && (
+                {archive.type === 'revolution' && archive.id !== 'suqu-monument' && (
                   <button 
                     onClick={() => {
                       setDetailModalOpen(false)
@@ -179,6 +179,17 @@ export const ArchiveDetailModal: React.FC = () => {
                   >
                     <Box size={16} />
                     文物全息展台
+                  </button>
+                )}
+
+                {/* Monument Special Action */}
+                {archive.id === 'suqu-monument' && (
+                  <button 
+                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-red-600/80 hover:bg-red-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] ml-auto"
+                    onClick={() => alert('敬献花篮成功，重温入党誓词：我志愿加入中国共产党...')}
+                  >
+                    <span className="text-xl">🌺</span>
+                    敬献花篮 · 重温誓词
                   </button>
                 )}
               </div>

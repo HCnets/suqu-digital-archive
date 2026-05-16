@@ -16,14 +16,22 @@ export const HudDashboard: React.FC = () => {
   return (
     <div className="absolute top-24 left-6 w-80 flex flex-col gap-6 pointer-events-auto z-40">
       
-      {/* 核心指标看板 */}
-      <div className="glass-panel p-5 rounded-3xl border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.15)] relative overflow-hidden">
-        <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl" />
+      {/* 核心指标看板: 中国红+琉璃金 风格 */}
+      <div className="glass-panel p-5 rounded-3xl border border-red-900/30 bg-black/60 shadow-[0_0_30px_rgba(220,38,38,0.15)] relative overflow-hidden backdrop-blur-xl">
+        <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-500/10 rounded-full blur-xl" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-amber-500 to-transparent animate-pulse" />
         
-        <h3 className="text-white/80 font-bold flex items-center gap-2 mb-4 text-sm">
-          <Database size={16} className="text-blue-400" />
-          苏区镇档案总览
-        </h3>
+        <div className="mb-4">
+          <h3 className="font-bold flex items-center gap-2 text-sm">
+            <Flag size={16} className="text-red-500" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-amber-300 tracking-wider">
+              数字苏区党建沙盘
+            </span>
+          </h3>
+          <p className="text-[10px] text-red-200/50 font-mono tracking-widest uppercase mt-1 ml-6">
+            Revolutionary Heritage System
+          </p>
+        </div>
         
         <div className="flex items-end gap-2 mb-6">
           <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-blue-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
@@ -65,24 +73,21 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 实时雷达监控面板 */}
+      {/* 雷达与动态感知 */}
       <div className="glass-panel p-5 rounded-3xl border border-white/5 relative">
-        <h3 className="text-white/60 font-bold text-xs uppercase tracking-widest mb-4 flex justify-between items-center">
-          <span>Active Radar</span>
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            Online
-          </span>
+        <h3 className="text-white/80 font-bold flex items-center gap-2 mb-4 text-sm">
+          <Activity size={16} className="text-red-400" />
+          红色阵地全域感知
         </h3>
         
-        <div className="h-32 w-full border border-white/10 rounded-xl bg-black/40 relative overflow-hidden flex items-center justify-center">
-          {/* 雷达扫描线模拟 */}
-          <div className="absolute inset-0 bg-[conic-gradient(from_90deg_at_50%_50%,rgba(0,0,0,0)_0%,rgba(59,130,246,0.2)_100%)] animate-spin" style={{ animationDuration: '3s' }} />
-          <div className="absolute w-full h-[1px] bg-blue-500/30 top-1/2 -translate-y-1/2" />
-          <div className="absolute h-full w-[1px] bg-blue-500/30 left-1/2 -translate-x-1/2" />
-          
-          <div className="absolute top-2 right-2 text-[10px] text-blue-400/50 font-mono">SYS.OK</div>
-          <div className="absolute bottom-2 left-2 text-[10px] text-blue-400/50 font-mono">LNG: 115.34 LAT: 23.36</div>
+        <div className="relative w-full aspect-square rounded-full border border-red-500/20 flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(220,38,38,0.1)_0%,transparent_70%)]" />
+          <div className="w-full h-full border border-red-500/10 rounded-full animate-[spin_4s_linear_infinite] relative">
+            <div className="w-1/2 h-1/2 bg-gradient-to-tr from-red-500/40 to-transparent origin-bottom-right" />
+          </div>
+          <div className="absolute w-2 h-2 bg-amber-400 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.8)]" />
+          <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-red-400 rounded-full animate-ping" />
+          <div className="absolute bottom-1/3 right-1/4 w-1 h-1 bg-red-400 rounded-full animate-ping delay-700" />
         </div>
       </div>
 
