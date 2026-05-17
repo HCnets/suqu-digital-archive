@@ -50,12 +50,12 @@ function App() {
         <div className="absolute top-24 right-6 pointer-events-auto">
           <div className="museum-card p-1.5 rounded-2xl flex flex-col gap-2">
             <button
-              onClick={() => setMapStyle('dark')}
+              onClick={() => setMapStyle('museum')}
               className={`p-3 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center transition-all duration-200 ${
-                mapStyle === 'dark' ? 'bg-[#C41E3A] text-white shadow-sm' : 'hover:bg-[#FDE8EC] text-[#5C5C5C]'
+                mapStyle === 'museum' ? 'bg-[#C41E3A] text-white shadow-sm' : 'hover:bg-[#FDE8EC] text-[#5C5C5C]'
               }`}
-              title="纪念馆导览底图"
-              aria-label="切换到纪念馆导览底图"
+              title="博物馆导览底图"
+              aria-label="切换到博物馆明亮底图"
             >
               <Layers size={22} />
             </button>

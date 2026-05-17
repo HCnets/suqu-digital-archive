@@ -31,8 +31,8 @@ interface AppState {
   setCurrentYear: (year: number) => void
   isAutoTouring: boolean
   setAutoTouring: (isTouring: boolean) => void
-  mapStyle: 'dark' | 'satellite'
-  setMapStyle: (style: 'dark' | 'satellite') => void
+  mapStyle: 'museum' | 'satellite'
+  setMapStyle: (style: 'museum' | 'satellite') => void
   
   isAdminOpen: boolean
   setAdminOpen: (isOpen: boolean) => void
@@ -106,7 +106,7 @@ export const useAppStore = create<AppState>()(
     setCurrentYear: (year) => set({ currentYear: year }),
     isAutoTouring: false,
     setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring }),
-    mapStyle: 'dark',
+    mapStyle: 'museum',
     setMapStyle: (style) => set({ mapStyle: style }),
     
     isAdminOpen: false,

@@ -6,8 +6,7 @@ import { cn } from '@/lib/utils'
 import { createRoot } from 'react-dom/client'
 
 const MAP_STYLES = {
-  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  // 使用 ArcGIS World Imagery 作为卫星底图
+  museum: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   satellite: {
     version: 8,
     sources: {
@@ -54,40 +53,36 @@ interface GisMapProps {
   onMapLoad?: (map: maplibregl.Map) => void
 }
 
-// 单个发光点位组件 (HTML/CSS 模拟的光柱和热点)
 const PoiMarker: React.FC<{ poi: ArchiveData; isSelected: boolean }> = ({ poi, isSelected }) => {
   const baseColor = useMemo(() => {
     switch (poi.type) {
-      case 'government': return 'bg-blue-500 shadow-blue-500/50'
-      case 'revolution': return 'bg-red-500 shadow-red-500/50'
-      case 'culture': return 'bg-amber-500 shadow-amber-500/50'
-      default: return 'bg-white shadow-white/50'
+      case 'government': return 'bg-[#5C5C5C] ring-[#5C5C5C]/40'
+      case 'revolution': return 'bg-[#C41E3A] ring-[#C41E3A]/40'
+      case 'culture': return 'bg-[#8B6914] ring-[#8B6914]/40'
+      default: return 'bg-[#5C5C5C] ring-[#5C5C5C]/40'
     }
   }, [poi.type])
 
   return (
     <div className="relative group cursor-pointer flex flex-col items-center pointer-events-auto">
-      {/* 悬停/选中时的光柱效果 */}
       <div 
         className={cn(
-          "absolute bottom-4 w-[2px] rounded-full bg-gradient-to-t from-white to-transparent transition-all duration-500",
-          isSelected ? "h-32 opacity-80" : "h-0 opacity-0 group-hover:h-20 group-hover:opacity-50"
+          "absolute bottom-4 w-[2px] rounded-full bg-gradient-to-t from-[#C41E3A] to-transparent transition-all duration-500",
+          isSelected ? "h-32 opacity-60" : "h-0 opacity-0 group-hover:h-20 group-hover:opacity-30"
         )}
       />
       
-      {/* 底部发光锚点 */}
       <div 
         className={cn(
-          "w-4 h-4 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)] border-2 border-white/80 transition-transform duration-300",
+          "w-5 h-5 rounded-full shadow-md border-2 border-white transition-transform duration-300 ring-2",
           baseColor,
           isSelected ? "scale-150" : "group-hover:scale-125"
         )}
       />
       
-      {/* 文字标签 */}
       <div 
         className={cn(
-          "absolute top-full mt-2 whitespace-nowrap text-xs font-bold px-2 py-1 rounded bg-black/60 backdrop-blur-sm border border-white/10 text-white transition-opacity",
+          "absolute top-full mt-2 whitespace-nowrap text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8DFD5] text-[#1A1A1A] shadow-sm transition-opacity",
           isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
       >
@@ -242,10 +237,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
           'type': 'fill-extrusion',
           'minzoom': 14,
           'paint': {
-            'fill-extrusion-color': '#1e293b',
+            'fill-extrusion-color': '#D4C5B2',
             'fill-extrusion-height': ['get', 'height'],
             'fill-extrusion-base': ['get', 'min_height'],
-            'fill-extrusion-opacity': 0.6
+            'fill-extrusion-opacity': 0.7
           }
         }, labelLayerId);
       }
@@ -402,13 +397,12 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
             'line-cap': 'round'
           },
           'paint': {
-            'line-color': '#ef4444',
+            'line-color': '#C41E3A',
             'line-width': 2,
-            'line-opacity': 0.3,
+            'line-opacity': 0.25,
           }
         });
         
-        // 辐射线上的流光 (通过虚线流动模拟)
         map.addLayer({
           'id': 'spark-topology-flow',
           'type': 'line',
@@ -418,10 +412,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
             'line-cap': 'round'
           },
           'paint': {
-            'line-color': '#fca5a5',
-            'line-width': 4,
-            'line-opacity': 0.8,
-            'line-dasharray': [0, 4, 3] // [起始, 虚线段, 间隔]
+            'line-color': '#C41E3A',
+            'line-width': 3,
+            'line-opacity': 0.5,
+            'line-dasharray': [0, 4, 3]
           }
         });
       }
@@ -456,10 +450,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
             'line-cap': 'round'
           },
           'paint': {
-            'line-color': '#ef4444',
+            'line-color': '#C41E3A',
             'line-width': 4,
-            'line-opacity': 0, // 默认隐藏，由 useEffect 控制显隐和动画
-            'line-dasharray': [0, 2, 2] // 用于流光动画 [0, dash, gap]
+            'line-opacity': 0,
+            'line-dasharray': [0, 2, 2]
           }
         });
       }
@@ -573,19 +567,17 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     const updateEnvironment = () => {
       if (!map.isStyleLoaded()) return
       
-      // 根据大事件类型改变全局光照与氛围
+      if (mapStyle !== 'satellite') return
+      
       if (activeEvent === '紫金苏维埃政权成立' || activeEvent === '血战炮子村') {
-        // 血与火的岁月：暗红环境
         map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.6)
         map.setPaintProperty('satellite-layer', 'raster-saturation', -0.5)
-        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 320) // 偏红
+        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 320)
       } else if (activeEvent === '苏维埃兵工厂建立') {
-        // 兵工厂：暗金/昏黄
         map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.7)
         map.setPaintProperty('satellite-layer', 'raster-saturation', 0.2)
-        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 40) // 偏黄
+        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 40)
       } else {
-        // 现代或默认：恢复正常
         map.setPaintProperty('satellite-layer', 'raster-brightness-max', 1.0)
         map.setPaintProperty('satellite-layer', 'raster-saturation', 0)
         map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 0)
@@ -617,8 +609,8 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     const buildingFeatures = archives.map(poi => {
       // 围绕坐标点生成一个小正方形 (模拟建筑占地)
       const offset = 0.0003;
-      const color = poi.type === 'revolution' ? '#ef4444' : 
-                    poi.type === 'government' ? '#3b82f6' : '#f59e0b';
+      const color = poi.type === 'revolution' ? '#C41E3A' : 
+                    poi.type === 'government' ? '#5C5C5C' : '#8B6914';
       
       // 生成更高大且发光的建筑体
       return {
@@ -652,12 +644,12 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       
       const renderContent = (
         <div 
-          className={`w-4 h-4 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-all duration-300 ${
-            poi.id === selectedPoiId ? 'scale-150 ring-4 ring-white/50' : 'hover:scale-125'
+          className={`w-5 h-5 rounded-full shadow-md cursor-pointer transition-all duration-300 border-2 border-white ${
+            poi.id === selectedPoiId ? 'scale-150 ring-2 ring-[#C41E3A]/40' : 'hover:scale-125'
           }`}
           style={{
-            backgroundColor: poi.type === 'revolution' ? '#ef4444' : 
-                           poi.type === 'government' ? '#3b82f6' : '#f59e0b'
+            backgroundColor: poi.type === 'revolution' ? '#C41E3A' : 
+                           poi.type === 'government' ? '#5C5C5C' : '#8B6914'
           }}
           onClick={(e) => {
             e.stopPropagation()
