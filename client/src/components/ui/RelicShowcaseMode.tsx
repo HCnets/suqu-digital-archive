@@ -151,6 +151,7 @@ export const RelicShowcaseMode: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(animationId)
+      window.speechSynthesis?.cancel()
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement)
       }
@@ -167,7 +168,7 @@ export const RelicShowcaseMode: React.FC = () => {
       
       <button 
         onClick={() => setRelicMode(false)}
-        className="absolute top-8 right-8 z-10 p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all"
+        className="absolute top-8 right-8 z-10 p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all min-w-[48px] min-h-[48px] flex items-center justify-center touch-manipulation"
         aria-label="退出文物全息展台"
       >
         <X size={22} />

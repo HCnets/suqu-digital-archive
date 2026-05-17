@@ -58,12 +58,27 @@ export const SwipeMode: React.FC = () => {
       isDragging.current = false
     }
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      const x = Math.max(0, Math.min(e.touches[0].clientX - rect.left, rect.width))
+      setDividerX((x / rect.width) * 100)
+    }
+
+    const handleTouchEnd = () => {
+      isDragging.current = false
+    }
+
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd)
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
     }
   }, [isSwipeMode])
 
@@ -130,6 +145,7 @@ export const SwipeMode: React.FC = () => {
           <div 
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white border-2 border-[#C41E3A] shadow-xl flex items-center justify-center cursor-ew-resize hover:scale-110 transition-transform pointer-events-auto"
             onMouseDown={() => isDragging.current = true}
+            onTouchStart={() => isDragging.current = true}
           >
             <MoveHorizontal size={20} className="text-[#C41E3A]" />
           </div>

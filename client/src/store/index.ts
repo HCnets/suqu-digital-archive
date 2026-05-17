@@ -340,8 +340,7 @@ export const useAppStore = create<AppState>()(
         const data: ArchiveData[] = await response.json();
         const archivesMap = data.reduce((acc, curr) => ({...acc, [curr.id]: curr}), {});
         set({ archives: archivesMap });
-      } catch (error) {
-        console.log('后端未连接，使用本地静态档案数据');
+      } catch (_error) {
       }
     },
     addArchive: async (archive) => {

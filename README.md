@@ -8,6 +8,19 @@
 ## 🌟 项目纪年表与版本演进 (Time Tree)
 *注：以下纪年表严格遵循时间树规范，只增不减，完整体现版本工程推进及成果。*
 
+### [v2.7.3] - 2026-05-18
+- **版本状态**: 第二轮品质审查全维度修复 - 触控完善、loading 反馈、容错健壮
+- **工程推进**:
+  - **P0 触控完善**: SwipeMode（百年前后对比）新增 `onTouchStart`/`onTouchMove`/`onTouchEnd` 拖动事件绑定，手机端可拖动分隔线完成时空对比交互。
+  - **P0 死代码清理**: 删除 `useTTS.ts`（未被任何组件引入）、`MockMap.tsx`（早期 React Three Fiber 占位）、`AdminDrawer.tsx`（后台录入面板残留）三个死代码文件，保持代码库干净。
+  - **P1 语音清理**: RelicShowcaseMode（文物全息展台）和 IndoorBimMode（室内 BIM 模式）退出时增加 `window.speechSynthesis.cancel()` 清理，防止语音讲解残留。退出按钮最小触控尺寸 `min-w-[48px] min-h-[48px]` + `touch-manipulation`。
+  - **P1 地图 Loading**: GisMap 组件新增博物馆风格 loading 遮罩（中国红旋转圆环 + 三圆点弹跳动画），弱网环境下不再白屏无反馈，地图瓦片/样式加载完毕后自动淡出。
+  - **P2 质量控制**: 清除 store/index.ts 生产环境 `console.log` 冗余日志。新增 `ErrorBoundary` 全局错误边界组件（博物馆风格错误回退页 + 重新加载按钮），包裹于 `main.tsx` 根层级。
+  - **404 页面**: 新增 `public/404.html` 博物馆风格 404 页面（中国红 + 琉璃金配色），同步提供 `404-root-domain.html` 用于 hcnets.github.io 根域名仓库部署。
+- **阶段成果**:
+  - 12 项不足全部修复完成。系统已通过 TypeScript 零错误编译 + Vite 生产构建验证。
+  - 移动端触控体验、加载反馈、语音资源清理、全局错误容错均达到生产级品质标准。
+
 ### [v2.7.2] - 2026-05-17
 - **版本状态**: 品质锁仓 - 全维度不足修复与双线部署完善
 - **工程推进**:

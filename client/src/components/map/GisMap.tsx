@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore, type ArchiveData } from '@/store'
@@ -97,6 +97,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
   const tourIntervalRef = useRef<number | null>(null)
+  const [mapLoading, setMapLoading] = useState(true)
   
   const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, activeEvent, isFpsMode } = useAppStore()
   
@@ -186,7 +187,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     }), 'bottom-right')
 
     map.on('load', () => {
-      // 执行太空坠入动画 (Space-to-Ground Fly-in)
+      setMapLoading(false)
       setTimeout(() => {
         map.flyTo({
           center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
@@ -683,6 +684,27 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   }, [archives, selectedPoiId])
 
   return (
-    <div ref={mapContainer} className={cn('w-full h-full relative', className)} />
+    <div className={cn('w-full h-full relative', className)}>
+      <div ref={mapContainer} className="w-full h-full" />
+      {mapLoading && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ backgroundColor: '#FEFAF6' }}>
+          <div className="flex flex-col items-center gap-6">
+            <svg width="64" height="64" viewBox="0 0 64 64" className="animate-spin">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="#E8DFD5" strokeWidth="3" />
+              <circle cx="32" cy="32" r="28" fill="none" stroke="#C41E3A" strokeWidth="3" strokeDasharray="176" strokeDashoffset="132" strokeLinecap="round" />
+            </svg>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[#C41E3A] font-serif text-lg font-bold tracking-wider">广东省苏区镇数字化档案</span>
+              <span className="text-[#8B6914] text-sm tracking-widest">地图加载中</span>
+              <div className="flex gap-1.5 mt-3">
+                <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" />
+                <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
