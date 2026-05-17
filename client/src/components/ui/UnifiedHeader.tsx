@@ -28,15 +28,15 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
         className
       )}
     >
-      <div className="flex flex-col gap-1 max-w-[68ch]">
-        <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-amber-400/85 font-medium">
+      <div className="flex flex-col gap-1 max-w-[72ch]">
+        <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-[#C41E3A] font-medium">
           红色党建思政实践平台
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-md font-serif">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#1A1A1A] font-serif">
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-zinc-300/90 font-medium tracking-wide drop-shadow leading-relaxed">
+          <p className="text-sm text-[#5C5C5C]/90 font-medium tracking-wide leading-relaxed">
             {description}
           </p>
         )}
@@ -46,7 +46,7 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
         {onOpenAdmin && (
           <button
             onClick={onOpenAdmin}
-            className="flex items-center gap-2 px-4 min-h-[44px] rounded-full transition-all duration-300 border bg-zinc-900/70 hover:bg-zinc-800 text-zinc-100 border-zinc-700/60 backdrop-blur-md"
+            className="flex items-center gap-2 px-4 min-h-[44px] rounded-lg transition-all duration-200 border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] text-[#5C5C5C]"
             aria-label="打开档案录入中心"
           >
             <Database size={16} />
@@ -57,10 +57,10 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
           <button
             onClick={onAutoTour}
             className={cn(
-              'flex items-center gap-2 px-4 min-h-[44px] rounded-full transition-all duration-300 border',
+              'flex items-center gap-2 px-4 min-h-[44px] rounded-lg transition-all duration-200 border',
               isTouring 
-                ? 'bg-rose-600/20 text-amber-300 border-rose-500/40'
-                : 'bg-zinc-900/70 hover:bg-zinc-800 text-zinc-100 border-zinc-700/60 backdrop-blur-md'
+                ? 'bg-[#FDE8EC] text-[#C41E3A] border-[#C41E3A]/40'
+                : 'bg-white hover:bg-[#FEFAF6] text-[#5C5C5C] border-[#E8DFD5]'
             )}
             aria-label={isTouring ? '停止自动讲解' : '启动自动讲解'}
           >
@@ -71,10 +71,10 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
         {onBack && (
           <button
             onClick={onBack}
-            className="liquid-glass group relative flex items-center justify-center rounded-full p-[12px] transition-all duration-300 hover:bg-white/20 active:scale-95 min-w-[44px] min-h-[44px]"
+            className="flex items-center justify-center rounded-full p-2 transition-all duration-200 bg-white border border-[#E8DFD5] hover:bg-[#FEFAF6] min-w-[44px] min-h-[44px]"
             aria-label="返回"
           >
-            <ArrowLeft className="w-[20px] h-[20px] text-white/90 group-hover:text-white transition-colors" />
+            <ArrowLeft className="w-[20px] h-[20px] text-[#5C5C5C]" />
           </button>
         )}
       </div>
