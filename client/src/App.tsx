@@ -91,14 +91,14 @@ function App() {
               {/* 面板装饰光晕 */}
               <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-20 ${
                 activeArchive.type === 'revolution' ? 'bg-rose-500' :
-                activeArchive.type === 'government' ? 'bg-blue-500' : 'bg-amber-500'
+                activeArchive.type === 'government' ? 'bg-zinc-400' : 'bg-amber-500'
               }`} />
 
               <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-3">
                   <span className={`w-3 h-3 rounded-full ${
                     activeArchive.type === 'revolution' ? 'bg-rose-500' :
-                    activeArchive.type === 'government' ? 'bg-blue-500' : 'bg-amber-500'
+                    activeArchive.type === 'government' ? 'bg-zinc-400' : 'bg-amber-500'
                   } shadow-[0_0_10px_currentColor]`} />
                   <h2 className="text-xl font-bold text-white tracking-wide font-serif">{activeArchive.title}</h2>
                 </div>
@@ -177,7 +177,7 @@ function App() {
             <h2 className="text-xl md:text-2xl text-amber-400 tracking-[0.5em] font-light mt-4">
               传承红色基因 · 弘扬苏区精神
             </h2>
-            <p className="text-rose-200/55 mt-12 text-sm tracking-[0.22em] animate-pulse">
+            <p className="text-rose-200/55 mt-12 text-sm tracking-[0.22em]">
               正在整理苏区史料与实践路线...
             </p>
           </div>

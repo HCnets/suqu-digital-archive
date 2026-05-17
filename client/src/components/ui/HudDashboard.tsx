@@ -50,13 +50,13 @@ export const HudDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer hover:-translate-y-0.5 transition-transform duration-300">
-            <div className="flex items-center gap-2 text-sm text-blue-300">
-              <Landmark size={14} className="group-hover:text-blue-400 transition-colors" /> 党政服务点位
+            <div className="flex items-center gap-2 text-sm text-zinc-300">
+              <Landmark size={14} className="group-hover:text-zinc-200 transition-colors" /> 党政服务点位
             </div>
             <span className="font-mono text-white font-bold">{govCount}</span>
           </div>
           <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] transition-all duration-1000" style={{ width: `${totalCount ? (govCount/totalCount)*100 : 0}%` }} />
+            <div className="h-full bg-zinc-400 shadow-[0_0_10px_rgba(161,161,170,0.5)] transition-all duration-1000" style={{ width: `${totalCount ? (govCount/totalCount)*100 : 0}%` }} />
           </div>
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer hover:-translate-y-0.5 transition-transform duration-300">

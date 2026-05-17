@@ -59,7 +59,7 @@ export const ArchiveDetailModal: React.FC = () => {
           <div className="flex items-center gap-4 relative z-10">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
               archive.type === 'revolution' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-              archive.type === 'government' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 
+              archive.type === 'government' ? 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30' : 
               'bg-amber-500/20 text-amber-400 border border-amber-500/30'
             }`}>
               <MapPin size={24} />
@@ -163,8 +163,8 @@ export const ArchiveDetailModal: React.FC = () => {
 
             {/* Tags & Actions */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
-                <span className="px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-300 text-sm border border-blue-500/20 font-medium">
-                  数字沙盘点位
+                <span className="px-4 py-1.5 rounded-full bg-zinc-500/15 text-zinc-300 text-sm border border-zinc-500/25 font-medium">
+                  数字档案坐标
                 </span>
                 
                 {/* Indoor BIM Action */}
