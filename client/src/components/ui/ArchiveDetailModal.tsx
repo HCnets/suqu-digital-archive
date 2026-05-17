@@ -161,8 +161,8 @@ export const ArchiveDetailModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tags & Actions */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+            {/* Tags & Actions */}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
                 <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm border border-blue-500/30">
                   数字沙盘点位
                 </span>
@@ -206,9 +206,7 @@ export const ArchiveDetailModal: React.FC = () => {
                   </button>
                 )}
               </div>
-            </div>
           </div>
-          
         </div>
       </div>
     </div>
