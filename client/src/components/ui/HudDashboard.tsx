@@ -53,7 +53,8 @@ export const HudDashboard: React.FC = () => {
       </button>
 
       {!collapsed && (
-        <div className="w-80 flex flex-col gap-4 pointer-events-auto max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar pr-1 pb-4">
+        <div className="w-80 flex flex-col gap-4 pointer-events-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+      <div className="overflow-y-auto custom-scrollbar pr-1 pb-4 space-y-4 flex-1">
       
       {/* 核心指标总览 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden">
@@ -214,6 +215,7 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
       
+    </div>
     </div>
     )}
     </div>
