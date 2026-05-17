@@ -76,9 +76,9 @@ function App() {
         {!showIntro && <HudDashboard />}
 
         {/* POI 信息卡 */}
-        <div className="flex-1 flex items-end justify-end p-6 pb-32 z-20">
+        <div className="flex-1 flex items-end justify-end p-6 pb-32 z-50">
           {activeArchive && (
-            <div className="museum-card p-6 rounded-2xl w-full max-w-md pointer-events-auto transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden">
+            <div className="museum-card p-6 rounded-2xl w-full max-w-md pointer-events-auto transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
               <div className={`absolute top-0 left-0 w-full h-1 ${
                 activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :
                 activeArchive.type === 'government' ? 'bg-[#5C5C5C]' : 'bg-[#8B6914]'
@@ -93,7 +93,7 @@ function App() {
                   <h2 className="text-lg font-bold text-[#1A1A1A] tracking-wide font-serif">{activeArchive.title}</h2>
                 </div>
                 <button 
-                  onClick={() => setSelectedPoiId(null)}
+                  onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null) }}
                   className="text-[#5C5C5C]/40 hover:text-[#5C5C5C] transition-colors rounded-full p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="关闭当前档案简介"
                 >
@@ -112,7 +112,7 @@ function App() {
 
               <div className="mt-4 pt-4 border-t border-[#E8DFD5] flex justify-end">
                 <button 
-                  onClick={() => setDetailModalOpen(true)}
+                  onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null); setDetailModalOpen(true) }}
                   className="party-btn-primary group flex items-center gap-2 px-5 min-h-[44px]"
                   aria-label={`查看${activeArchive.title}的完整档案`}
                 >

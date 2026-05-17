@@ -95,7 +95,7 @@ export const RightDataPanel: React.FC = () => {
   }
 
   return (
-    <div className="absolute top-24 right-20 w-80 flex flex-col gap-4 pointer-events-auto z-40">
+    <div className="absolute top-24 right-20 w-80 flex flex-col gap-4 pointer-events-auto z-40 max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar pr-1 pb-4">
       
       {/* 模块一：线上参与致敬 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden flex-none">
