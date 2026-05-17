@@ -116,7 +116,7 @@ function App() {
 
             <div className="mt-4 pt-4 border-t border-[#E8DFD5] flex justify-end">
               <button 
-                onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null); setDetailModalOpen(true) }}
+                onClick={(e) => { e.stopPropagation(); setDetailModalOpen(true) }}
                 className="party-btn-primary group flex items-center gap-2 px-5 min-h-[44px]"
                 aria-label={`查看${activeArchive.title}的完整档案`}
               >

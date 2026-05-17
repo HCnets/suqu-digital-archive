@@ -4,14 +4,19 @@ import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box }
 import { Flower2 } from 'lucide-react'
 
 export const ArchiveDetailModal: React.FC = () => {
-  const { selectedPoiId, getArchiveData, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
+  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
   const [isPlaying, setIsPlaying] = React.useState(false)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   
-  if (!selectedPoiId) return null
+  if (!isDetailModalOpen || !selectedPoiId) return null
   
   const archive = getArchiveData(selectedPoiId)
   if (!archive) return null
+
+  const handleClose = () => {
+    setDetailModalOpen(false)
+    setSelectedPoiId(null)
+  }
 
   const handleToggleAudio = () => {
     if (isPlaying) {
@@ -30,7 +35,7 @@ export const ArchiveDetailModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[80] flex items-center justify-center p-6" onClick={(e) => { if (e.target === e.currentTarget) setDetailModalOpen(false) }}>
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[80] flex items-center justify-center p-6" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
       
       <div className="relative w-full max-w-5xl h-full max-h-[85vh] bg-white border border-[#E8DFD5] rounded-3xl shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
@@ -85,7 +90,7 @@ export const ArchiveDetailModal: React.FC = () => {
             </button>
             
             <button 
-              onClick={() => setDetailModalOpen(false)}
+              onClick={handleClose}
               className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:bg-[#FDE8EC] hover:text-[#C41E3A] hover:border-[#C41E3A]/30 transition-all duration-200"
               aria-label="关闭档案"
             >
