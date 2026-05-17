@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
   const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode } = useAppStore()
@@ -101,11 +101,11 @@ export const HudDashboard: React.FC = () => {
       </div>
 
       {/* 时空穿梭与环境控制 */}
-      <div className="glass-panel p-4 rounded-xl border border-white/5 space-y-4">
+      <div className="glass-panel p-4 rounded-xl border border-red-800/50 space-y-4 bg-black/20">
         {/* 时空穿梭 */}
-        <div className="flex items-center gap-2 text-purple-300 border-b border-white/10 pb-2">
+        <div className="flex items-center gap-2 text-yellow-400 border-b border-red-800/50 pb-2">
           <Clock size={16} />
-          <h3 className="font-bold text-sm tracking-widest">TIME TRAVEL</h3>
+          <h3 className="font-bold text-sm tracking-widest">时空印记与体验</h3>
         </div>
         
         <button 
@@ -113,7 +113,7 @@ export const HudDashboard: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 p-3 rounded border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)]"
         >
           <MoveHorizontal size={16} />
-          <span className="text-sm font-medium">时空卷帘门</span>
+          <span className="text-sm font-medium">百年时空卷帘门</span>
         </button>
 
         <button 
@@ -121,27 +121,28 @@ export const HudDashboard: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 p-3 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
         >
           <Crosshair size={16} />
-          <span className="text-sm font-medium">第一人称街景漫游</span>
+          <span className="text-sm font-medium">重走红军路 (第一人称)</span>
         </button>
 
         <button 
           onClick={() => setDirectorMode(!isDirectorMode)}
           className={`w-full flex items-center justify-center gap-2 p-3 rounded border transition-all ${
             isDirectorMode 
-              ? 'border-amber-500 bg-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.4)] animate-pulse'
+              ? 'border-yellow-500 bg-yellow-500/20 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4)] animate-pulse'
               : 'border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 shadow-[0_0_20px_rgba(220,38,38,0.2)]'
           }`}
         >
           <Film size={16} />
-          <span className="text-sm font-medium">{isDirectorMode ? '⏹ 停止自动汇报' : '▶ 启动自动接待汇报'}</span>
+          <span className="text-sm font-medium">{isDirectorMode ? '⏹ 停止自动汇报' : '▶ 启动沉浸式自动宣讲'}</span>
         </button>
       </div>
 
       {/* Environmental Controls */}
-        <div className="flex items-center gap-2 text-red-300 border-b border-red-800/50 pb-2 pt-2">
+      <div className="glass-panel p-4 rounded-xl border border-red-800/50 space-y-4 bg-black/20 mt-6">
+        <div className="flex items-center gap-2 text-red-300 border-b border-red-800/50 pb-2">
             <Map size={16} />
             <h3 className="font-bold text-sm tracking-widest">思政空间交互</h3>
-          </div>
+        </div>
         
         <div className="flex flex-col gap-3">
           <button 
@@ -156,11 +157,9 @@ export const HudDashboard: React.FC = () => {
             </div>
             <div className={`w-2 h-2 rounded-full ${showHistoricalRoute ? 'bg-red-400 animate-pulse' : 'bg-white/20'}`} />
           </button>
-
-          {/* 天气控制已被移除，替换为留白或保留 */}
         </div>
       </div>
-
+      
     </div>
   )
 }
