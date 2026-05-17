@@ -133,7 +133,6 @@ export const SwipeMode: React.FC = () => {
           >
             <MoveHorizontal size={20} className="text-[#C41E3A]" />
           </div>
-          </div>
         </div>
       </div>
 
