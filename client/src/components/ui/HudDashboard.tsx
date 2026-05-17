@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAppStore } from '@/store'
 import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -12,17 +12,6 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 export const HudDashboard: React.FC = () => {
   const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setCollapsed(true)
-      }
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
   
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
   

@@ -75,58 +75,58 @@ function App() {
         {/* 左侧 HUD */}
         {!showIntro && <HudDashboard />}
 
-        {/* POI 信息卡 */}
-        <div className="flex-1 flex items-end justify-end p-6 pb-32 z-50">
-          {activeArchive && (
-            <div className="museum-card p-6 rounded-2xl w-full max-w-md pointer-events-auto transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
-              <div className={`absolute top-0 left-0 w-full h-1 ${
-                activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :
-                activeArchive.type === 'government' ? 'bg-[#5C5C5C]' : 'bg-[#8B6914]'
-              }`} />
-
-              <div className="flex justify-between items-start mb-3 relative z-10 mt-1">
-                <div className="flex items-center gap-3">
-                  <span className={`w-3 h-3 rounded-full border-2 ${
-                    activeArchive.type === 'revolution' ? 'bg-[#C41E3A] border-[#C41E3A]' :
-                    activeArchive.type === 'government' ? 'bg-[#5C5C5C] border-[#5C5C5C]' : 'bg-[#8B6914] border-[#8B6914]'
-                  }`} />
-                  <h2 className="text-lg font-bold text-[#1A1A1A] tracking-wide font-serif">{activeArchive.title}</h2>
-                </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null) }}
-                  className="text-[#5C5C5C]/40 hover:text-[#5C5C5C] transition-colors rounded-full p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  aria-label="关闭当前档案简介"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <p className="text-[#5C5C5C] leading-relaxed text-sm font-serif">
-                {activeArchive.description}
-              </p>
-              
-              <div className="mt-3 flex gap-4 text-xs text-[#5C5C5C]/70 font-mono bg-[#FEFAF6] p-2.5 rounded-lg border border-[#E8DFD5]">
-                <span>LNG: {activeArchive.longitude.toFixed(4)}</span>
-                <span>LAT: {activeArchive.latitude.toFixed(4)}</span>
-                <span className="ml-auto text-[#C41E3A] font-medium">{activeArchive.year}</span>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-[#E8DFD5] flex justify-end">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null); setDetailModalOpen(true) }}
-                  className="party-btn-primary group flex items-center gap-2 px-5 min-h-[44px]"
-                  aria-label={`查看${activeArchive.title}的完整档案`}
-                >
-                  <BookOpenText size={16} />
-                  查看完整档案
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* 底部时间轴 */}
         <TimeSlider />
       </div>
+
+      {/* POI 信息卡 - 渲染在z-10容器之外以避免被RightDataPanel覆盖 */}
+      {!showIntro && activeArchive && (
+        <div className="absolute bottom-20 right-6 z-[60] pointer-events-auto">
+          <div className="museum-card p-6 rounded-2xl w-full max-w-md transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :
+              activeArchive.type === 'government' ? 'bg-[#5C5C5C]' : 'bg-[#8B6914]'
+            }`} />
+
+            <div className="flex justify-between items-start mb-3 relative z-10 mt-1">
+              <div className="flex items-center gap-3">
+                <span className={`w-3 h-3 rounded-full border-2 ${
+                  activeArchive.type === 'revolution' ? 'bg-[#C41E3A] border-[#C41E3A]' :
+                  activeArchive.type === 'government' ? 'bg-[#5C5C5C] border-[#5C5C5C]' : 'bg-[#8B6914] border-[#8B6914]'
+                }`} />
+                <h2 className="text-lg font-bold text-[#1A1A1A] tracking-wide font-serif">{activeArchive.title}</h2>
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null) }}
+                className="text-[#5C5C5C]/40 hover:text-[#5C5C5C] transition-colors rounded-full p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/80 hover:bg-white"
+                aria-label="关闭当前档案简介"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-[#5C5C5C] leading-relaxed text-sm font-serif">
+              {activeArchive.description}
+            </p>
+            
+            <div className="mt-3 flex gap-4 text-xs text-[#5C5C5C]/70 font-mono bg-[#FEFAF6] p-2.5 rounded-lg border border-[#E8DFD5]">
+              <span>LNG: {activeArchive.longitude.toFixed(4)}</span>
+              <span>LAT: {activeArchive.latitude.toFixed(4)}</span>
+              <span className="ml-auto text-[#C41E3A] font-medium">{activeArchive.year}</span>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[#E8DFD5] flex justify-end">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setDetailModalOpen(true) }}
+                className="party-btn-primary group flex items-center gap-2 px-5 min-h-[44px]"
+                aria-label={`查看${activeArchive.title}的完整档案`}
+              >
+                <BookOpenText size={16} />
+                查看完整档案
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <ArchiveDetailModal />
       {isIndoorMode && <IndoorBimMode />}
