@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const DATA_FILE = path.join(__dirname, 'archives.json');
 const TRIBUTES_FILE = path.join(__dirname, 'tributes.json');
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');

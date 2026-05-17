@@ -74,6 +74,58 @@
   border-radius: 2px;
 }
 
+@media (max-width: 1024px) {
+  .hud-panel, .right-panel {
+    width: 260px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hud-panel, .right-panel {
+    width: 100vw !important;
+    max-width: 320px !important;
+    top: 72px !important;
+  }
+
+  .right-panel {
+    top: auto !important;
+    bottom: 120px !important;
+    right: 8px !important;
+  }
+
+  .museum-card button,
+  .party-btn-primary,
+  .party-btn-outline,
+  .party-btn-gold {
+    min-height: 48px !important;
+    font-size: 0.875rem !important;
+  }
+
+  .top-marker {
+    font-size: 1.125rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hud-panel, .right-panel {
+    max-width: 280px !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .museum-card h3 {
+    font-size: 0.875rem !important;
+  }
+
+  .museum-card p {
+    font-size: 0.75rem !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
