@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { HeartHandshake, MessageSquareHeart, Users, ShieldAlert, Sparkles } from 'lucide-react'
+import { HeartHandshake, MessageSquareHeart, Users, Sparkles } from 'lucide-react'
 
 export const RightDataPanel: React.FC = () => {
   const [mounted, setMounted] = useState(false)
@@ -32,7 +32,7 @@ export const RightDataPanel: React.FC = () => {
         {/* 核心数字 */}
         <div className="bg-rose-950/40 p-4 rounded-2xl border border-rose-900/50 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(225,29,72,0.3)] transition-all duration-300">
           <Sparkles className="absolute top-2 right-2 text-amber-500/30 group-hover:text-amber-400 transition-colors duration-500" size={24} />
-          <div className="text-xs text-rose-200/80 mb-2 font-medium">累计云端敬献鲜花</div>
+          <div className="text-xs text-rose-200/80 mb-2 font-medium">线上参与致敬人次</div>
           <div className="text-4xl font-black text-amber-400 font-serif drop-shadow-[0_0_10px_rgba(250,204,21,0.3)]">
             {flowerCount.toLocaleString()}
           </div>
@@ -40,9 +40,12 @@ export const RightDataPanel: React.FC = () => {
             <Users size={12}/> 来自全国 34 个省市自治区的群众
           </div>
           
-          <button className="mt-4 w-full min-h-[44px] bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-900/50 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5">
+          <button
+            className="mt-4 w-full min-h-[44px] bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-900/50 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5"
+            aria-label="参与线上致敬"
+          >
             <HeartHandshake size={18} />
-            点击敬献花篮
+            参与线上致敬
           </button>
         </div>
       </div>
@@ -81,8 +84,11 @@ export const RightDataPanel: React.FC = () => {
           </div>
         </div>
 
-        <button className="mt-4 w-full min-h-[44px] bg-transparent border border-amber-500/50 hover:bg-amber-500/10 text-amber-400 font-bold rounded-xl transition-all duration-300 text-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(250,204,21,0.2)]">
-          留下我的心声
+        <button
+          className="mt-4 w-full min-h-[44px] bg-transparent border border-amber-500/50 hover:bg-amber-500/10 text-amber-400 font-bold rounded-xl transition-all duration-300 text-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(250,204,21,0.2)]"
+          aria-label="留下群众感言"
+        >
+          留下学习感言
         </button>
       </div>
 

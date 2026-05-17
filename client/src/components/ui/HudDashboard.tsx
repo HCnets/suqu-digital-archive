@@ -29,7 +29,7 @@ export const HudDashboard: React.FC = () => {
             </span>
           </h3>
           <p className="text-[10px] text-rose-200/70 font-medium tracking-widest mt-2 ml-8">
-            面向全体人民的党史教育阵地
+            先看重点内容，再进入现场学习
           </p>
         </div>
         
@@ -51,7 +51,7 @@ export const HudDashboard: React.FC = () => {
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer hover:-translate-y-0.5 transition-transform duration-300">
             <div className="flex items-center gap-2 text-sm text-blue-300">
-              <Landmark size={14} className="group-hover:text-blue-400 transition-colors" /> 政府基础建设
+              <Landmark size={14} className="group-hover:text-blue-400 transition-colors" /> 党政服务点位
             </div>
             <span className="font-mono text-white font-bold">{govCount}</span>
           </div>
@@ -61,7 +61,7 @@ export const HudDashboard: React.FC = () => {
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer hover:-translate-y-0.5 transition-transform duration-300">
             <div className="flex items-center gap-2 text-sm text-amber-300">
-              <Activity size={14} className="group-hover:text-amber-400 transition-colors" /> 文化与其它设施
+              <Activity size={14} className="group-hover:text-amber-400 transition-colors" /> 群众文化阵地
             </div>
             <span className="font-mono text-white font-bold">{culCount}</span>
           </div>
@@ -73,10 +73,13 @@ export const HudDashboard: React.FC = () => {
 
       {/* 思政学习大纲 */}
       <div className="glass-panel p-5 rounded-3xl border border-rose-900/30 relative bg-zinc-950/60 shadow-lg backdrop-blur-xl">
-        <h3 className="text-amber-400 font-bold flex items-center gap-2 mb-4 text-sm font-serif tracking-widest">
+          <h3 className="text-amber-400 font-bold flex items-center gap-2 mb-2 text-sm font-serif tracking-widest">
           <BookOpen size={16} />
           学习路线与实践
         </h3>
+          <p className="text-xs text-zinc-300/70 mb-4 leading-relaxed">
+            按照“看遗址、读史实、谈感受”的顺序，帮助群众更容易进入学习状态。
+          </p>
         
         <div className="space-y-3">
           <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-900/50 hover:bg-rose-900/60 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(225,29,72,0.3)] transition-all duration-300 cursor-pointer group flex flex-col justify-center min-h-[44px]">
@@ -113,7 +116,7 @@ export const HudDashboard: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 p-3 rounded border border-rose-800/30 bg-rose-900/10 text-rose-200 hover:bg-rose-900/30 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 min-h-[44px]"
         >
           <MoveHorizontal size={16} />
-          <span className="text-sm font-medium">百年时空卷帘门</span>
+          <span className="text-sm font-medium">百年时空对照</span>
         </button>
 
         <button 
@@ -121,7 +124,7 @@ export const HudDashboard: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 p-3 rounded border border-rose-800/30 bg-rose-900/10 text-rose-200 hover:bg-rose-900/30 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 min-h-[44px]"
         >
           <Crosshair size={16} />
-          <span className="text-sm font-medium">重走红军路 (第一人称)</span>
+          <span className="text-sm font-medium">重走红军路</span>
         </button>
 
         <button 
@@ -133,7 +136,7 @@ export const HudDashboard: React.FC = () => {
           }`}
         >
           <Film size={16} />
-          <span className="text-sm font-medium">{isDirectorMode ? '⏹ 停止自动汇报' : '▶ 启动沉浸式自动宣讲'}</span>
+          <span className="text-sm font-medium">{isDirectorMode ? '停止自动讲解' : '开始自动讲解'}</span>
         </button>
       </div>
 
@@ -141,7 +144,7 @@ export const HudDashboard: React.FC = () => {
       <div className="glass-panel p-4 rounded-xl border border-rose-900/30 space-y-4 bg-zinc-950/60 shadow-lg backdrop-blur-xl mt-6">
         <div className="flex items-center gap-2 text-rose-300 border-b border-rose-900/40 pb-2">
             <Map size={16} />
-            <h3 className="font-bold text-sm tracking-widest font-serif">思政空间交互</h3>
+            <h3 className="font-bold text-sm tracking-widest font-serif">辅助学习工具</h3>
         </div>
         
         <div className="flex flex-col gap-3">

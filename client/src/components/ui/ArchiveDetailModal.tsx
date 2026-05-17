@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { X, Calendar, MapPin, Image as ImageIcon, Play, ExternalLink, Layers, Volume2, Square, Box } from 'lucide-react'
+import { X, Calendar, MapPin, Image as ImageIcon, Layers, Volume2, Square, Box, Flower2 } from 'lucide-react'
 import { useTTS } from '@/hooks/useTTS'
 
 export const ArchiveDetailModal: React.FC = () => {
@@ -85,7 +85,7 @@ export const ArchiveDetailModal: React.FC = () => {
               }`}
             >
               {isPlaying ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
-              <span className="text-sm font-medium">{isPlaying ? '停止解说' : 'AI 智能解说'}</span>
+              <span className="text-sm font-medium">{isPlaying ? '停止讲解' : '语音讲解'}</span>
             </button>
             
             <button 
@@ -200,8 +200,9 @@ export const ArchiveDetailModal: React.FC = () => {
                   <button 
                     className="flex items-center gap-2 px-6 min-h-[44px] rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all shadow-[0_4px_20px_rgba(225,29,72,0.4)] ml-auto hover:-translate-y-0.5"
                     onClick={() => alert('敬献花篮成功，重温入党誓词：我志愿加入中国共产党...')}
+                    aria-label="敬献花篮并重温誓词"
                   >
-                    <span className="text-xl">🌺</span>
+                    <Flower2 size={18} />
                     敬献花篮 · 重温誓词
                   </button>
                 )}

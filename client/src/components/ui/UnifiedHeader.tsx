@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowLeft, Rocket, Database } from 'lucide-react'
+import { ArrowLeft, AudioLines, Database } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -24,26 +24,30 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
   return (
     <header
       className={cn(
-        'w-full flex items-center justify-between px-6 py-4 pointer-events-auto',
+        'w-full flex items-start justify-between px-6 py-4 pointer-events-auto',
         className
       )}
     >
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-md">
+      <div className="flex flex-col gap-1 max-w-[68ch]">
+        <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-amber-400/85 font-medium">
+          红色党建思政实践平台
+        </p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-md font-serif">
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-slate-300 font-medium tracking-wide drop-shadow">
+          <p className="text-sm text-zinc-300/90 font-medium tracking-wide drop-shadow leading-relaxed">
             {description}
           </p>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {onOpenAdmin && (
           <button
             onClick={onOpenAdmin}
-            className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border-indigo-500/30 backdrop-blur-md"
+            className="flex items-center gap-2 px-4 min-h-[44px] rounded-full transition-all duration-300 border bg-zinc-900/70 hover:bg-zinc-800 text-zinc-100 border-zinc-700/60 backdrop-blur-md"
+            aria-label="打开档案录入中心"
           >
             <Database size={16} />
             <span className="text-sm font-medium">录入中心</span>
@@ -53,23 +57,26 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
           <button
             onClick={onAutoTour}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border",
+              'flex items-center gap-2 px-4 min-h-[44px] rounded-full transition-all duration-300 border',
               isTouring 
-                ? "bg-amber-500/20 text-amber-400 border-amber-500/50 animate-pulse" 
-                : "bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md"
+                ? 'bg-rose-600/20 text-amber-300 border-rose-500/40'
+                : 'bg-zinc-900/70 hover:bg-zinc-800 text-zinc-100 border-zinc-700/60 backdrop-blur-md'
             )}
+            aria-label={isTouring ? '停止自动讲解' : '启动自动讲解'}
           >
-            <Rocket size={16} className={isTouring ? "animate-bounce" : ""} />
-            <span className="text-sm font-medium">{isTouring ? "巡航中..." : "自动巡航"}</span>
+            <AudioLines size={16} />
+            <span className="text-sm font-medium">{isTouring ? '讲解进行中' : '自动讲解'}</span>
           </button>
         )}
-        <button
-          onClick={onBack}
-          className="liquid-glass group relative flex items-center justify-center rounded-full p-[12px] transition-all duration-300 hover:scale-105 hover:bg-white/20 active:scale-95"
-          aria-label="返回"
-        >
-          <ArrowLeft className="w-[20px] h-[20px] text-white/90 group-hover:text-white transition-colors" />
-        </button>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="liquid-glass group relative flex items-center justify-center rounded-full p-[12px] transition-all duration-300 hover:bg-white/20 active:scale-95 min-w-[44px] min-h-[44px]"
+            aria-label="返回"
+          >
+            <ArrowLeft className="w-[20px] h-[20px] text-white/90 group-hover:text-white transition-colors" />
+          </button>
+        )}
       </div>
     </header>
   )

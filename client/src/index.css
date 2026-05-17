@@ -22,6 +22,15 @@
   body {
     @apply m-0 p-0 w-screen h-screen overflow-hidden bg-slate-900 text-slate-100 font-sans;
   }
+
+  button,
+  [role='button'],
+  a,
+  input,
+  textarea,
+  select {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950;
+  }
 }
 
 @layer utilities {
@@ -32,5 +41,16 @@
   
   .glass-panel {
     @apply bg-slate-900/60 backdrop-blur-xl border border-white/10;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
