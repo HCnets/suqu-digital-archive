@@ -292,6 +292,42 @@ const STATIC_ARCHIVES: Record<string, ArchiveData> = {
     longitude: 115.3480,
     latitude: 23.3560,
     media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Suqu_Town_Hall.jpg/800px-Suqu_Town_Hall.jpg`, caption: `苏区镇人民政府——全国唯一以\u2018苏区\u2019命名的乡镇行政中心` }]
+  },
+  "paozi-village-defense": {
+    id: `paozi-village-defense`,
+    title: `炮子村阻击战遗址`,
+    year: 1928,
+    type: `revolution`,
+    description: `1928年3月，红二师、红四师与苏区赤卫队在此依托山势地形与敌军展开殊死搏斗，以少敌多、以弱抗强，掩护了苏维埃政府和群众安全转移。这是一场可歌可泣的苏区保卫战。`,
+    content: `【思政大课堂：牺牲与担当】
+1928年3月，国民党反动派纠集数千兵力分三路向炮子村苏区发起总攻。面对数倍于己的敌人，红二师、红四师余部及当地赤卫队共约600余人，在炮子村外围山头构筑防线，展开了长达三天三夜的殊死阻击。
+
+【壮烈的阻击战】
+战斗中，红军战士子弹打光了就用石头砸，石头用完了就拼刺刀、肉搏。赤卫队员黄木生拉响最后一颗手榴弹与数名敌军同归于尽。年仅16岁的红军小战士钟火妹在运送弹药途中中弹牺牲，牺牲时双手仍紧紧抱着弹药箱。三天后，苏维埃政府和大部分群众安全转移，但留守阻击的红军指战员几乎全部壮烈牺牲。
+
+【永恒的精神丰碑】
+炮子村阻击战是东江苏区保卫战中最壮烈的一页。先烈们用生命诠释了什么叫"牺牲小我、成就大我"。今天，当我们站在这片被鲜血浸染的土地上，更应当铭记：和平来之不易，幸福需要守护。`,
+    longitude: 115.3330,
+    latitude: 23.3585,
+    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Paozi_Village_Battle_Site.jpg/800px-Paozi_Village_Battle_Site.jpg`, caption: `炮子村阻击战遗址——1928年600余名红军赤卫队员殊死阻击敌军三天三夜` }]
+  },
+  "suqu-red-transport-station": {
+    id: `suqu-red-transport-station`,
+    title: `苏区红色交通站旧址`,
+    year: 1928,
+    type: `revolution`,
+    description: `土地革命战争时期，中共中央建立的地下交通网络在苏区镇的重要节点。承担着传递情报、护送干部、运送物资等绝密任务，是连接东江苏区与中央苏区的"红色血脉"。`,
+    content: `【思政大课堂：隐蔽战线的忠诚】
+1928年至1934年间，中共中央建立了从上海经香港、汕头、大埔进入中央苏区的秘密交通线。紫金县苏区镇（炮子乡）是这条红色交通线的重要支线节点。交通员们化装成商贩、郎中、挑夫，冒着生命危险传递党的机密文件、护送领导干部、运送药品武器。
+
+【无声的英雄】
+交通站设在炮子村一间不起眼的杂货铺地下。交通员白天是普通百姓，夜晚则化身红色信使。据《东江革命根据地史》记载，经由苏区交通站护送的党政军领导干部达数十人，传递机密文件数百件。交通员李月梅在执行任务途中被捕，敌人严刑拷打，她至死没有吐露半个字。
+
+【忠诚的底色】
+红色交通站是革命战争年代的"隐秘动脉"，交通员们用生命和忠诚织就了一张无形的革命大网。他们的故事告诉我们：忠诚不是口号，而是生死关头的不变信仰。`,
+    longitude: 115.3425,
+    latitude: 23.3570,
+    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Suqu_Red_Transport_Station.jpg/800px-Suqu_Red_Transport_Station.jpg`, caption: `苏区红色交通站旧址——连接东江苏区与中央苏区的秘密交通线节点` }]
   }
 };
 

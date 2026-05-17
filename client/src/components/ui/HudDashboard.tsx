@@ -7,6 +7,11 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
   { title: "第二课：信仰的底色是忠诚", subtitle: "血田泣血，见证革命先烈的赤胆忠心", archiveId: "blood-field", order: 2 },
   { title: "第三课：群众路线生动实践", subtitle: "农会旧址，感受千百万劳苦大众的觉醒", archiveId: "zijin-farmers-association", order: 3 },
+  { title: "第四课：牺牲与担当", subtitle: "炮子村阻击战，600勇士以弱抗强护百姓", archiveId: "paozi-village-defense", order: 4 },
+  { title: "第五课：星火燎原的力量", subtitle: "红军亭，南昌起义与广州起义部队会师", archiveId: "red-army-pavilion", order: 5 },
+  { title: "第六课：深山里的红色中枢", subtitle: "县委旧址，看党的组织领导革命斗争", archiveId: "zijin-party-committee", order: 6 },
+  { title: "第七课：隐蔽战线的忠诚", subtitle: "红色交通站，绝密情报与干部的护送命脉", archiveId: "suqu-red-transport-station", order: 7 },
+  { title: "第八课：一盘棋的革命战略", subtitle: "东江特委，统一领导百万人口的东江苏区", archiveId: "dongjiang-committee", order: 8 },
 ]
 
 export const HudDashboard: React.FC = () => {

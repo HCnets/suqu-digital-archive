@@ -1,11 +1,34 @@
-import React, { useRef } from 'react'
+import React, { useRef, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box } from 'lucide-react'
 import { Flower2 } from 'lucide-react'
 
+const MuseumPlaceholder: React.FC<{ archive: any }> = ({ archive }) => {
+  const bgColor = archive.type === 'revolution' ? '#FDE8EC' : archive.type === 'government' ? '#F5F0EB' : '#FFF8E1'
+  const accentColor = archive.type === 'revolution' ? '#C41E3A' : archive.type === 'government' ? '#5C5C5C' : '#8B6914'
+  const label = archive.type === 'revolution' ? '红色革命遗址' : archive.type === 'government' ? '党政服务点位' : '群众文化阵地'
+  const shortTitle = archive.title.length > 12 ? archive.title.slice(0, 12) + '...' : archive.title
+  return (
+    <div className="w-full aspect-video rounded-2xl overflow-hidden border border-[#E8DFD5] relative flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${bgColor} 0%, #FEFAF6 100%)` }}>
+      <div className="absolute inset-4 rounded-xl border border-dashed opacity-30" style={{ borderColor: accentColor }} />
+      <div className="text-center space-y-3 z-10 px-8">
+        <div className="flex items-center justify-center gap-2" style={{ color: accentColor }}>
+          <div className="w-8 h-px" style={{ backgroundColor: accentColor, opacity: 0.5 }} />
+          <span className="text-3xl">{archive.type === 'revolution' ? '★' : archive.type === 'government' ? '◆' : '■'}</span>
+          <div className="w-8 h-px" style={{ backgroundColor: accentColor, opacity: 0.5 }} />
+        </div>
+        <div className="text-xl font-bold font-serif text-[#1A1A1A]">{shortTitle}</div>
+        <div className="text-sm font-serif" style={{ color: accentColor }}>{archive.year}年 · {label}</div>
+        <div className="text-xs text-[#5C5C5C]/60 font-serif">广东省紫金县苏区镇 · 数字化档案</div>
+      </div>
+    </div>
+  )
+}
+
 export const ArchiveDetailModal: React.FC = () => {
   const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
   const [isPlaying, setIsPlaying] = React.useState(false)
+  const [imgFailed, setImgFailed] = React.useState(false)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   
   if (!isDetailModalOpen || !selectedPoiId) return null
@@ -104,11 +127,12 @@ export const ArchiveDetailModal: React.FC = () => {
           
           {/* Left: Media */}
           <div className="w-full lg:w-3/5 flex flex-col gap-4">
-            {archive.media && archive.media.length > 0 ? (
+            {archive.media && archive.media.length > 0 && !imgFailed ? (
               <div className="w-full aspect-video rounded-2xl overflow-hidden bg-[#FEFAF6] border border-[#E8DFD5] relative group">
                 <img 
                   src={archive.media[0].url} 
                   alt={archive.media[0].caption}
+                  onError={() => setImgFailed(true)}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-white/90 to-transparent">
@@ -118,9 +142,7 @@ export const ArchiveDetailModal: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="w-full aspect-video rounded-2xl bg-[#FEFAF6] border border-[#E8DFD5] flex items-center justify-center text-[#5C5C5C]/30 font-serif">
-                暂无多媒体资料
-              </div>
+              <MuseumPlaceholder archive={archive} />
             )}
             
             {archive.media && archive.media.length > 1 && (
