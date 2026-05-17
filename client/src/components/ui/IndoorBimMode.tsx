@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { X, Cpu, Layers } from 'lucide-react'
+import { X, Layers } from 'lucide-react'
 import { useAppStore } from '@/store'
 import * as THREE from 'three'
 
@@ -10,51 +10,48 @@ export const IndoorBimMode: React.FC = () => {
   useEffect(() => {
     if (!mountRef.current) return
 
-    // Initialize Three.js scene for BIM mock
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#0a0f18')
-    scene.fog = new THREE.FogExp2('#0a0f18', 0.05)
+    scene.background = new THREE.Color('#FEFAF6')
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     mountRef.current.appendChild(renderer.domElement)
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
     scene.add(ambientLight)
+    
+    const directionalLight = new THREE.DirectionalLight(0xffeedd, 1.0)
+    directionalLight.position.set(5, 10, 5)
+    scene.add(directionalLight)
 
-    const pointLight = new THREE.PointLight(0x3b82f6, 2, 50)
+    const pointLight = new THREE.PointLight(0xC41E3A, 1.5, 50)
     pointLight.position.set(0, 5, 0)
     scene.add(pointLight)
 
-    // Create wireframe floor plan (BIM Mock)
     const buildingGroup = new THREE.Group()
 
-    // Floor
     const floorGeo = new THREE.PlaneGeometry(20, 20, 10, 10)
     const floorMat = new THREE.MeshBasicMaterial({ 
-      color: 0x1e3a8a, 
-      wireframe: true,
+      color: 0xD4C5B2, 
+      wireframe: false,
       transparent: true,
-      opacity: 0.3
+      opacity: 0.5
     })
     const floor = new THREE.Mesh(floorGeo, floorMat)
     floor.rotation.x = -Math.PI / 2
     buildingGroup.add(floor)
 
-    // Pillars / Structure
     const pillarGeo = new THREE.BoxGeometry(0.5, 4, 0.5)
     const pillarMat = new THREE.MeshPhongMaterial({ 
-      color: 0x60a5fa,
+      color: 0xE8DFD5,
       transparent: true,
-      opacity: 0.8,
-      wireframe: true
+      opacity: 0.9
     })
 
-    const positions = [
+    const positions: [number, number, number][] = [
       [-5, 2, -5], [5, 2, -5], [-5, 2, 5], [5, 2, 5]
     ]
 
@@ -64,12 +61,12 @@ export const IndoorBimMode: React.FC = () => {
       buildingGroup.add(pillar)
     })
 
-    // Core Data Hub
     const coreGeo = new THREE.OctahedronGeometry(1.5, 0)
     const coreMat = new THREE.MeshStandardMaterial({
-      color: 0x3b82f6,
-      emissive: 0x1d4ed8,
-      wireframe: true
+      color: 0xC41E3A,
+      emissive: 0x8B1A2B,
+      roughness: 0.3,
+      metalness: 0.1
     })
     const core = new THREE.Mesh(coreGeo, coreMat)
     core.position.set(0, 3, 0)
@@ -80,26 +77,21 @@ export const IndoorBimMode: React.FC = () => {
     camera.position.set(0, 8, 12)
     camera.lookAt(0, 0, 0)
 
-    // Animation Loop
     let animationId: number
     const clock = new THREE.Clock()
 
     const animate = () => {
       animationId = requestAnimationFrame(animate)
       const elapsedTime = clock.getElapsedTime()
-
-      buildingGroup.rotation.y = elapsedTime * 0.1
-      core.rotation.x = elapsedTime * 0.5
-      core.rotation.y = elapsedTime * 0.3
-      
-      core.position.y = 3 + Math.sin(elapsedTime * 2) * 0.5 // Floating effect
-
+      buildingGroup.rotation.y = elapsedTime * 0.08
+      core.rotation.x = elapsedTime * 0.4
+      core.rotation.y = elapsedTime * 0.25
+      core.position.y = 3 + Math.sin(elapsedTime * 2) * 0.5
       renderer.render(scene, camera)
     }
 
     animate()
 
-    // Handle Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight
       camera.updateProjectionMatrix()
@@ -118,40 +110,38 @@ export const IndoorBimMode: React.FC = () => {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black animate-in fade-in zoom-in-95 duration-700 flex flex-col">
-      {/* Header Overlay */}
+    <div className="fixed inset-0 z-[200] animate-in fade-in zoom-in-95 duration-700 flex flex-col" style={{ backgroundColor: '#FEFAF6' }}>
       <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 rounded-full backdrop-blur-md w-fit">
-            <Cpu size={14} className="animate-pulse" />
-            <span className="text-xs font-bold tracking-widest uppercase">Indoor BIM Engine Active</span>
+          <div className="flex items-center gap-2 text-[#C41E3A] border border-[#C41E3A]/30 bg-[#FDE8EC] px-3 py-1 rounded-full w-fit">
+            <Layers size={14} />
+            <span className="text-xs font-bold tracking-wider">室内 BIM 结构透视模式</span>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-widest drop-shadow-lg">
-            苏区镇政府大楼 - 结构透视
+          <h2 className="text-3xl font-bold text-[#1A1A1A] tracking-wide font-serif">
+            苏区镇政府大楼 — 建筑结构三维浏览
           </h2>
-          <p className="text-blue-300/70 font-mono text-sm">
-            LEVEL 1 / CORE DATA HUB / REAL-TIME MONITORING
+          <p className="text-[#5C5C5C] text-sm">
+            请在 3D 空间中观察建筑的墙体承重、柱网布局与核心数据节点
           </p>
         </div>
 
         <button 
           onClick={() => setIndoorMode(false)}
-          className="pointer-events-auto p-3 rounded-full bg-white/10 hover:bg-red-500/30 text-white/70 hover:text-white border border-white/20 hover:border-red-500/50 transition-all backdrop-blur-md"
+          className="pointer-events-auto p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all"
+          aria-label="退出室内BIM模式"
         >
-          <X size={24} />
+          <X size={22} />
         </button>
       </div>
 
-      {/* 3D Canvas Container */}
       <div ref={mountRef} className="w-full h-full absolute inset-0" />
 
-      {/* Footer Overlay */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-6 z-10 pointer-events-none">
-        <div className="glass-panel px-6 py-3 rounded-2xl flex items-center gap-4">
-          <Layers className="text-blue-400" />
+        <div className="museum-card px-6 py-3 rounded-2xl flex items-center gap-4">
+          <Layers className="text-[#C41E3A]" size={18} />
           <div className="flex flex-col">
-            <span className="text-xs text-white/50">RENDER MODE</span>
-            <span className="text-sm font-bold text-white">WIREFRAME</span>
+            <span className="text-xs text-[#5C5C5C]">渲染模式</span>
+            <span className="text-sm font-bold text-[#1A1A1A]">三维透视线框</span>
           </div>
         </div>
       </div>

@@ -101,22 +101,22 @@ export const SwipeMode: React.FC = () => {
         }} />
 
         {/* 历史标识牌 */}
-        <div className="absolute top-8 left-8 glass-panel p-4 rounded-2xl border border-white/10 bg-red-900/50 backdrop-blur-xl pointer-events-none">
-          <div className="text-red-200 font-mono text-xs uppercase tracking-[0.2em]">
-            民国 16年
+        <div className="absolute top-8 left-8 museum-card p-4 rounded-2xl pointer-events-none">
+          <div className="text-[#C41E3A] font-mono text-xs uppercase tracking-[0.2em]">
+            民国 16年 · 1927
           </div>
-          <h2 className="text-2xl font-black text-white mt-1">
+          <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
             苏维埃政权成立
           </h2>
         </div>
       </div>
 
-      {/* 现代标识牌 (悬浮在右侧，属于 SwipeMode UI) */}
-      <div className="absolute top-8 right-8 z-20 glass-panel p-4 rounded-2xl border border-white/10 bg-blue-900/50 backdrop-blur-xl pointer-events-none">
-        <div className="text-blue-200 font-mono text-xs uppercase tracking-[0.2em]">
+      {/* 现代标识牌 (悬浮在右侧) */}
+      <div className="absolute top-8 right-8 z-20 museum-card p-4 rounded-2xl pointer-events-none">
+        <div className="text-[#8B6914] font-mono text-xs uppercase tracking-[0.2em]">
           公元 2026
         </div>
-        <h2 className="text-2xl font-black text-white mt-1">
+        <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
           新时代数字苏区
         </h2>
       </div>
@@ -126,12 +126,13 @@ export const SwipeMode: React.FC = () => {
         className="absolute top-0 bottom-0 z-30 flex items-center justify-center -ml-[1px]"
         style={{ left: `${dividerX}%` }}
       >
-        <div className="w-[2px] h-full bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,1)] relative">
+        <div className="w-[2px] h-full bg-[#C41E3A] shadow-[0_0_12px_rgba(196,30,58,0.6)] relative">
           <div 
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-black border-2 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.8)] flex items-center justify-center cursor-ew-resize hover:scale-110 transition-transform pointer-events-auto"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white border-2 border-[#C41E3A] shadow-xl flex items-center justify-center cursor-ew-resize hover:scale-110 transition-transform pointer-events-auto"
             onMouseDown={() => isDragging.current = true}
           >
-            <MoveHorizontal size={20} className="text-purple-400" />
+            <MoveHorizontal size={20} className="text-[#C41E3A]" />
+          </div>
           </div>
         </div>
       </div>
@@ -139,9 +140,9 @@ export const SwipeMode: React.FC = () => {
       {/* 退出按钮 */}
       <button 
         onClick={() => setSwipeMode(false)}
-        className="absolute top-8 left-1/2 -translate-x-1/2 z-40 p-4 rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 transition-all backdrop-blur-md pointer-events-auto"
+        className="absolute top-8 left-1/2 -translate-x-1/2 z-40 p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all pointer-events-auto shadow-sm"
       >
-        <X size={24} />
+        <X size={20} />
       </button>
     </div>
   )

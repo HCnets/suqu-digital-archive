@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useState } from 'react'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -10,6 +11,7 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 
 export const HudDashboard: React.FC = () => {
   const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId } = useAppStore()
+  const [collapsed, setCollapsed] = useState(false)
   
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
   
@@ -40,7 +42,18 @@ export const HudDashboard: React.FC = () => {
   }
 
   return (
-    <div className="absolute top-24 left-6 w-80 flex flex-col gap-4 pointer-events-auto z-40">
+    <div className="absolute top-24 left-4 flex gap-0 z-40">
+      {/* 折叠条 */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="pointer-events-auto self-start mt-0 w-8 h-12 rounded-l-xl bg-white border border-r-0 border-[#E8DFD5] flex items-center justify-center text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FEFAF6] transition-colors"
+        aria-label={collapsed ? "展开学习面板" : "折叠学习面板"}
+      >
+        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+      </button>
+
+      {!collapsed && (
+        <div className="w-80 flex flex-col gap-4 pointer-events-auto">
       
       {/* 核心指标总览 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden">
@@ -96,7 +109,7 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 思政学习大纲 — 现在可点击联动！ */}
+      {/* 思政学习大纲 */}
       <div className="museum-card p-5 rounded-2xl">
         <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 mb-1 text-sm font-serif tracking-wider">
           <BookOpen size={16} className="text-[#C41E3A]" />
@@ -201,6 +214,8 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
       
+    </div>
+    )}
     </div>
   )
 }

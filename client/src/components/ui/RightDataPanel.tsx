@@ -11,15 +11,26 @@ interface Message {
   createdAt: number
 }
 
+const MOCK_MESSAGES: Message[] = [
+  { id: 'mock-1', name: '紫金县实验中学 少先队', identity: '少先队员', text: '我们是共产主义接班人！请党放心，强国有我！', createdAt: Date.now() - 120000 },
+  { id: 'mock-2', name: '老党员 张建国', identity: '党员', text: '看到血田遗址的介绍，老泪纵横。江山就是人民，人民就是江山。', createdAt: Date.now() - 900000 },
+  { id: 'mock-3', name: '群众 138****9921', identity: '群众', text: '重走红军路，才知道今天的幸福生活多么来之不易。向先烈致敬！', createdAt: Date.now() - 1800000 },
+  { id: 'mock-4', name: '河源市青年学习小组', identity: '团员', text: '走好新时代的长征路，把群众路线坚持到底。', createdAt: Date.now() - 3600000 },
+  { id: 'mock-5', name: '大埔围村 党员小队', identity: '党员', text: '看了红屋的介绍，更加坚定了为人民服务的初心使命。', createdAt: Date.now() - 7200000 },
+  { id: 'mock-6', name: '外地游客 李先生', identity: '群众', text: '数字大屏做得太震撼了，这些真实的历史让人肃然起敬。', createdAt: Date.now() - 10800000 },
+]
+
 export const RightDataPanel: React.FC = () => {
   const [tributeCount, setTributeCount] = useState(11990821)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [apiMessages, setApiMessages] = useState<Message[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formName, setFormName] = useState('')
   const [formIdentity, setFormIdentity] = useState('群众')
   const [formText, setFormText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  const allMessages = apiMessages.length > 0 ? apiMessages : MOCK_MESSAGES
 
   useEffect(() => {
     fetch(`${API_BASE}/tributes`)
@@ -29,7 +40,7 @@ export const RightDataPanel: React.FC = () => {
     
     fetch(`${API_BASE}/messages`)
       .then(r => r.json())
-      .then(d => setMessages(d))
+      .then(d => { if (d && d.length > 0) setApiMessages(d) })
       .catch(() => {})
   }, [])
 
@@ -53,7 +64,7 @@ export const RightDataPanel: React.FC = () => {
         body: JSON.stringify({ name: formName, identity: formIdentity, text: formText })
       })
       const newMsg = await r.json()
-      setMessages(prev => [newMsg, ...prev])
+      setApiMessages(prev => [newMsg, ...prev])
       setFormText('')
       setFormName('')
       setSubmitted(true)
@@ -66,7 +77,7 @@ export const RightDataPanel: React.FC = () => {
         text: formText.trim(),
         createdAt: Date.now()
       }
-      setMessages(prev => [fallbackMsg, ...prev])
+      setApiMessages(prev => [fallbackMsg, ...prev])
       setFormText('')
       setFormName('')
       setSubmitted(true)
@@ -128,7 +139,7 @@ export const RightDataPanel: React.FC = () => {
           <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
           
           <div className="absolute inset-0 overflow-y-auto custom-scrollbar pt-2 pb-8 space-y-3 pr-2">
-            {messages.map((msg) => (
+            {allMessages.map((msg) => (
               <div key={msg.id} className="bg-[#FEFAF6] p-3.5 rounded-xl border border-[#E8DFD5] hover:border-[#C41E3A]/20 transition-colors duration-200">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-[#1A1A1A]">{msg.name}</span>
