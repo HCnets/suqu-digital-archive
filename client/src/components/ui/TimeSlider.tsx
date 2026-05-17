@@ -2,9 +2,16 @@ import React, { useEffect } from 'react'
 import { useAppStore } from '@/store'
 
 const HISTORICAL_EVENTS: Record<number, { title: string, subtitle: string }> = {
+  1923: { title: "紫金县总农会成立", subtitle: "海陆惠紫农民运动的星星之火" },
   1927: { title: "紫金苏维埃政权成立", subtitle: "星火燎原，武装暴动" },
   1928: { title: "血战炮子村", subtitle: "可歌可泣的苏区保卫战" },
-  1929: { title: "苏维埃兵工厂建立", subtitle: "后勤命脉，武装工农" },
+  1949: { title: "中华人民共和国成立", subtitle: "中国人民从此站起来了" },
+  1958: { title: "国务院命名「苏区乡」", subtitle: "全国唯一以苏区命名的乡镇" },
+  1978: { title: "改革开放", subtitle: "春天的故事在南粤大地奏响" },
+  2019: { title: "广东省党员教育基地", subtitle: "苏区列入省级党性教育熔炉" },
+  2020: { title: "群众路线教育实践馆", subtitle: "红色村组织振兴试点落成" },
+  2021: { title: "苏区党建文化广场", subtitle: "党群连心，红色文化润物无声" },
+  2023: { title: "苏区红色书院", subtitle: "书香里的红色基因代代相传" },
   2026: { title: "新时代数字苏区", subtitle: "红色基因，数字孪生" }
 }
 
@@ -13,7 +20,7 @@ export const TimeSlider: React.FC = () => {
 
   const minYear = 1920
   const maxYear = 2030
-  const marks = [1927, 1980, 2026]
+  const marks = [1927, 1949, 1958, 1978, 2026]
 
   useEffect(() => {
     if (HISTORICAL_EVENTS[currentYear]) {

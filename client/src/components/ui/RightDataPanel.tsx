@@ -18,6 +18,12 @@ const MOCK_MESSAGES: Message[] = [
   { id: 'mock-4', name: '河源市青年学习小组', identity: '团员', text: '走好新时代的长征路，把群众路线坚持到底。', createdAt: Date.now() - 3600000 },
   { id: 'mock-5', name: '大埔围村 党员小队', identity: '党员', text: '看了红屋的介绍，更加坚定了为人民服务的初心使命。', createdAt: Date.now() - 7200000 },
   { id: 'mock-6', name: '外地游客 李先生', identity: '群众', text: '数字大屏做得太震撼了，这些真实的历史让人肃然起敬。', createdAt: Date.now() - 10800000 },
+  { id: 'mock-7', name: '退役军人 陈卫国', identity: '群众', text: '作为一名老兵，看到炮子村阻击战的故事，深深致敬我的先辈战友们！', createdAt: Date.now() - 14400000 },
+  { id: 'mock-8', name: '华南师大 党史研究生', identity: '团员', text: '用数字化手段传承红色基因，这是一次非常成功的思政教育创新实践。', createdAt: Date.now() - 18000000 },
+  { id: 'mock-9', name: '港澳青年 林嘉琪', identity: '群众', text: '第一次如此直观地了解苏区的革命历史。祖国不会忘记，我们也不会忘记。', createdAt: Date.now() - 21600000 },
+  { id: 'mock-10', name: '海外侨胞 黄志远', identity: '群众', text: '虽然身在海外，但看到家乡的红色历史被这样用心记录，倍感自豪！', createdAt: Date.now() - 25200000 },
+  { id: 'mock-11', name: '苏区镇 老党员之家', identity: '党员', text: '我们村的年轻人用数字技术把红色故事讲给全国人民听，好样的！', createdAt: Date.now() - 28800000 },
+  { id: 'mock-12', name: '深圳小学 红领巾小队', identity: '少先队员', text: '老师带我们云参观苏区镇，我们要向革命先辈学习，做新时代的好少年！', createdAt: Date.now() - 32400000 },
 ]
 
 export const RightDataPanel: React.FC = () => {

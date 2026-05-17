@@ -1,24 +1,41 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAppStore } from '@/store'
 import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box, Flower2 } from 'lucide-react'
+import { TributeCeremony } from '@/components/ui/TributeCeremony'
 
 const MuseumPlaceholder: React.FC<{ archive: any }> = ({ archive }) => {
   const bgColor = archive.type === 'revolution' ? '#FDE8EC' : archive.type === 'government' ? '#F5F0EB' : '#FFF8E1'
   const accentColor = archive.type === 'revolution' ? '#C41E3A' : archive.type === 'government' ? '#5C5C5C' : '#8B6914'
   const label = archive.type === 'revolution' ? '红色革命遗址' : archive.type === 'government' ? '党政服务点位' : '群众文化阵地'
-  const shortTitle = archive.title.length > 12 ? archive.title.slice(0, 12) + '...' : archive.title
+  const iconSymbol = archive.type === 'revolution' ? '★' : archive.type === 'government' ? '◆' : '■'
+  const shortTitle = archive.title.length > 14 ? archive.title.slice(0, 14) + '…' : archive.title
+  const contentPreview = archive.description.length > 60 ? archive.description.slice(0, 60) + '…' : archive.description
   return (
-    <div className="w-full aspect-video rounded-2xl overflow-hidden border border-[#E8DFD5] relative flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${bgColor} 0%, #FEFAF6 100%)` }}>
-      <div className="absolute inset-4 rounded-xl border border-dashed opacity-30" style={{ borderColor: accentColor }} />
-      <div className="text-center space-y-3 z-10 px-8">
-        <div className="flex items-center justify-center gap-2" style={{ color: accentColor }}>
-          <div className="w-8 h-px" style={{ backgroundColor: accentColor, opacity: 0.5 }} />
-          <span className="text-3xl">{archive.type === 'revolution' ? '★' : archive.type === 'government' ? '◆' : '■'}</span>
-          <div className="w-8 h-px" style={{ backgroundColor: accentColor, opacity: 0.5 }} />
+    <div className="w-full aspect-video rounded-2xl overflow-hidden border border-[#E8DFD5] relative flex items-center justify-center group" style={{ background: `linear-gradient(135deg, ${bgColor} 20%, #FEFAF6 60%, ${bgColor}30 100%)` }}>
+      <div className="absolute inset-3 rounded-xl border border-dashed opacity-30" style={{ borderColor: accentColor }} />
+      <div className="absolute inset-6 rounded-lg border opacity-15" style={{ borderColor: accentColor }} />
+      <svg className="absolute top-3 left-3 opacity-10" width="40" height="40" viewBox="0 0 40 40" fill={accentColor}>
+        <path d="M20 2L25 15L38 15L27 23L31 36L20 29L9 36L13 23L2 15L15 15Z" />
+      </svg>
+      <svg className="absolute bottom-3 right-3 opacity-10" width="40" height="40" viewBox="0 0 40 40" fill={accentColor}>
+        <path d="M20 2L25 15L38 15L27 23L31 36L20 29L9 36L13 23L2 15L15 15Z" />
+      </svg>
+      <div className="text-center space-y-4 z-10 px-10">
+        <div className="flex items-center justify-center gap-3" style={{ color: accentColor }}>
+          <div className="w-10 h-px" style={{ backgroundColor: accentColor, opacity: 0.4 }} />
+          <span className="text-4xl drop-shadow-sm">{iconSymbol}</span>
+          <div className="w-10 h-px" style={{ backgroundColor: accentColor, opacity: 0.4 }} />
         </div>
-        <div className="text-xl font-bold font-serif text-[#1A1A1A]">{shortTitle}</div>
-        <div className="text-sm font-serif" style={{ color: accentColor }}>{archive.year}年 · {label}</div>
-        <div className="text-xs text-[#5C5C5C]/60 font-serif">广东省紫金县苏区镇 · 数字化档案</div>
+        <div className="text-2xl font-bold font-serif text-[#1A1A1A] tracking-wide">{shortTitle}</div>
+        <div className="inline-block px-4 py-1 rounded-full text-sm font-serif tracking-wider" style={{ color: accentColor, backgroundColor: bgColor, border: `1px solid ${accentColor}30` }}>
+          {archive.year}年 · {label}
+        </div>
+        <div className="text-xs text-[#5C5C5C]/70 font-serif leading-relaxed max-w-xs mx-auto">{contentPreview}</div>
+        <div className="flex items-center justify-center gap-2 pt-1">
+          <div className="w-16 h-px" style={{ backgroundColor: accentColor, opacity: 0.2 }} />
+          <span className="text-[9px] tracking-[0.3em] uppercase font-medium" style={{ color: accentColor, opacity: 0.5 }}>Digital Archive</span>
+          <div className="w-16 h-px" style={{ backgroundColor: accentColor, opacity: 0.2 }} />
+        </div>
       </div>
     </div>
   )
@@ -28,6 +45,7 @@ export const ArchiveDetailModal: React.FC = () => {
   const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [imgFailed, setImgFailed] = React.useState(false)
+  const [showCeremony, setShowCeremony] = useState(false)
   
   if (!isDetailModalOpen || !selectedPoiId) return null
   
@@ -217,7 +235,7 @@ export const ArchiveDetailModal: React.FC = () => {
               {archive.id === 'suqu-monument' && (
                 <button 
                   className="flex items-center gap-2 px-5 min-h-[44px] rounded-lg party-btn-primary ml-auto"
-                  onClick={() => alert('敬献花篮成功')}
+                  onClick={() => setShowCeremony(true)}
                   aria-label="敬献花篮"
                 >
                   <Flower2 size={18} />
@@ -228,6 +246,10 @@ export const ArchiveDetailModal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showCeremony && (
+        <TributeCeremony onClose={() => setShowCeremony(false)} />
+      )}
     </div>
   )
 }

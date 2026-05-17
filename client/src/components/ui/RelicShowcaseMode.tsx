@@ -72,17 +72,41 @@ export const RelicShowcaseMode: React.FC = () => {
     ring.position.y = -0.39
     relicGroup.add(ring)
 
-    const relicGeometry = new THREE.BoxGeometry(1, 1.5, 1)
+    const relicGeometry = archive?.id === 'suqu-red-house'
+      ? new THREE.CylinderGeometry(0.5, 0.55, 1.2, 32)
+      : archive?.id === 'blood-field'
+      ? new THREE.OctahedronGeometry(0.6, 0)
+      : archive?.id === 'soviet-arsenal'
+      ? new THREE.ConeGeometry(0.5, 1.4, 6)
+      : archive?.id === 'paozi-village-defense'
+      ? new THREE.TorusKnotGeometry(0.45, 0.12, 64, 8)
+      : archive?.id === 'red-army-pavilion'
+      ? new THREE.DodecahedronGeometry(0.6, 0)
+      : archive?.id === 'suqu-red-transport-station'
+      ? new THREE.TorusGeometry(0.45, 0.18, 16, 32)
+      : archive?.id === 'dongjiang-committee'
+      ? new THREE.IcosahedronGeometry(0.6, 0)
+      : new THREE.BoxGeometry(1, 1.5, 1)
     
     const canvas = document.createElement('canvas')
     canvas.width = 256
     canvas.height = 256
     const context = canvas.getContext('2d')
     if (context) {
-      context.fillStyle = '#A08070'
+      const baseHue = archive?.id === 'suqu-red-house' ? 10
+        : archive?.id === 'blood-field' ? 0
+        : archive?.id === 'soviet-arsenal' ? 20
+        : archive?.id === 'paozi-village-defense' ? 340
+        : archive?.id === 'red-army-pavilion' ? 30
+        : archive?.id === 'suqu-red-transport-station' ? 15
+        : archive?.id === 'dongjiang-committee' ? 25
+        : 20
+      context.fillStyle = `hsl(${baseHue}, 30%, 45%)`
       context.fillRect(0, 0, 256, 256)
       for (let i = 0; i < 5000; i++) {
-        context.fillStyle = Math.random() > 0.5 ? '#8B7355' : '#6B5340'
+        context.fillStyle = Math.random() > 0.5 
+          ? `hsl(${baseHue + 5}, 25%, ${35 + Math.random() * 15}%)` 
+          : `hsl(${baseHue - 5}, 20%, ${25 + Math.random() * 10}%)`
         context.fillRect(Math.random() * 256, Math.random() * 256, 2, 2)
       }
     }

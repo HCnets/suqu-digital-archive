@@ -152,6 +152,9 @@ function App() {
             <h2 className="text-xl md:text-2xl tracking-[0.5em] font-light mt-4" style={{ color: '#8B6914' }}>
               传承红色基因 · 弘扬苏区精神
             </h2>
+            <p className="mt-8 text-sm md:text-base tracking-[0.15em] font-serif leading-relaxed max-w-xl" style={{ color: '#8B6914' }}>
+              坚定信念 · 求真务实 · 一心为民 · 清正廉洁 · 艰苦奋斗 · 争创一流 · 无私奉献
+            </p>
             <p className="mt-12 text-sm tracking-[0.22em]" style={{ color: '#5C5C5C' }}>
               正在整理苏区史料与实践路线...
             </p>
