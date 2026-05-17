@@ -36,17 +36,17 @@ export const ArchiveDetailModal: React.FC = () => {
       />
       
       {/* 模态框主体 */}
-      <div className="relative w-full max-w-5xl h-full max-h-[85vh] bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+      <div className="relative w-full max-w-5xl h-full max-h-[85vh] bg-zinc-950/90 backdrop-blur-2xl border border-rose-900/30 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* 模态框头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20 relative overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-rose-900/30 bg-black/20 relative overflow-hidden">
           {/* Audio Waveform Effect (Only visible when playing) */}
           {isPlaying && (
             <div className="absolute inset-0 z-0 opacity-20 pointer-events-none flex items-center justify-center gap-2">
               {[...Array(20)].map((_, i) => (
                 <div 
                   key={i} 
-                  className="w-2 bg-blue-400 rounded-full animate-pulse" 
+                  className="w-2 bg-rose-500 rounded-full animate-pulse" 
                   style={{ 
                     height: `${Math.random() * 60 + 20}%`,
                     animationDuration: `${Math.random() * 0.5 + 0.3}s` 
@@ -58,17 +58,17 @@ export const ArchiveDetailModal: React.FC = () => {
 
           <div className="flex items-center gap-4 relative z-10">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-              archive.type === 'revolution' ? 'bg-red-500/20 text-red-400' :
-              archive.type === 'government' ? 'bg-blue-500/20 text-blue-400' : 
-              'bg-amber-500/20 text-amber-400'
+              archive.type === 'revolution' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+              archive.type === 'government' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 
+              'bg-amber-500/20 text-amber-400 border border-amber-500/30'
             }`}>
               <MapPin size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-wide">{archive.title}</h2>
-              <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
+              <h2 className="text-2xl font-bold text-rose-50 tracking-wide font-serif">{archive.title}</h2>
+              <div className="flex items-center gap-3 mt-1 text-sm text-rose-200/60 font-medium">
                 <span className="flex items-center gap-1"><Calendar size={14} /> {archive.year}年</span>
-                <span className="flex items-center gap-1 font-mono bg-white/5 px-2 rounded">
+                <span className="flex items-center gap-1 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5">
                   {archive.longitude.toFixed(4)}, {archive.latitude.toFixed(4)}
                 </span>
               </div>
@@ -78,10 +78,10 @@ export const ArchiveDetailModal: React.FC = () => {
           <div className="flex items-center gap-4 relative z-10">
             <button
               onClick={handleToggleAudio}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border ${
+              className={`flex items-center gap-2 px-5 min-h-[44px] rounded-full transition-all duration-300 border ${
                 isPlaying 
-                  ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
-                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                  ? 'bg-rose-600/20 border-rose-500/50 text-rose-300 shadow-[0_0_15px_rgba(225,29,72,0.3)]' 
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:-translate-y-0.5'
               }`}
             >
               {isPlaying ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
@@ -90,9 +90,9 @@ export const ArchiveDetailModal: React.FC = () => {
             
             <button 
               onClick={() => setDetailModalOpen(false)}
-              className="p-3 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/50 hover:bg-rose-600/20 hover:text-rose-200 hover:border-rose-500/30 transition-all duration-300"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
         </div>
@@ -103,29 +103,29 @@ export const ArchiveDetailModal: React.FC = () => {
           {/* 左侧：多媒体展示 */}
           <div className="w-full lg:w-3/5 flex flex-col gap-4">
             {archive.media && archive.media.length > 0 ? (
-              <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/5 relative group">
+              <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black/50 border border-rose-900/30 relative group">
                 <img 
                   src={archive.media[0].url} 
                   alt={archive.media[0].caption}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white/90 text-sm flex items-center gap-2">
+                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-zinc-950 to-transparent">
+                  <p className="text-white/90 text-sm flex items-center gap-2 font-serif">
                     <ImageIcon size={16} /> {archive.media[0].caption}
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="w-full aspect-video rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30">
+              <div className="w-full aspect-video rounded-2xl bg-white/5 border border-rose-900/30 flex items-center justify-center text-white/30 font-serif">
                 暂无多媒体资料
               </div>
             )}
             
             {/* 缩略图列表 (如果有多个) */}
             {archive.media && archive.media.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-2">
+              <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                 {archive.media.map((m, idx) => (
-                  <div key={idx} className="w-32 aspect-video rounded-lg overflow-hidden bg-white/10 flex-shrink-0 cursor-pointer hover:ring-2 ring-white/50 transition-all">
+                  <div key={idx} className="w-32 aspect-video rounded-xl overflow-hidden bg-white/10 flex-shrink-0 cursor-pointer hover:ring-2 ring-rose-500/50 transition-all hover:-translate-y-1 duration-300">
                     <img src={m.url} alt={m.caption} className="w-full h-full object-cover" />
                   </div>
                 ))}
@@ -135,35 +135,35 @@ export const ArchiveDetailModal: React.FC = () => {
 
           {/* 右侧：深度档案文本 */}
           <div className="w-full lg:w-2/5 flex flex-col">
-            <h3 className="text-lg font-semibold text-white/80 mb-4 flex items-center gap-2">
-              <div className="w-1 h-4 bg-blue-500 rounded-full" />
+            <h3 className="text-lg font-semibold text-amber-400/90 mb-4 flex items-center gap-2 font-serif tracking-wider">
+              <div className="w-1 h-4 bg-amber-500 rounded-full" />
               档案详述
             </h3>
               <div className="prose prose-invert prose-red max-w-none">
-                <p className="text-red-100/90 leading-loose text-base md:text-lg font-medium">
+                <p className="text-rose-100/90 leading-loose text-base md:text-lg font-serif">
                   {archive.description}
                 </p>
                 
                 {archive.content && (
-                  <div className="mt-8 pt-6 border-t border-red-900/30">
-                    <h4 className="text-amber-400 font-bold mb-4 flex items-center gap-2">
+                  <div className="mt-8 pt-6 border-t border-rose-900/40">
+                    <h4 className="text-amber-400 font-bold mb-4 flex items-center gap-2 font-serif text-lg tracking-wide">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                       深度历史文献档案
                     </h4>
-                    <div className="text-red-50/80 whitespace-pre-wrap leading-loose">
+                    <div className="text-rose-50/80 whitespace-pre-wrap leading-loose font-serif">
                       {archive.content}
                     </div>
                   </div>
                 )}
                 
-                <div className="mt-8 p-4 rounded-xl bg-red-900/20 border border-red-500/20 text-red-200/60 text-sm">
-                  <strong>档案局注记：</strong> 此文献经过数字化多维拓扑重建。基于目前系统客观条件限制，地图空间中显示的 3D 建筑为 GIS 地理空间引擎生成的【程序化高程占位基座】，用以标记遗址坐标与范围，并非历史建筑的 1:1 倾斜摄影或手工 3D 还原模型。真实历史风貌请以现场文物或档案局馆藏老照片为准。
+                <div className="mt-8 p-5 rounded-2xl bg-rose-950/30 border border-rose-900/50 text-rose-200/70 text-sm font-serif leading-relaxed">
+                  <strong className="text-rose-200">档案局注记：</strong> 此文献经过数字化多维拓扑重建。基于目前系统客观条件限制，地图空间中显示的 3D 建筑为 GIS 地理空间引擎生成的【程序化高程占位基座】，用以标记遗址坐标与范围，并非历史建筑的 1:1 倾斜摄影或手工 3D 还原模型。真实历史风貌请以现场文物或档案局馆藏老照片为准。
                 </div>
               </div>
 
             {/* Tags & Actions */}
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm border border-blue-500/30">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+                <span className="px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-300 text-sm border border-blue-500/20 font-medium">
                   数字沙盘点位
                 </span>
                 
@@ -174,7 +174,7 @@ export const ArchiveDetailModal: React.FC = () => {
                       setDetailModalOpen(false)
                       setIndoorMode(true)
                     }}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-colors ml-auto animate-pulse"
+                    className="flex items-center gap-2 px-5 min-h-[44px] rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all ml-auto hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(16,185,129,0.2)]"
                   >
                     <Layers size={16} />
                     进入室内 BIM 下钻模式
@@ -188,7 +188,7 @@ export const ArchiveDetailModal: React.FC = () => {
                       setDetailModalOpen(false)
                       setRelicMode(true)
                     }}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 transition-colors ml-auto animate-pulse"
+                    className="flex items-center gap-2 px-5 min-h-[44px] rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all ml-auto hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(245,158,11,0.2)]"
                   >
                     <Box size={16} />
                     文物全息展台
@@ -198,7 +198,7 @@ export const ArchiveDetailModal: React.FC = () => {
                 {/* Monument Special Action */}
                 {archive.id === 'suqu-monument' && (
                   <button 
-                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-red-600/80 hover:bg-red-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] ml-auto"
+                    className="flex items-center gap-2 px-6 min-h-[44px] rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all shadow-[0_4px_20px_rgba(225,29,72,0.4)] ml-auto hover:-translate-y-0.5"
                     onClick={() => alert('敬献花篮成功，重温入党誓词：我志愿加入中国共产党...')}
                   >
                     <span className="text-xl">🌺</span>
