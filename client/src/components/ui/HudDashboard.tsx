@@ -3,7 +3,7 @@ import { useAppStore } from '@/store'
 import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route } from 'lucide-react'
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute } = useAppStore()
   
   // 基于当前时间轴过滤数据
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
