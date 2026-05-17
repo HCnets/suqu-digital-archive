@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useState } from 'react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -17,6 +17,11 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 export const HudDashboard: React.FC = () => {
   const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
+  useEffect(() => {
+    setCollapsed(isMobile)
+  }, [isMobile])
   
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
   
@@ -47,19 +52,37 @@ export const HudDashboard: React.FC = () => {
   }
 
   return (
-    <div className="absolute top-24 left-4 flex gap-0 z-40">
-      {/* 折叠条 */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="pointer-events-auto self-start mt-0 w-8 h-12 rounded-l-xl bg-white border border-r-0 border-[#E8DFD5] flex items-center justify-center text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FEFAF6] transition-colors"
-        aria-label={collapsed ? "展开学习面板" : "折叠学习面板"}
-      >
-        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-      </button>
+    <>
+      {/* 移动端遮罩 */}
+      {!collapsed && isMobile && (
+        <div className="md:hidden fixed inset-0 bg-black/30 z-[45] pointer-events-auto" onClick={() => setCollapsed(true)} />
+      )}
+      
+      <div className="absolute top-24 left-4 flex gap-0 z-[50]">
+        {/* 折叠/汉堡按钮 */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={`pointer-events-auto self-start w-10 h-12 rounded-xl bg-white border border-[#E8DFD5] flex items-center justify-center text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FEFAF6] transition-all shadow-sm ${
+            collapsed ? 'rounded-xl' : 'rounded-l-xl'
+          }`}
+          aria-label={collapsed ? "展开学习面板" : "折叠学习面板"}
+        >
+          {collapsed ? (isMobile ? <Menu size={18} /> : <PanelLeftOpen size={16} />) : <PanelLeftClose size={16} />}
+        </button>
 
-      {!collapsed && (
-        <div className="w-80 flex flex-col gap-4 pointer-events-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-      <div className="overflow-y-auto custom-scrollbar pr-1 pb-4 space-y-4 flex-1">
+        {!collapsed && (
+          <div className={`flex flex-col gap-4 pointer-events-auto bg-white md:bg-transparent md:border-none border border-l-0 border-[#E8DFD5] rounded-r-2xl md:rounded-none ${isMobile ? 'w-[85vw] max-w-[360px] fixed left-4 top-20 bottom-4 shadow-2xl rounded-2xl' : 'w-80'}`} style={{ maxHeight: isMobile ? 'calc(100vh - 96px)' : 'calc(100vh - 220px)' }}>
+            {isMobile && (
+              <div className="flex items-center justify-between px-5 pt-4 md:hidden">
+                <h2 className="text-sm font-bold text-[#1A1A1A] font-serif flex items-center gap-2">
+                  <BookHeart size={16} className="text-[#C41E3A]" /> 苏区思政大课堂
+                </h2>
+                <button onClick={() => setCollapsed(true)} className="p-1.5 rounded-lg hover:bg-[#FEFAF6] text-[#5C5C5C] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="关闭面板">
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+            <div className="overflow-y-auto custom-scrollbar pr-1 pb-4 space-y-4 flex-1 px-1 md:px-0">
       
       {/* 核心指标总览 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden">
@@ -131,8 +154,8 @@ export const HudDashboard: React.FC = () => {
             return (
               <button
                 key={course.order}
-                onClick={() => handleLearningCourseClick(course.archiveId)}
-                className={`w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer group flex flex-col justify-center min-h-[44px] ${
+                onClick={() => { handleLearningCourseClick(course.archiveId); if (isMobile) setCollapsed(true) }}
+                className={`w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer group flex flex-col justify-center min-h-[44px] touch-manipulation ${
                   isActive 
                     ? 'bg-[#FDE8EC] border-[#C41E3A]/50 shadow-sm' 
                     : 'bg-white border-[#E8DFD5] hover:border-[#C41E3A]/30 hover:bg-[#FEFAF6]'
@@ -169,24 +192,24 @@ export const HudDashboard: React.FC = () => {
         </h3>
         
         <button 
-          onClick={() => setSwipeMode(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px]"
+          onClick={() => { setSwipeMode(true); if (isMobile) setCollapsed(true) }}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px] touch-manipulation"
         >
           <MoveHorizontal size={16} />
           <span className="text-sm font-medium">百年时空对照</span>
         </button>
 
         <button 
-          onClick={() => setFpsMode(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px]"
+          onClick={() => { setFpsMode(true); if (isMobile) setCollapsed(true) }}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px] touch-manipulation"
         >
           <Crosshair size={16} />
           <span className="text-sm font-medium">重走红军路</span>
         </button>
 
         <button 
-          onClick={() => setDirectorMode(!isDirectorMode)}
-          className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] ${
+          onClick={() => { setDirectorMode(!isDirectorMode); if (isMobile) setCollapsed(true) }}
+          className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
             isDirectorMode 
               ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]'
               : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
@@ -207,7 +230,7 @@ export const HudDashboard: React.FC = () => {
         <div className="flex flex-col gap-2">
           <button 
             onClick={() => setShowHistoricalRoute(!showHistoricalRoute)}
-            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] ${
+            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
               showHistoricalRoute ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
             }`}
           >
@@ -224,5 +247,6 @@ export const HudDashboard: React.FC = () => {
     </div>
     )}
     </div>
+    </>
   )
 }

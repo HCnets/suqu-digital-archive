@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { HeartHandshake, Sparkles, Users, MessageSquareHeart, Flower2, Send, X } from 'lucide-react'
+import { HeartHandshake, Sparkles, Users, MessageSquareHeart, Flower2, Send, X, ChevronUp } from 'lucide-react'
 
 const API_BASE = 'http://localhost:3001/api'
 
@@ -29,6 +29,8 @@ export const RightDataPanel: React.FC = () => {
   const [formText, setFormText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const allMessages = apiMessages.length > 0 ? apiMessages : MOCK_MESSAGES
 
@@ -94,10 +96,8 @@ export const RightDataPanel: React.FC = () => {
     return `${Math.floor(diff / 86400000)}天前`
   }
 
-  return (
-    <div className="absolute top-24 right-20 w-80 flex flex-col gap-4 pointer-events-auto z-40 max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar pr-1 pb-4">
-      
-      {/* 模块一：线上参与致敬 */}
+  const panelContent = (
+    <div className="flex flex-col gap-4 pointer-events-auto max-h-[calc(100vh-130px)] overflow-y-auto custom-scrollbar pr-1 pb-4 w-full">      {/* 模块一：线上参与致敬 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden flex-none">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C41E3A] to-[#8B6914]" />
         
@@ -216,5 +216,45 @@ export const RightDataPanel: React.FC = () => {
         )}
       </div>
     </div>
+  )
+
+  return (
+    <>
+      {isMobile && mobileOpen && (
+        <div className="fixed inset-0 bg-black/30 z-[45] pointer-events-auto md:hidden" onClick={() => setMobileOpen(false)} />
+      )}
+      {isMobile && (
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="absolute bottom-28 right-4 z-[50] md:hidden min-w-[48px] min-h-[48px] rounded-full bg-[#C41E3A] text-white shadow-lg flex items-center justify-center gap-1.5 px-4 font-medium text-sm pointer-events-auto touch-manipulation"
+          aria-label="打开群众互动面板"
+        >
+          <HeartHandshake size={18} />
+          {!mobileOpen && <span className="text-xs whitespace-nowrap">群众互动</span>}
+          <ChevronUp size={16} className={`transition-transform ${mobileOpen ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+      {isMobile ? (
+        mobileOpen && (
+          <div className="fixed inset-x-4 top-16 bottom-4 z-[50] md:hidden pointer-events-auto bg-white rounded-2xl shadow-2xl border border-[#E8DFD5] overflow-hidden">
+            <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-[#E8DFD5]">
+              <h2 className="text-sm font-bold text-[#1A1A1A] font-serif flex items-center gap-2">
+                <MessageSquareHeart size={16} className="text-[#C41E3A]" /> 群众互动与致敬
+              </h2>
+              <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg hover:bg-[#FEFAF6] text-[#5C5C5C] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="关闭">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto h-[calc(100%-56px)]">
+              {panelContent}
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="absolute top-24 right-20 w-80 z-40">
+          {panelContent}
+        </div>
+      )}
+    </>
   )
 }

@@ -24,32 +24,32 @@ export const TimeSlider: React.FC = () => {
   }, [currentYear, setActiveEvent])
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-8 pointer-events-auto z-40">
+    <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 md:px-8 pointer-events-auto z-40">
       {/* 编年史大事件提示 */}
       {HISTORICAL_EVENTS[currentYear] && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-8 text-center pointer-events-none w-full animate-in slide-in-from-bottom-4 fade-in duration-500">
-          <div className="inline-flex flex-col items-center p-6 rounded-2xl bg-white border border-[#E8DFD5] shadow-lg">
-            <h1 className="text-5xl md:text-6xl font-black tracking-widest font-serif text-[#C41E3A]">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 md:mb-8 text-center pointer-events-none w-full animate-in slide-in-from-bottom-4 fade-in duration-500">
+          <div className="inline-flex flex-col items-center p-4 md:p-6 rounded-2xl bg-white border border-[#E8DFD5] shadow-lg">
+            <h1 className="text-3xl md:text-6xl font-black tracking-widest font-serif text-[#C41E3A]">
               {currentYear}
             </h1>
-            <h2 className="text-xl font-bold text-[#1A1A1A] tracking-wide mt-1 font-serif">
+            <h2 className="text-lg md:text-xl font-bold text-[#1A1A1A] tracking-wide mt-1 font-serif">
               {HISTORICAL_EVENTS[currentYear].title}
             </h2>
-            <p className="text-[#5C5C5C] text-sm mt-1 font-medium">
+            <p className="text-[#5C5C5C] text-xs md:text-sm mt-1 font-medium">
               {HISTORICAL_EVENTS[currentYear].subtitle}
             </p>
           </div>
-          <div className="w-px h-8 mx-auto mt-2 bg-gradient-to-b from-[#C41E3A]/40 to-transparent" />
+          <div className="w-px h-6 md:h-8 mx-auto mt-2 bg-gradient-to-b from-[#C41E3A]/40 to-transparent" />
         </div>
       )}
 
-      <div className="museum-card p-6 rounded-2xl flex flex-col gap-5">
+      <div className="museum-card p-4 md:p-6 rounded-2xl flex flex-col gap-4 md:gap-5">
         <div className="flex justify-between items-center text-[#5C5C5C]">
-          <span className="text-sm font-medium">{minYear}</span>
-          <span className="text-3xl font-bold text-[#1A1A1A] font-serif">
+          <span className="text-xs md:text-sm font-medium">{minYear}</span>
+          <span className="text-2xl md:text-3xl font-bold text-[#1A1A1A] font-serif">
             {currentYear}
           </span>
-          <span className="text-sm font-medium">{maxYear}</span>
+          <span className="text-xs md:text-sm font-medium">{maxYear}</span>
         </div>
 
         <div className="relative w-full h-2 bg-[#FEFAF6] rounded-full mt-2 border border-[#E8DFD5]">

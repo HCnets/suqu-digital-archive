@@ -79,10 +79,10 @@ function App() {
         <TimeSlider />
       </div>
 
-      {/* POI 信息卡 - 渲染在z-10容器之外以避免被RightDataPanel覆盖 */}
+      {/* POI 信息卡 */}
       {!showIntro && activeArchive && (
-        <div className="absolute bottom-20 right-6 z-[60] pointer-events-auto">
-          <div className="museum-card p-6 rounded-2xl w-full max-w-md transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
+        <div className="absolute bottom-20 right-6 left-6 md:left-auto z-[60] pointer-events-auto">
+          <div className="museum-card p-4 md:p-6 rounded-2xl w-full md:max-w-md transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
             <div className={`absolute top-0 left-0 w-full h-1 ${
               activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :
               activeArchive.type === 'government' ? 'bg-[#5C5C5C]' : 'bg-[#8B6914]'

@@ -58,12 +58,12 @@ export const ArchiveDetailModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[80] flex items-center justify-center p-6" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[80] flex items-center justify-center p-1 md:p-6" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
       
-      <div className="relative w-full max-w-5xl h-full max-h-[85vh] bg-white border border-[#E8DFD5] rounded-3xl shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+      <div className="relative w-full max-w-5xl h-full max-h-[98vh] md:max-h-[85vh] bg-white border border-[#E8DFD5] rounded-2xl md:rounded-3xl shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E8DFD5] bg-[#FEFAF6] relative overflow-hidden">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-[#E8DFD5] bg-[#FEFAF6] relative overflow-hidden">
           {isPlaying && (
             <div className="absolute inset-0 z-0 opacity-15 pointer-events-none flex items-center justify-center gap-2">
               {[...Array(16)].map((_, i) => (

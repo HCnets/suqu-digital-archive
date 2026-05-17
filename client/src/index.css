@@ -84,6 +84,11 @@
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+
+  button, [role='button'], a {
+    touch-action: manipulation;
   }
 
   .hud-panel, .right-panel {
@@ -109,6 +114,17 @@
   .top-marker {
     font-size: 1.125rem !important;
   }
+
+  /* 地图控件触控适配 */
+  .maplibregl-ctrl-group {
+    border-radius: 12px !important;
+    overflow: hidden;
+  }
+
+  .maplibregl-ctrl-group button {
+    width: 40px !important;
+    height: 40px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -123,6 +139,10 @@
 
   .museum-card p {
     font-size: 0.75rem !important;
+  }
+
+  input, textarea, select {
+    font-size: 16px !important;
   }
 }
 
