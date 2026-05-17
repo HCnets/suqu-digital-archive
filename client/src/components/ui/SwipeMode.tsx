@@ -79,6 +79,10 @@ export const SwipeMode: React.FC = () => {
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend', handleTouchEnd)
+      if (historicalMapInstance.current) {
+        historicalMapInstance.current.remove()
+        historicalMapInstance.current = null
+      }
     }
   }, [isSwipeMode])
 

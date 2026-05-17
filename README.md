@@ -8,6 +8,19 @@
 ## 🌟 项目纪年表与版本演进 (Time Tree)
 *注：以下纪年表严格遵循时间树规范，只增不减，完整体现版本工程推进及成果。*
 
+### [v2.9.0] - 2026-05-18
+- **版本状态**: 第五轮红色资源与功能完善 — 英雄谱专区、东江苏区地图、工程卫生
+- **工程推进**:
+  - **P0 功能缺陷修复**: FpsOverlay 操作说明从 WASD 修正为方向键（↑↓←→）指示，解决用户按 WASD 无效问题。SwipeMode 退出时销毁 historicalMap 实例（`map.remove()`），消除双 MapLibre 内存泄漏。DirectorModeController 移除未使用 `getAllArchives` 死代码。
+  - **P1 红色人物英雄谱**: 创建 `HeroesPanel` 组件（双列卡片布局），收录彭湃、刘琴西、叶镛、徐向前、钟火妹、黄木生、李月梅、张木桂、魏荫亭、苏惠等 10 位革命先驱。按「革命领袖/红军战士/人民群众」三类分色展示生平事迹与精神传承。入口位于 HudDashboard 辅助学习工具区。
+  - **P1 东江苏区全域形势图**: GisMap 新增 GeoJSON 半透明红色边界图层展示海陆惠紫四县连片苏区范围（面积约 3000 平方公里），支持开关切换，开启时自动缩放到全域视角。HudDashboard 新增「东江苏区全域形势」切换按钮。
+  - **P1 IndoorBIM 动态标题**: `IndoorBimMode` 现在从 store 读取 `selectedPoiId` 获取当前建筑名称，标题随建筑切换动态变化（原固定显示「苏区镇政府大楼」）。
+  - **P1 store 网络优化**: `fetchArchives()` 在前置于静态部署（GitHub Pages）时跳过无用 `fetch` 请求，避免生产环境约 2 秒等待超时。
+  - **P2 工程卫生**: 清除 store `console.error` 冗余日志。新增 `public/robots.txt` SEO 爬虫指引。`server/archives.json` 补充缺失的 `paozi-village-defense` 和 `suqu-red-transport-station` 两条档案数据（14→16 条与服务端同步）。
+- **阶段成果**:
+  - 12 项第五轮审查不足全部修复。TypeScript 零错误 + Vite 构建通过。
+  - 红色人物专区从零到 10 位英雄，东江苏区全域地图首次可视化。系统生态完整度大幅提升。
+
 ### [v2.8.0] - 2026-05-18
 - **版本状态**: 第四轮红色内容深度修复 - 仪式感升级与思政教育体系完善
 - **工程推进**:

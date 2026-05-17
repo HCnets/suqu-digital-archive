@@ -33,21 +33,28 @@ export const FpsOverlay: React.FC = () => {
           <div className="flex items-center justify-between gap-8">
             <span>平移镜头</span>
             <div className="flex gap-1">
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">W</kbd>
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">A</kbd>
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">S</kbd>
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">D</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">↑</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">↓</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">←</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">→</kbd>
             </div>
           </div>
           
           <div className="flex items-center justify-between gap-8">
             <span>旋转视角</span>
-            <span className="text-xs">鼠标拖拽</span>
+            <div className="flex gap-1">
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">Q</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">E</kbd>
+            </div>
           </div>
 
           <div className="flex items-center justify-between gap-8">
-            <span>调整高度</span>
-            <span className="text-xs">鼠标滚轮</span>
+            <span>调整俯仰</span>
+            <div className="flex gap-1">
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">Ctrl</kbd>
+              <span className="text-xs text-[#5C5C5C]/50">+</span>
+              <span className="text-xs">拖拽</span>
+            </div>
           </div>
         </div>
 

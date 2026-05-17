@@ -194,5 +194,29 @@
     "media": [
       { "type": "image", "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Suqu_Town_Hall.jpg/800px-Suqu_Town_Hall.jpg", "caption": "苏区镇人民政府——全国唯一以'苏区'命名的乡镇行政中心，乡村振兴红色样板" }
     ]
+  },
+  "paozi-village-defense": {
+    "id": "paozi-village-defense",
+    "title": "炮子村阻击战遗址",
+    "year": 1928,
+    "type": "revolution",
+    "description": "1928年3月，红二师、红四师与苏区赤卫队在此依托山势地形与敌军展开殊死搏斗，以少敌多、以弱抗强，掩护了苏维埃政府和群众安全转移。",
+    "longitude": 115.3330,
+    "latitude": 23.3585,
+    "media": [
+      { "type": "image", "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Paozi_Village_Battle_Site.jpg/800px-Paozi_Village_Battle_Site.jpg", "caption": "炮子村阻击战遗址——1928年600余名红军赤卫队员殊死阻击敌军三天三夜" }
+    ]
+  },
+  "suqu-red-transport-station": {
+    "id": "suqu-red-transport-station",
+    "title": "苏区红色交通站旧址",
+    "year": 1928,
+    "type": "revolution",
+    "description": "土地革命战争时期，中共中央建立的地下交通网络在苏区镇的重要节点，承担传递情报、护送干部、运送物资等绝密任务。",
+    "longitude": 115.3425,
+    "latitude": 23.3570,
+    "media": [
+      { "type": "image", "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Suqu_Red_Transport_Station.jpg/800px-Suqu_Red_Transport_Station.jpg", "caption": "苏区红色交通站旧址——连接东江苏区与中央苏区的秘密交通线节点" }
+    ]
   }
 }

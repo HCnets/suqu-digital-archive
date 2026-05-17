@@ -8,8 +8,7 @@ export const DirectorModeController: React.FC = () => {
     setSelectedPoiId, 
     setDetailModalOpen,
     setActiveEvent,
-    setShowHistoricalRoute,
-    getAllArchives
+    setShowHistoricalRoute
   } = useAppStore()
 
   const sequenceRef = useRef<boolean>(false)

@@ -99,7 +99,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   const tourIntervalRef = useRef<number | null>(null)
   const [mapLoading, setMapLoading] = useState(true)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, activeEvent, isFpsMode } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode } = useAppStore()
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -530,6 +530,63 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       cancelAnimationFrame(animationFrameId)
     }
   }, [showHistoricalRoute])
+
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+    const SOURCE_ID = 'soviet-region-source'
+    const LAYER_ID = 'soviet-region-fill'
+    const OUTLINE_ID = 'soviet-region-outline'
+
+    if (showSovietRegion) {
+      if (!map.getSource(SOURCE_ID)) {
+        map.addSource(SOURCE_ID, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: { name: '海陆惠紫苏区' },
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[
+                [114.40, 23.72],
+                [115.72, 23.72],
+                [115.75, 22.78],
+                [114.38, 22.80],
+                [114.40, 23.72]
+              ]]
+            }
+          }
+        })
+        map.addLayer({
+          id: LAYER_ID,
+          type: 'fill',
+          source: SOURCE_ID,
+          paint: {
+            'fill-color': '#C41E3A',
+            'fill-opacity': 0.12
+          }
+        })
+        map.addLayer({
+          id: OUTLINE_ID,
+          type: 'line',
+          source: SOURCE_ID,
+          paint: {
+            'line-color': '#C41E3A',
+            'line-width': 2,
+            'line-opacity': 0.6,
+            'line-dasharray': [4, 3]
+          }
+        })
+      }
+
+      const bounds: [[number, number], [number, number]] = [[114.38, 22.78], [115.75, 23.72]]
+      map.fitBounds(bounds, { padding: 100, duration: 2000 })
+    } else {
+      if (map.getLayer(OUTLINE_ID)) map.removeLayer(OUTLINE_ID)
+      if (map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID)
+      if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID)
+    }
+  }, [showSovietRegion])
 
   // 监听 FPS 模式切换
   useEffect(() => {

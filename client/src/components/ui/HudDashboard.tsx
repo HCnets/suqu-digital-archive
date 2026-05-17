@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { FpsOverlay } from '@/components/ui/FpsOverlay'
+import { HeroesPanel } from '@/components/ui/HeroesPanel'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -14,8 +17,9 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 ]
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
+  const [showHeroes, setShowHeroes] = useState(false)
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
 
   useEffect(() => {
@@ -257,6 +261,30 @@ export const HudDashboard: React.FC = () => {
             </div>
             <div className={`w-2 h-2 rounded-full transition-all duration-300 ${showHistoricalRoute ? 'bg-[#C41E3A]' : 'bg-[#E8DFD5]'}`} />
           </button>
+
+          <button 
+            onClick={() => setShowHeroes(true)}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Users size={14} />
+              <span className="text-sm font-medium">革命先驱 · 英雄谱</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => setShowSovietRegion(!showSovietRegion)}
+            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
+              showSovietRegion ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Map size={14} />
+              <span className="text-sm font-medium">东江苏区全域形势</span>
+            </div>
+            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${showSovietRegion ? 'bg-[#C41E3A]' : 'bg-[#E8DFD5]'}`} />
+          </button>
         </div>
       </div>
       
@@ -264,6 +292,8 @@ export const HudDashboard: React.FC = () => {
     </div>
     )}
     </div>
+
+    {showHeroes && <HeroesPanel onClose={() => setShowHeroes(false)} />}
     </>
   )
 }

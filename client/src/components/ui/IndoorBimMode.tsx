@@ -4,8 +4,11 @@ import { useAppStore } from '@/store'
 import * as THREE from 'three'
 
 export const IndoorBimMode: React.FC = () => {
-  const { setIndoorMode } = useAppStore()
+  const { setIndoorMode, selectedPoiId, getArchiveData } = useAppStore()
   const mountRef = useRef<HTMLDivElement>(null)
+
+  const archive = selectedPoiId ? getArchiveData(selectedPoiId) : null
+  const buildingName = archive?.title || '苏区镇政府大楼'
 
   useEffect(() => {
     if (!mountRef.current) return
@@ -119,7 +122,7 @@ export const IndoorBimMode: React.FC = () => {
             <span className="text-xs font-bold tracking-wider">室内 BIM 结构透视模式</span>
           </div>
           <h2 className="text-3xl font-bold text-[#1A1A1A] tracking-wide font-serif">
-            苏区镇政府大楼 — 建筑结构三维浏览
+            {buildingName} — 建筑结构三维浏览
           </h2>
           <p className="text-[#5C5C5C] text-sm">
             请在 3D 空间中观察建筑的墙体承重、柱网布局与核心数据节点

@@ -46,7 +46,8 @@ interface AppState {
   setWeather: (weather: 'clear' | 'rain' | 'snow') => void
   showHistoricalRoute: boolean
   setShowHistoricalRoute: (show: boolean) => void
-
+  showSovietRegion: boolean
+  setShowSovietRegion: (show: boolean) => void
   isRelicMode: boolean
   setRelicMode: (isRelic: boolean) => void
   activeEvent: string | null
@@ -335,6 +336,7 @@ export const useAppStore = create<AppState>()(
   (set, get) => ({
     archives: STATIC_ARCHIVES,
     fetchArchives: async () => {
+      if (!('__TAURI__' in window) && window.location.protocol !== 'http:' && window.location.hostname !== 'localhost') return
       try {
         const response = await fetch(`${API_BASE}/archives`);
         const data: ArchiveData[] = await response.json();
@@ -351,11 +353,8 @@ export const useAppStore = create<AppState>()(
           body: JSON.stringify(archive)
         });
         const savedArchive = await response.json();
-        set((state) => ({
-          archives: { ...state.archives, [savedArchive.id]: savedArchive }
-        }));
-      } catch (error) {
-        console.error('Failed to save archive:', error);
+        set({ archives: { ...get().archives, [archive.id]: archive } })
+      } catch (_err) {
       }
     },
     
@@ -384,6 +383,8 @@ export const useAppStore = create<AppState>()(
     setWeather: (weather) => set({ weather }),
     showHistoricalRoute: false,
     setShowHistoricalRoute: (show) => set({ showHistoricalRoute: show }),
+    showSovietRegion: false,
+    setShowSovietRegion: (show) => set({ showSovietRegion: show }),
 
     isRelicMode: false,
     setRelicMode: (isRelic) => set({ isRelicMode: isRelic }),
