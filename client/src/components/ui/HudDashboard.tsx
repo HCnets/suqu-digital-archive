@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
@@ -15,9 +15,15 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 ]
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     setCollapsed(isMobile)
@@ -217,6 +223,18 @@ export const HudDashboard: React.FC = () => {
         >
           <Film size={16} />
           <span className="text-sm font-medium">{isDirectorMode ? '停止自动讲解' : '开始自动讲解'}</span>
+        </button>
+
+        <button 
+          onClick={() => setWeather(weather === 'rain' ? 'clear' : 'rain')}
+          className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
+            weather === 'rain'
+              ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]'
+              : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
+          }`}
+        >
+          {weather === 'rain' ? <Sun size={16} /> : <CloudRain size={16} />}
+          <span className="text-sm font-medium">{weather === 'rain' ? '晴空万里' : '雨中追忆'}</span>
         </button>
       </div>
 

@@ -30,7 +30,13 @@ export const RightDataPanel: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const allMessages = apiMessages.length > 0 ? apiMessages : MOCK_MESSAGES
 
@@ -172,12 +178,14 @@ export const RightDataPanel: React.FC = () => {
               <input
                 type="text"
                 placeholder="您的称呼"
+                aria-label="您的称呼"
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-lg border border-[#E8DFD5] text-sm bg-[#FEFAF6] text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none"
                 maxLength={20}
               />
               <select
+                aria-label="选择身份"
                 value={formIdentity}
                 onChange={e => setFormIdentity(e.target.value)}
                 className="px-2 py-2 rounded-lg border border-[#E8DFD5] text-sm bg-[#FEFAF6] text-[#1A1A1A] focus:border-[#C41E3A]/40 focus:outline-none"
@@ -190,6 +198,7 @@ export const RightDataPanel: React.FC = () => {
             </div>
             <textarea
               placeholder="写下您的学习感悟..."
+              aria-label="写下您的学习感悟"
               value={formText}
               onChange={e => setFormText(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-[#E8DFD5] text-sm bg-[#FEFAF6] text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none resize-none"

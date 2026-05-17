@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react'
+import React, { useRef } from 'react'
 import { useAppStore } from '@/store'
 import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box } from 'lucide-react'
 import { Flower2 } from 'lucide-react'
