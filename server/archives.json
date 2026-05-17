@@ -8,7 +8,10 @@
     "content": "【思政大课堂：政权归于人民】\n1927年4月，蒋介石发动四一二反革命政变。紫金县党组织按照中共中央和广东省委指示，组织武装暴动。1927年12月，在彭湃同志的直接指导下，紫金县工农兵代表大会在苏区镇（原炮子乡）林氏宗祠召开，正式宣告紫金县苏维埃政府成立。大会选举产生了执行委员会，主席为刘琴西。\n\n【历史的回响】\n红屋原为林氏宗祠，始建于清代。苏维埃政权在此办公期间，发布了《没收地主土地分给农民》等一系列纲领性文件，掀起了东江流域土地革命的高潮。红屋的建立，标志着紫金劳苦大众第一次真正把政权掌握在自己手中。\n\n【启示与传承】\n江山就是人民，人民就是江山。只有始终同人民群众同呼吸、共命运、心连心，党才能赢得人民的衷心拥护。红屋虽小，但它是中国苏维埃运动在广东的一面旗帜，见证了中国共产党人早期探索人民政权建设的伟大实践。",
     "longitude": 115.3412,
     "latitude": 23.3615,
-    "historicalRoute": true
+    "historicalRoute": true,
+    "media": [
+      { "type": "image", "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Zijin_County_Soviet_Government_Site.jpg/800px-Zijin_County_Soviet_Government_Site.jpg", "caption": "紫金县苏维埃政府旧址（红屋）外观 —— 始建于清代的林氏宗祠，1927年成为苏维埃政权驻地" }
+    ]
   },
   "blood-field": {
     "id": "blood-field",

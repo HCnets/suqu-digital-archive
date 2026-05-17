@@ -1,9 +1,15 @@
 import React from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2 } from 'lucide-react'
+
+const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
+  { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
+  { title: "第二课：信仰的底色是忠诚", subtitle: "血田泣血，见证革命先烈的赤胆忠心", archiveId: "blood-field", order: 2 },
+  { title: "第三课：群众路线生动实践", subtitle: "农会旧址，感受千百万劳苦大众的觉醒", archiveId: "zijin-farmers-association", order: 3 },
+]
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId } = useAppStore()
   
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
   
@@ -11,6 +17,27 @@ export const HudDashboard: React.FC = () => {
   const redCount = currentArchives.filter(a => a.type === 'revolution').length
   const govCount = currentArchives.filter(a => a.type === 'government').length
   const culCount = currentArchives.filter(a => a.type === 'culture').length
+
+  const handleLearningCourseClick = (archiveId: string) => {
+    const archive = getAllArchives().find(a => a.id === archiveId)
+    if (!archive) return
+    
+    setSelectedPoiId(archiveId)
+    setTimeout(() => {
+      setDetailModalOpen(true)
+    }, 400)
+    
+    if (mainMapInstance) {
+      mainMapInstance.flyTo({
+        center: [archive.longitude, archive.latitude],
+        zoom: 17,
+        pitch: 65,
+        bearing: -15,
+        duration: 2500,
+        essential: true
+      })
+    }
+  }
 
   return (
     <div className="absolute top-24 left-6 w-80 flex flex-col gap-4 pointer-events-auto z-40">
@@ -69,44 +96,49 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 思政学习大纲 */}
+      {/* 思政学习大纲 — 现在可点击联动！ */}
       <div className="museum-card p-5 rounded-2xl">
         <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 mb-1 text-sm font-serif tracking-wider">
           <BookOpen size={16} className="text-[#C41E3A]" />
           学习路线与实践
         </h3>
         <p className="text-xs text-[#5C5C5C] mb-4 leading-relaxed">
-          按照"览遗址全景、读红色史料、谈学习感悟"的顺序，循序渐进地走进苏区革命历史。
+          按顺序点击每一课，地图将自动定位到对应红色遗址并展开深度档案。
         </p>
         
         <div className="space-y-2.5">
-          <div className="p-3 rounded-xl museum-card-hover cursor-pointer group flex flex-col justify-center min-h-[44px]">
-            <div className="flex justify-between items-center text-sm font-medium text-[#1A1A1A]">
-              <span className="flex items-center gap-2">
-                <ChevronRight size={14} className="text-[#C41E3A]/50 group-hover:text-[#C41E3A] group-hover:translate-x-1 transition-all" />
-                第一课：政权归于人民
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-[#FDE8EC] text-[#C41E3A]">红屋</span>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl museum-card-hover cursor-pointer group flex flex-col justify-center min-h-[44px]">
-            <div className="flex justify-between items-center text-sm font-medium text-[#1A1A1A]">
-              <span className="flex items-center gap-2">
-                <ChevronRight size={14} className="text-[#C41E3A]/50 group-hover:text-[#C41E3A] group-hover:translate-x-1 transition-all" />
-                第二课：信仰的底色是忠诚
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-[#FDE8EC] text-[#C41E3A]">血田</span>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl museum-card-hover cursor-pointer group flex flex-col justify-center min-h-[44px]">
-            <div className="flex justify-between items-center text-sm font-medium text-[#1A1A1A]">
-              <span className="flex items-center gap-2">
-                <ChevronRight size={14} className="text-[#C41E3A]/50 group-hover:text-[#C41E3A] group-hover:translate-x-1 transition-all" />
-                第三课：群众路线生动实践
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-[#FDE8EC] text-[#C41E3A]">农会</span>
-            </div>
-          </div>
+          {LEARNING_COURSES.map((course) => {
+            const isActive = selectedPoiId === course.archiveId
+            return (
+              <button
+                key={course.order}
+                onClick={() => handleLearningCourseClick(course.archiveId)}
+                className={`w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer group flex flex-col justify-center min-h-[44px] ${
+                  isActive 
+                    ? 'bg-[#FDE8EC] border-[#C41E3A]/50 shadow-sm' 
+                    : 'bg-white border-[#E8DFD5] hover:border-[#C41E3A]/30 hover:bg-[#FEFAF6]'
+                }`}
+                aria-label={`点击学习${course.title}`}
+              >
+                <div className="flex justify-between items-center text-sm font-medium text-[#1A1A1A]">
+                  <span className="flex items-center gap-2">
+                    {isActive ? (
+                      <CheckCircle2 size={14} className="text-[#C41E3A]" />
+                    ) : (
+                      <ChevronRight size={14} className="text-[#C41E3A]/50 group-hover:text-[#C41E3A] group-hover:translate-x-1 transition-all" />
+                    )}
+                    {course.title}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded ${
+                    isActive ? 'bg-[#C41E3A] text-white' : 'bg-[#FDE8EC] text-[#C41E3A]'
+                  }`}>
+                    {isActive ? '学习中' : '点击学习'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#5C5C5C]/60 mt-1 ml-6">{course.subtitle}</p>
+              </button>
+            )
+          })}
         </div>
       </div>
 

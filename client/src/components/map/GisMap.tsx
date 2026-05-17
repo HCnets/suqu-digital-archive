@@ -210,13 +210,15 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
         }, 4000)
       }, 500)
 
-      // 1. 插入 3D 地形 (DEM)
+      // 1. 插入 3D 地形 (DEM) — 使用 AWS Terrain Tiles (Terrarium 编码), 稳定可靠无需 API Key
       map.addSource('terrain-source', {
         type: 'raster-dem',
-        url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json', // MapLibre 官方测试 DEM
-        tileSize: 256
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 14
       });
-      map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 }); // exaggeration 是地形夸张系数
+      map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 });
 
       // 添加 3D 建筑图层 (如果底图支持)
       if (map.getSource('openmaptiles') || map.getSource('carto')) {
