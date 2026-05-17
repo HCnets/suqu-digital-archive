@@ -8,6 +8,17 @@
 ## 🌟 项目纪年表与版本演进 (Time Tree)
 *注：以下纪年表严格遵循时间树规范，只增不减，完整体现版本工程推进及成果。*
 
+### [v2.7.4] - 2026-05-18
+- **版本状态**: 第三轮审查代码整洁度与体验细节修复
+- **工程推进**:
+  - **代码整洁**: 合并 HudDashboard.tsx 重复 React import、ArchiveDetailModal.tsx 重复 lucide-react import 为单行导入。
+  - **未使用变量清理**: 移除 App.tsx 中未使用的 `isSwipeMode` 解构、ArchiveDetailModal.tsx 中声明但从未赋值的 `synthRef`。
+  - **Lint 卫生**: RightDataPanel.tsx catch 块未使用的 `e` 变量改为 `_e`。
+  - **OG 分享缩略图**: index.html 补充 `og:image` 标签指向项目 favicon.svg，微信/QQ/Facebook 分享链接时将显示红底「苏」字预览缩略图。
+- **阶段成果**:
+  - 全部 6 项审查发现不足修复完成。TypeScript 编译 + Vite 构建双验证通过。
+  - 代码库达到零 Lint 警告、零未使用导入/变量的整洁标准。
+
 ### [v2.7.3] - 2026-05-18
 - **版本状态**: 第二轮品质审查全维度修复 - 触控完善、loading 反馈、容错健壮
 - **工程推进**:

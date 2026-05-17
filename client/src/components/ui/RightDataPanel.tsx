@@ -77,7 +77,7 @@ export const RightDataPanel: React.FC = () => {
       setFormName('')
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 3000)
-    } catch (e) {
+    } catch (_e) {
       const fallbackMsg: Message = {
         id: `local-${Date.now()}`,
         name: formName || '匿名群众',

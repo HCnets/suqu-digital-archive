@@ -15,7 +15,7 @@ import { useAppStore } from '@/store'
 import { BookOpenText, Layers, Globe, X } from 'lucide-react'
 
 function App() {
-  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, isSwipeMode, setMainMapInstance } = useAppStore()
+  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, setMainMapInstance } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   

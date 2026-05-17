@@ -1,7 +1,6 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { useAppStore } from '@/store'
-import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box } from 'lucide-react'
-import { Flower2 } from 'lucide-react'
+import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box, Flower2 } from 'lucide-react'
 
 const MuseumPlaceholder: React.FC<{ archive: any }> = ({ archive }) => {
   const bgColor = archive.type === 'revolution' ? '#FDE8EC' : archive.type === 'government' ? '#F5F0EB' : '#FFF8E1'
@@ -29,7 +28,6 @@ export const ArchiveDetailModal: React.FC = () => {
   const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [imgFailed, setImgFailed] = React.useState(false)
-  const synthRef = useRef<SpeechSynthesis | null>(null)
   
   if (!isDetailModalOpen || !selectedPoiId) return null
   
