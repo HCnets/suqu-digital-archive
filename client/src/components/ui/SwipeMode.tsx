@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
 import { X, MoveHorizontal } from 'lucide-react'
-import { GisMap } from './map/GisMap'
+import { GisMap } from '../map/GisMap'
 
 export const SwipeMode: React.FC = () => {
   const { isSwipeMode, setSwipeMode, mainMapInstance } = useAppStore()
