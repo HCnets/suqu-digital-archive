@@ -24,6 +24,65 @@
   - TypeScript 零错误 + Vite 双线构建全部通过（GitHub Pages dist + 服务器 dist-server）。红色资源从单层档案扩展为 9 大文献专题+3 个互动体验+1 个打卡体系，项目生态达到展馆级完整度。
   - **GitHub `4a087fd` 已推送**。
 
+### [v3.0.5] - 2026-05-18
+- **版本状态**: 第十一轮逻辑缺陷修复 — 9项核心逻辑漏洞全修复
+- **工程推进**:
+  - **P0 GisMap 地图反复销毁**: `isAdminOpen` 从 Effect 依赖数组移除，改用 `isAdminOpenRef` 模式跟踪。此前每次切换管理面板都会完全销毁并重建整个地图（含地形、3D 建筑层、太空坠入动画）。
+  - **P0 底图切换 RAF 动画泄漏**: 路线动画 `requestAnimationFrame` 提升为组件级 ref `routeAnimRef`，底图 `setStyle()` 切换时主动取消。修复对已销毁图层持续 `setPaintProperty` 操作的错误。
+  - **P0 Marker React Root 内存泄漏**: 历史年份过滤移除 Marker 时，先调用 `root.unmount()` 再 `marker.remove()`，避免 React 僵尸树累积。
+  - **P1 DirectorMode 退出状态残留**: 自动讲解退出时同步重置 `showHistoricalRoute=false`，清理函数中同加此逻辑。修复历史行军线在退出后仍显示的问题。
+  - **P1 主题党日路线参数失效**: PartyDayRoutes 回调不再丢弃 `poiIds`/`opening`，选线后地图飞到路线第一个 POI 并播放专属开场白语音。
+  - **P1 snow 天气死功能启用**: 天气按钮从 `rain ⟷ clear` 两态循环升级为 `clear → rain → snow → clear` 三态，snow 渲染和 CSS 动画已有但此前 UI 无法触发。
+  - **P2 ArchiveDetailModal imgFailed 状态残留**: 添加 `useEffect` 监听 `selectedPoiId` 变化时重置 `imgFailed=false`，切换档案后图片正常重新加载。
+  - **P2 SwipeMode clipPath Canvas 兼容性**: `clip-path` 替换为 `overflow:hidden` + `100vw` 内层容器方案，确保 MapLibre Canvas 地图裁剪跨浏览器一致性。
+  - **P2 store addArchive 数据源错误**: `addArchive` 存储使用服务端返回对象 `savedArchive` 而非本地参数 `archive`，确保服务端生成的 id/timestamps 正确同步。
+- **阶段成果**:
+  - 3 项 P0 严重缺陷（地图重建/RAF泄漏/内存泄漏）+ 6 项 P1/P2 逻辑漏洞全部修复。TypeScript 零错误 + Vite 构建通过。
+  - 系统稳定性大幅提升，地图不再因管理面板切换或底图切换出现异常行为。
+  - **GitHub `c22aae0` 已推送**。
+
+### [v3.0.4] - 2026-05-18
+- **版本状态**: 第十轮 CSS 层叠上下文穿透修复 — 左侧面板弹窗被右侧面板压制
+- **工程推进**:
+  - **P0 层叠上下文陷阱根因修复**: 左侧 `HudDashboard` 原本渲染在 `App.tsx` 的 `z-10` UI 包装层内部，导致其所有子级弹窗（`RedResourceHub`/`TodaySuqu`/`HeroesPanel`/`RedQuiz`/`PartyDayRoutes`/`CheckInPassport` 的 `z-[85]`）被根级 `RightDataPanel`（`z-[41]`）的 stacking context 压制，左侧弹窗被右侧面板覆盖。
+  - **修复方案**: 将 `<HudDashboard />` 从 `z-10` wrapper 内部提升到 `App` 根级渲染，其子级弹窗的 `z-[85]` 现在可与根级面板正确竞争层叠。
+- **阶段成果**:
+  - 左侧所有弹窗不再被右侧数据面板覆盖。TypeScript 零错误 + Vite 构建通过。
+  - **GitHub `a5c19c1` 已推送**。
+
+### [v3.0.3] - 2026-05-18
+- **版本状态**: 第九轮卡片重叠修复 — 群众互动面板与 POI 卡片层叠
+- **工程推进**:
+  - **P0 移动端按钮/面板覆盖 POI 卡片**: 移动端「群众互动」按钮 `z-index` 提升至 `z-[65]`，其展开面板同级，覆盖在 POI 信息卡片 (`z-[60]`) 之上。
+  - **P1 桌面端 POI 卡片与右侧数据面板间距**: POI 信息卡片从 `right-6` 调整为 `md:right-24`，向右偏移 6rem 留出足够喘息空间，不再与 320px 宽的 RightDataPanel 紧贴。
+  - **P1 SwipeMode 关闭按钮与历史标识牌重叠**: 关闭按钮在移动端从左侧移至右侧 (`right-4`)，桌面端居中 (`md:left-1/2 md:-translate-x-1/2`)。
+- **阶段成果**:
+  - 三处卡片/按钮重叠问题解决。Vite 构建通过。
+  - **GitHub `3747f7d` 已推送**。
+
+### [v3.0.2] - 2026-05-18
+- **版本状态**: 第八轮排版与按钮交互修复 — 思政课导航、POI 重叠、层级冲突
+- **工程推进**:
+  - **P0 思政课按钮实际行为修复**: `ArchiveDetailModal` 添加 `handleLearnCourse()`，从 store 获取 `mainMapInstance`，点击「开始学习本节思政课」关闭详情弹窗后执行 `map.flyTo` 飞到对应 POI。此前按钮仅关闭弹窗无导航动作。
+  - **P1 POI 信息卡与时间轴重叠**: POI 卡片 bottom 间距从 `bottom-20` 调整为 `md:bottom-20` + `bottom-28`（移动端加大），避免与 `TimeSlider` 底部编年史面板碰撞。
+  - **P2 工程卫生**: 清理 `HudDashboard` 未使用 import（`Camera`/`Heart`/`Flower2`/`Globe`）、移除死状态 `partyRouteActive` 和 `isAutoTouring`。移除 `GisMap` 的 `PoiMarker` 死组件、`tourIntervalRef`、`isAutoTouring` orbit 逻辑。
+  - **P2 生产环境 fetch 优化**: `RightDataPanel` 致敬按钮在生产环境直接使用 `localStorage` 本地递增，不尝试 `localhost:3001`。
+- **阶段成果**:
+  - 思政课按钮功能闭环、3 处重叠修复、55 行死代码清理。TypeScript 零错误 + Vite 构建通过。
+  - **GitHub `ce4dcb2` 已推送**。
+
+### [v3.0.1] - 2026-05-18
+- **版本状态**: 第七轮交互缺陷修复 — 键盘控制、地图热切换、过期闭包、双自动讲解统一
+- **工程推进**:
+  - **P0 FpsOverlay 按键说明修正**: 「旋转/俯仰 Q/E」→「Ctrl+↑↓←→」、「缩放 滚轮」→「+/-」、新增「平移镜头 ↑↓←→」，完全对齐 MapLibre 原生快捷键。
+  - **P0 Header 自动讲解统一**: Header「自动讲解」按钮对接 `setDirectorMode`，不再使用已废弃的 `isAutoTouring`/`setAutoTouring`，两个自动讲解系统合并为一个。
+  - **P0 底图热切换修复**: GisMap 移除 `key={mapStyle}` 策略，改用 `map.setStyle()`，不再销毁重建整个地图实例。解决视口丢失和 Marker 全部重加载问题。
+  - **P1 地图背景点击过期闭包**: GisMap click 事件中的 `selectedPoiId` 通过 `selectedPoiIdRef` 追踪最新值。
+  - **P2 SwipeMode 触摸冗余**: 替换 `onMouseDown + onTouchStart` 为统一 `onPointerDown`。
+- **阶段成果**:
+  - 5 项交互缺陷修复。TypeScript 零错误 + Vite 构建通过。
+  - **GitHub `58c26aa` 已推送**。
+
 ### [v2.9.0] - 2026-05-18
 - **版本状态**: 第五轮红色资源与功能完善 — 英雄谱专区、东江苏区地图、工程卫生
 - **工程推进**:
