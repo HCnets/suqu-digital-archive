@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users, Library, Camera, ScrollText, Star, Stamp, MapPinCheck, Heart, Flower2, Globe, GitCompare } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { HeroesPanel } from '@/components/ui/HeroesPanel'
@@ -22,7 +22,7 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 ]
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather, setAutoTouring } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
   const [showHeroes, setShowHeroes] = useState(false)
   const [showResourceHub, setShowResourceHub] = useState(false)
@@ -37,7 +37,6 @@ export const HudDashboard: React.FC = () => {
       return saved ? JSON.parse(saved) : []
     } catch { return [] }
   })
-  const [partyRouteActive, setPartyRouteActive] = useState(false)
 
   useEffect(() => {
     if (selectedPoiId && !visitedPois.includes(selectedPoiId)) {
@@ -394,11 +393,9 @@ export const HudDashboard: React.FC = () => {
     {showPartyRoutes && (
       <PartyDayRoutes 
         onClose={() => setShowPartyRoutes(false)} 
-        onStartRoute={(poiIds, opening) => {
+        onStartRoute={(_poiIds, _opening) => {
           setShowPartyRoutes(false)
           if (isMobile) setCollapsed(true)
-          setPartyRouteActive(true)
-          // Start director mode with custom route
           setTimeout(() => {
             setDirectorMode(true)
           }, 500)

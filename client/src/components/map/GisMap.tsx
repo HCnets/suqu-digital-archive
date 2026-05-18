@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAppStore, type ArchiveData } from '@/store'
+import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { createRoot } from 'react-dom/client'
 
@@ -53,118 +53,21 @@ interface GisMapProps {
   onMapLoad?: (map: maplibregl.Map) => void
 }
 
-const PoiMarker: React.FC<{ poi: ArchiveData; isSelected: boolean }> = ({ poi, isSelected }) => {
-  const baseColor = useMemo(() => {
-    switch (poi.type) {
-      case 'government': return 'bg-[#5C5C5C] ring-[#5C5C5C]/40'
-      case 'revolution': return 'bg-[#C41E3A] ring-[#C41E3A]/40'
-      case 'culture': return 'bg-[#8B6914] ring-[#8B6914]/40'
-      default: return 'bg-[#5C5C5C] ring-[#5C5C5C]/40'
-    }
-  }, [poi.type])
-
-  return (
-    <div className="relative group cursor-pointer flex flex-col items-center pointer-events-auto">
-      <div 
-        className={cn(
-          "absolute bottom-4 w-[2px] rounded-full bg-gradient-to-t from-[#C41E3A] to-transparent transition-all duration-500",
-          isSelected ? "h-32 opacity-60" : "h-0 opacity-0 group-hover:h-20 group-hover:opacity-30"
-        )}
-      />
-      
-      <div 
-        className={cn(
-          "w-5 h-5 rounded-full shadow-md border-2 border-white transition-transform duration-300 ring-2",
-          baseColor,
-          isSelected ? "scale-150" : "group-hover:scale-125"
-        )}
-      />
-      
-      <div 
-        className={cn(
-          "absolute top-full mt-2 whitespace-nowrap text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8DFD5] text-[#1A1A1A] shadow-sm transition-opacity",
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}
-      >
-        {poi.title}
-      </div>
-    </div>
-  )
-}
-
 export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, onMapLoad }) => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Record<string, maplibregl.Marker>>({})
-  const tourIntervalRef = useRef<number | null>(null)
   const [mapLoading, setMapLoading] = useState(true)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode, isDirectorMode } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode, isDirectorMode } = useAppStore()
+  
+  const selectedPoiIdRef = useRef(selectedPoiId)
+  useEffect(() => { selectedPoiIdRef.current = selectedPoiId }, [selectedPoiId])
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
     return getAllArchives().filter(poi => poi.year <= currentYear)
   }, [getAllArchives, currentYear])
-
-  // 自动巡航逻辑 (Orbit Fly)
-  useEffect(() => {
-    if (!mapRef.current) return
-    const map = mapRef.current
-
-    let orbitAnimationFrame: number = 0
-    
-    if (isAutoTouring) {
-      let currentIndex = 0
-      
-      const goToNextAndOrbit = () => {
-        if (currentIndex >= archives.length) {
-          setAutoTouring(false)
-          return
-        }
-        
-        const poi = archives[currentIndex]
-        setSelectedPoiId(poi.id)
-        
-        // 先飞过去
-        map.flyTo({
-          center: [poi.longitude, poi.latitude],
-          zoom: 16.5,
-          pitch: 70,
-          bearing: 0,
-          duration: 3000,
-          essential: true
-        })
-        
-        // 飞行到位后开始盘旋
-        setTimeout(() => {
-          let currentBearing = map.getBearing()
-          const orbit = () => {
-            currentBearing += 0.1 // 盘旋速度
-            map.setBearing(currentBearing)
-            orbitAnimationFrame = requestAnimationFrame(orbit)
-          }
-          orbit()
-        }, 3000)
-        
-        currentIndex++
-      }
-
-      goToNextAndOrbit()
-      // 每 12 秒跳到下一个点 (3秒飞行 + 9秒盘旋)
-      tourIntervalRef.current = window.setInterval(() => {
-        cancelAnimationFrame(orbitAnimationFrame)
-        goToNextAndOrbit()
-      }, 12000)
-    } else {
-      if (tourIntervalRef.current) clearInterval(tourIntervalRef.current)
-      cancelAnimationFrame(orbitAnimationFrame)
-    }
-
-    return () => {
-      if (tourIntervalRef.current) clearInterval(tourIntervalRef.current)
-      cancelAnimationFrame(orbitAnimationFrame)
-    }
-  }, [isAutoTouring, archives])
 
   // 初始化地图
   useEffect(() => {
@@ -251,10 +154,9 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
 
     map.on('click', (e) => {
         if (isAdminOpen) {
-          // 如果处于录入模式，则拾取坐标，不触发点位详情
           setDraftCoords([e.lngLat.lng, e.lngLat.lat])
         } else {
-          if (selectedPoiId) setSelectedPoiId(null)
+          if (selectedPoiIdRef.current) setSelectedPoiId(null)
         }
       })
       
@@ -265,7 +167,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
         map.remove()
         mapRef.current = null
       }
-    }, [mapStyle, isAdminOpen]) // 依赖 isAdminOpen 以便更新 click 事件
+    }, [isAdminOpen])
 
   // 渲染/更新 Markers
   useEffect(() => {
