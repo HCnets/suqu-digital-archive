@@ -66,17 +66,20 @@ export const RightDataPanel: React.FC = () => {
   }, [])
 
   const handleTribute = useCallback(async () => {
-    try {
-      const r = await fetch(`${API_BASE}/tributes`, { method: 'POST' })
-      const d = await r.json()
-      setTributeCount(d.count)
-    } catch {
-      setTributeCount(prev => {
-        const next = prev + 1
-        try { localStorage.setItem('suqu_tribute_count', String(next)) } catch {}
-        return next
-      })
+    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    if (isDev) {
+      try {
+        const r = await fetch(`${API_BASE}/tributes`, { method: 'POST' })
+        const d = await r.json()
+        setTributeCount(d.count)
+        return
+      } catch {}
     }
+    setTributeCount(prev => {
+      const next = prev + 1
+      try { localStorage.setItem('suqu_tribute_count', String(next)) } catch {}
+      return next
+    })
   }, [])
 
   const handleSubmitMessage = useCallback(async () => {
@@ -277,7 +280,7 @@ export const RightDataPanel: React.FC = () => {
           </div>
         )
       ) : (
-        <div className="absolute top-24 right-20 w-80 z-40">
+        <div className="absolute top-24 right-20 w-80 z-[41]">
           {panelContent}
         </div>
       )}

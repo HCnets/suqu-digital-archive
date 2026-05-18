@@ -148,8 +148,7 @@ export const SwipeMode: React.FC = () => {
         <div className="w-[2px] h-full bg-[#C41E3A] shadow-[0_0_12px_rgba(196,30,58,0.6)] relative">
           <div 
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white border-2 border-[#C41E3A] shadow-xl flex items-center justify-center cursor-ew-resize hover:scale-110 transition-transform pointer-events-auto"
-            onMouseDown={() => isDragging.current = true}
-            onTouchStart={() => isDragging.current = true}
+            onPointerDown={() => isDragging.current = true}
           >
             <MoveHorizontal size={20} className="text-[#C41E3A]" />
           </div>
@@ -159,7 +158,7 @@ export const SwipeMode: React.FC = () => {
       {/* 退出按钮 */}
       <button 
         onClick={() => setSwipeMode(false)}
-        className="absolute top-8 left-1/2 -translate-x-1/2 z-40 p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all pointer-events-auto shadow-sm"
+        className="absolute top-8 right-4 z-40 md:left-1/2 md:-translate-x-1/2 md:right-auto p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all pointer-events-auto shadow-sm"
       >
         <X size={20} />
       </button>

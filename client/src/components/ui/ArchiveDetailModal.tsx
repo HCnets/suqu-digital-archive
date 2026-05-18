@@ -42,7 +42,7 @@ const MuseumPlaceholder: React.FC<{ archive: any }> = ({ archive }) => {
 }
 
 export const ArchiveDetailModal: React.FC = () => {
-  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId } = useAppStore()
+  const { selectedPoiId, getArchiveData, isDetailModalOpen, setDetailModalOpen, setIndoorMode, setRelicMode, setSelectedPoiId, mainMapInstance } = useAppStore()
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [imgFailed, setImgFailed] = React.useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
@@ -55,6 +55,20 @@ export const ArchiveDetailModal: React.FC = () => {
   const handleClose = () => {
     setDetailModalOpen(false)
     setSelectedPoiId(null)
+  }
+
+  const handleLearnCourse = () => {
+    setDetailModalOpen(false)
+    if (mainMapInstance) {
+      mainMapInstance.flyTo({
+        center: [archive.longitude, archive.latitude],
+        zoom: 17,
+        pitch: 65,
+        bearing: -20,
+        duration: 2000,
+        essential: true
+      })
+    }
   }
 
   const handleToggleAudio = () => {
@@ -203,9 +217,7 @@ export const ArchiveDetailModal: React.FC = () => {
             {/* Tags & Actions */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
-                onClick={() => {
-                  handleClose()
-                }}
+                onClick={handleLearnCourse}
                 className="flex items-center gap-2 px-5 min-h-[44px] rounded-lg party-btn-primary"
                 aria-label="开始学习本节思政课"
               >
