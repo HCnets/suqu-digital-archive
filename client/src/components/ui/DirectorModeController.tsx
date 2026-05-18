@@ -16,6 +16,7 @@ export const DirectorModeController: React.FC = () => {
   useEffect(() => {
     if (!isDirectorMode) {
       sequenceRef.current = false
+      setShowHistoricalRoute(false)
       return
     }
     
@@ -126,6 +127,7 @@ export const DirectorModeController: React.FC = () => {
 
     return () => {
       sequenceRef.current = false
+      setShowHistoricalRoute(false)
       if (window.speechSynthesis) window.speechSynthesis.cancel()
     }
   }, [isDirectorMode])

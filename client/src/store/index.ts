@@ -352,8 +352,8 @@ export const useAppStore = create<AppState>()(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(archive)
         });
-        const savedArchive = await response.json();
-        set({ archives: { ...get().archives, [archive.id]: archive } })
+        const savedArchive = await response.json()
+        set({ archives: { ...get().archives, [savedArchive.id]: savedArchive } })
       } catch (_err) {
       }
     },

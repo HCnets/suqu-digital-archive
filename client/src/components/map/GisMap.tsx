@@ -63,6 +63,9 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   
   const selectedPoiIdRef = useRef(selectedPoiId)
   useEffect(() => { selectedPoiIdRef.current = selectedPoiId }, [selectedPoiId])
+  const isAdminOpenRef = useRef(isAdminOpen)
+  useEffect(() => { isAdminOpenRef.current = isAdminOpen }, [isAdminOpen])
+  const routeAnimRef = useRef<number | null>(null)
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -153,7 +156,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     })
 
     map.on('click', (e) => {
-        if (isAdminOpen) {
+        if (isAdminOpenRef.current) {
           setDraftCoords([e.lngLat.lng, e.lngLat.lat])
         } else {
           if (selectedPoiIdRef.current) setSelectedPoiId(null)
@@ -167,7 +170,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
         map.remove()
         mapRef.current = null
       }
-    }, [isAdminOpen])
+    }, [])
 
   // 渲染/更新 Markers
   useEffect(() => {
@@ -375,17 +378,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
-    let animationFrameId: number
 
     const animateDashArray = (step: number) => {
       if (!map.getLayer('historical-route-line')) return
 
-      // MapLibre 的 line-dasharray 格式: [dashLength, gapLength]
-      // 我们可以通过不断改变数组的值来产生流动效果
-      // 这里采用一个小技巧：设置数组为 [0, dash, gap] 等，但由于版本限制，我们使用简单的不断增减
-      // 更好的方式是用 requestAnimationFrame 修改 line-dasharray，或者配合 step 
-      const dashLength = 2;
-      const gapLength = 2;
       const opacity = 0.5 + 0.5 * Math.sin(step / 10);
       
       if (map.getLayer('historical-route-line')) {
@@ -393,12 +389,11 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       }
       
       if (map.getLayer('spark-topology-flow')) {
-        // 让辐射流光也动起来
         const sparkOpacity = 0.4 + 0.6 * Math.sin(step / 5);
         map.setPaintProperty('spark-topology-flow', 'line-opacity', sparkOpacity);
       }
 
-      animationFrameId = requestAnimationFrame(() => animateDashArray(step + 1))
+      routeAnimRef.current = requestAnimationFrame(() => animateDashArray(step + 1))
     }
 
     const updateRouteVisibility = () => {
@@ -407,9 +402,8 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       if (showHistoricalRoute) {
         map.setPaintProperty('historical-route-line', 'line-opacity', 0.8)
         map.setPaintProperty('historical-route-line', 'line-dasharray', [2, 2])
-        animationFrameId = requestAnimationFrame(() => animateDashArray(0))
+        routeAnimRef.current = requestAnimationFrame(() => animateDashArray(0))
         
-        // 飞行到路线区域
         map.flyTo({
           center: [115.3350, 23.3550],
           zoom: 13.5,
@@ -417,7 +411,8 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
           duration: 2000
         })
       } else {
-        cancelAnimationFrame(animationFrameId)
+        if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current)
+        routeAnimRef.current = null
         map.setPaintProperty('historical-route-line', 'line-opacity', 0)
       }
     }
@@ -429,7 +424,8 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId)
+      if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current)
+      routeAnimRef.current = null
     }
   }, [showHistoricalRoute])
 
@@ -576,6 +572,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     const currentArchiveIds = new Set(archives.map(a => a.id))
     Object.keys(markersRef.current).forEach(id => {
       if (!currentArchiveIds.has(id)) {
+        const el = markersRef.current[id].getElement()
+        if (el && (el as any)._reactRoot) {
+          (el as any)._reactRoot.unmount()
+        }
         markersRef.current[id].remove()
         delete markersRef.current[id]
         if (selectedPoiId === id) setSelectedPoiId(null)
@@ -672,6 +672,10 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     if (!currentStyle || !currentStyle.name) return
     const isCurrentlySatellite = currentStyle.name?.includes('satellite') || currentStyle.layers?.some((l: any) => l.id === 'satellite-layer')
     if ((mapStyle === 'satellite' && isCurrentlySatellite) || (mapStyle === 'museum' && !isCurrentlySatellite)) return
+    if (routeAnimRef.current) {
+      cancelAnimationFrame(routeAnimRef.current)
+      routeAnimRef.current = null
+    }
     setMapLoading(true)
     map.setStyle(targetStyle as maplibregl.StyleSpecification)
     map.once('style.load', () => {

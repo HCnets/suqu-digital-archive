@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, CloudSnow, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { HeroesPanel } from '@/components/ui/HeroesPanel'
@@ -255,15 +255,15 @@ export const HudDashboard: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => setWeather(weather === 'rain' ? 'clear' : 'rain')}
+          onClick={() => setWeather(weather === 'clear' ? 'rain' : weather === 'rain' ? 'snow' : 'clear')}
           className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
-            weather === 'rain'
+            weather !== 'clear'
               ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]'
               : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
           }`}
         >
-          {weather === 'rain' ? <Sun size={16} /> : <CloudRain size={16} />}
-          <span className="text-sm font-medium">{weather === 'rain' ? '晴空万里' : '雨中追忆'}</span>
+          {weather === 'clear' ? <CloudRain size={16} /> : weather === 'rain' ? <CloudSnow size={16} /> : <Sun size={16} />}
+          <span className="text-sm font-medium">{weather === 'clear' ? '雨中追忆' : weather === 'rain' ? '雪落苏区' : '晴空万里'}</span>
         </button>
       </div>
 
@@ -393,12 +393,23 @@ export const HudDashboard: React.FC = () => {
     {showPartyRoutes && (
       <PartyDayRoutes 
         onClose={() => setShowPartyRoutes(false)} 
-        onStartRoute={(_poiIds, _opening) => {
+        onStartRoute={(poiIds, opening) => {
           setShowPartyRoutes(false)
           if (isMobile) setCollapsed(true)
+          if (poiIds.length > 0) {
+            setSelectedPoiId(poiIds[0])
+          }
           setTimeout(() => {
             setDirectorMode(true)
-          }, 500)
+          }, 800)
+          if (opening && window.speechSynthesis) {
+            setTimeout(() => {
+              const u = new SpeechSynthesisUtterance(opening)
+              u.lang = 'zh-CN'
+              u.rate = 0.95
+              window.speechSynthesis.speak(u)
+            }, 1200)
+          }
         }}
       />
     )}

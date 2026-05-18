@@ -103,30 +103,32 @@ export const SwipeMode: React.FC = () => {
 
       {/* 左半部分：1927年历史 */}
       <div 
-        className="absolute inset-0 z-10 pointer-events-auto"
-        style={{ clipPath: `polygon(0 0, ${dividerX}% 0, ${dividerX}% 100%, 0 100%)` }}
+        className="absolute inset-y-0 left-0 z-10 overflow-hidden"
+        style={{ width: `${dividerX}%` }}
       >
-        <GisMap 
-          className="w-full h-full" 
-          mapId="historical-map" 
-          onMapLoad={(map) => historicalMapInstance.current = map}
-        />
-        
-        {/* 复古/战争滤镜叠加层 (让整个历史地图变暗红) */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(139, 69, 19, 0.2) 100%)',
-          mixBlendMode: 'multiply',
-          filter: 'grayscale(60%) sepia(30%) contrast(1.2) saturate(0.3) brightness(0.9)'
-        }} />
+        <div className="absolute inset-y-0 left-0 pointer-events-auto" style={{ width: '100vw' }}>
+          <GisMap 
+            className="w-full h-full" 
+            mapId="historical-map" 
+            onMapLoad={(map) => historicalMapInstance.current = map}
+          />
+          
+          {/* 复古/战争滤镜叠加层 */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(139, 69, 19, 0.2) 100%)',
+            mixBlendMode: 'multiply',
+            filter: 'grayscale(60%) sepia(30%) contrast(1.2) saturate(0.3) brightness(0.9)'
+          }} />
 
-        {/* 历史标识牌 */}
-        <div className="absolute top-8 left-8 museum-card p-4 rounded-2xl pointer-events-none">
-          <div className="text-[#C41E3A] font-mono text-xs uppercase tracking-[0.2em]">
-            民国 16年 · 1927
+          {/* 历史标识牌 */}
+          <div className="absolute top-8 left-8 museum-card p-4 rounded-2xl pointer-events-none">
+            <div className="text-[#C41E3A] font-mono text-xs uppercase tracking-[0.2em]">
+              民国 16年 · 1927
+            </div>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
+              苏维埃政权成立
+            </h2>
           </div>
-          <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
-            苏维埃政权成立
-          </h2>
         </div>
       </div>
 

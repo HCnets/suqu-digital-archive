@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box, Flower2, BookOpen } from 'lucide-react'
 import { TributeCeremony } from '@/components/ui/TributeCeremony'
@@ -46,6 +46,10 @@ export const ArchiveDetailModal: React.FC = () => {
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [imgFailed, setImgFailed] = React.useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
+  
+  useEffect(() => {
+    setImgFailed(false)
+  }, [selectedPoiId])
   
   if (!isDetailModalOpen || !selectedPoiId) return null
   
