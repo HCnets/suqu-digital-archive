@@ -72,12 +72,12 @@ function App() {
           </div>
         </div>
 
-        {/* 左侧 HUD */}
-        {!showIntro && <HudDashboard />}
-
         {/* 底部时间轴 */}
         <TimeSlider />
       </div>
+
+      {/* 左侧 HUD — 提升到 root 层级，避免被 RightDataPanel 的 stacking context 压制 */}
+      {!showIntro && <HudDashboard />}
 
       {/* POI 信息卡 */}
       {!showIntro && activeArchive && (
