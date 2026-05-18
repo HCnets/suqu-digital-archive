@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, Sun, Users, Library, Camera, ScrollText, Star, Stamp, MapPinCheck, Heart, Flower2, Globe, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { HeroesPanel } from '@/components/ui/HeroesPanel'
+import { RedResourceHub } from '@/components/ui/RedResourceHub'
+import { TodaySuqu } from '@/components/ui/TodaySuqu'
+import { RedQuiz } from '@/components/ui/RedQuiz'
+import { PartyDayRoutes } from '@/components/ui/PartyDayRoutes'
+import { CheckInPassport } from '@/components/ui/CheckInPassport'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -17,10 +22,32 @@ const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; or
 ]
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather, setAutoTouring } = useAppStore()
   const [collapsed, setCollapsed] = useState(false)
   const [showHeroes, setShowHeroes] = useState(false)
+  const [showResourceHub, setShowResourceHub] = useState(false)
+  const [showTodaySuqu, setShowTodaySuqu] = useState(false)
+  const [showRedQuiz, setShowRedQuiz] = useState(false)
+  const [showPartyRoutes, setShowPartyRoutes] = useState(false)
+  const [showPassport, setShowPassport] = useState(false)
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
+  const [visitedPois, setVisitedPois] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('suqu_checkin_pois')
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+  const [partyRouteActive, setPartyRouteActive] = useState(false)
+
+  useEffect(() => {
+    if (selectedPoiId && !visitedPois.includes(selectedPoiId)) {
+      setVisitedPois(prev => {
+        const next = [...prev, selectedPoiId]
+        try { localStorage.setItem('suqu_checkin_pois', JSON.stringify(next)) } catch {}
+        return next
+      })
+    }
+  }, [selectedPoiId])
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -287,6 +314,73 @@ export const HudDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 红色资源文库 */}
+      <div className="museum-card p-4 rounded-2xl space-y-3">
+        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
+          <Library size={16} className="text-[#C41E3A]" />
+          红色资源文库
+        </h3>
+        
+        <div className="flex flex-col gap-2">
+          <button 
+            onClick={() => { setShowResourceHub(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <ScrollText size={14} />
+              <span className="text-sm font-medium">红色家书 · 文献馆藏</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowTodaySuqu(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <GitCompare size={14} />
+              <span className="text-sm font-medium">今日苏区 · 今昔对比</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowRedQuiz(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Star size={14} />
+              <span className="text-sm font-medium">党史知识闯关答题</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowPartyRoutes(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <MapPinCheck size={14} />
+              <span className="text-sm font-medium">主题党日活动路线</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowPassport(true); if (isMobile) setCollapsed(true) }}
+            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
+              visitedPois.length >= 16 ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Stamp size={14} />
+              <span className="text-sm font-medium">红色地标打卡护照</span>
+            </div>
+            <span className="text-xs font-bold text-[#C41E3A]">{visitedPois.length}/16</span>
+          </button>
+        </div>
+      </div>
       
     </div>
     </div>
@@ -294,6 +388,24 @@ export const HudDashboard: React.FC = () => {
     </div>
 
     {showHeroes && <HeroesPanel onClose={() => setShowHeroes(false)} />}
+    {showResourceHub && <RedResourceHub onClose={() => setShowResourceHub(false)} />}
+    {showTodaySuqu && <TodaySuqu onClose={() => setShowTodaySuqu(false)} />}
+    {showRedQuiz && <RedQuiz onClose={() => setShowRedQuiz(false)} />}
+    {showPartyRoutes && (
+      <PartyDayRoutes 
+        onClose={() => setShowPartyRoutes(false)} 
+        onStartRoute={(poiIds, opening) => {
+          setShowPartyRoutes(false)
+          if (isMobile) setCollapsed(true)
+          setPartyRouteActive(true)
+          // Start director mode with custom route
+          setTimeout(() => {
+            setDirectorMode(true)
+          }, 500)
+        }}
+      />
+    )}
+    {showPassport && <CheckInPassport onClose={() => setShowPassport(false)} visitedPois={visitedPois} />}
     </>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAppStore } from '@/store'
-import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box, Flower2 } from 'lucide-react'
+import { MapPin, Calendar, Image as ImageIcon, X, Volume2, Square, Layers, Box, Flower2, BookOpen } from 'lucide-react'
 import { TributeCeremony } from '@/components/ui/TributeCeremony'
 
 const MuseumPlaceholder: React.FC<{ archive: any }> = ({ archive }) => {
@@ -139,7 +139,7 @@ export const ArchiveDetailModal: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8 bg-white">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8 bg-white" key={selectedPoiId}>
           
           {/* Left: Media */}
           <div className="w-full lg:w-3/5 flex flex-col gap-4">
@@ -202,6 +202,17 @@ export const ArchiveDetailModal: React.FC = () => {
 
             {/* Tags & Actions */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => {
+                  handleClose()
+                }}
+                className="flex items-center gap-2 px-5 min-h-[44px] rounded-lg party-btn-primary"
+                aria-label="开始学习本节思政课"
+              >
+                <BookOpen size={18} />
+                开始学习本节思政课
+              </button>
+              
               <span className="px-4 py-1.5 rounded-full bg-[#FEFAF6] text-[#5C5C5C] text-sm border border-[#E8DFD5] font-medium">
                 数字档案坐标
               </span>

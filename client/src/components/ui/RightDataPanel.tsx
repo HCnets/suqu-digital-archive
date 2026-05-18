@@ -27,7 +27,12 @@ const MOCK_MESSAGES: Message[] = [
 ]
 
 export const RightDataPanel: React.FC = () => {
-  const [tributeCount, setTributeCount] = useState(11990821)
+  const [tributeCount, setTributeCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('suqu_tribute_count')
+      return saved ? parseInt(saved, 10) : 11990821
+    } catch { return 11990821 }
+  })
   const [apiMessages, setApiMessages] = useState<Message[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formName, setFormName] = useState('')
@@ -47,6 +52,8 @@ export const RightDataPanel: React.FC = () => {
   const allMessages = apiMessages.length > 0 ? apiMessages : MOCK_MESSAGES
 
   useEffect(() => {
+    const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    if (!isDev) return
     fetch(`${API_BASE}/tributes`)
       .then(r => r.json())
       .then(d => setTributeCount(d.count))
@@ -64,7 +71,11 @@ export const RightDataPanel: React.FC = () => {
       const d = await r.json()
       setTributeCount(d.count)
     } catch {
-      setTributeCount(prev => prev + 1)
+      setTributeCount(prev => {
+        const next = prev + 1
+        try { localStorage.setItem('suqu_tribute_count', String(next)) } catch {}
+        return next
+      })
     }
   }, [])
 

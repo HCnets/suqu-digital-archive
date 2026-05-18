@@ -15,7 +15,7 @@ import { useAppStore } from '@/store'
 import { BookOpenText, Layers, Globe, X } from 'lucide-react'
 
 function App() {
-  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, isAutoTouring, setAutoTouring, mapStyle, setMapStyle, isIndoorMode, setMainMapInstance } = useAppStore()
+  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, setDirectorMode, isDirectorMode, mapStyle, setMapStyle, isIndoorMode, setMainMapInstance } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   
@@ -33,7 +33,7 @@ function App() {
     <div className="relative w-screen h-screen overflow-hidden" style={{ backgroundColor: '#FEFAF6' }}>
       {/* GIS Map Layer */}
       <div className="absolute inset-0 z-0">
-        <GisMap key={mapStyle} onMapLoad={(map) => setMainMapInstance(map)} />
+        <GisMap onMapLoad={(map) => setMainMapInstance(map)} />
       </div>
 
       {/* UI Layer */}
@@ -42,8 +42,8 @@ function App() {
         <UnifiedHeader 
           title="广东省苏区镇数字化档案" 
           description="传承红色基因 · 弘扬苏区精神 —— 面向全体人民的红色党建与思政实践数字展厅"
-          onAutoTour={() => setAutoTouring(!isAutoTouring)}
-          isTouring={isAutoTouring}
+          onAutoTour={() => setDirectorMode(!isDirectorMode)}
+          isTouring={isDirectorMode}
         />
 
         {/* Map Style Switcher */}

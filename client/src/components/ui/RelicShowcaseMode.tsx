@@ -207,7 +207,7 @@ export const RelicShowcaseMode: React.FC = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-[#1A1A1A] tracking-wide font-serif">
-                苏区革命文物 · 全息扫描档案
+                {archive?.title || '苏区革命文物'} · 全息扫描档案
               </h2>
               <p className="text-[#5C5C5C] text-sm mt-1">
                 三维激光扫描 · 数字空间中 1:1 重建历史痕迹

@@ -99,7 +99,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   const tourIntervalRef = useRef<number | null>(null)
   const [mapLoading, setMapLoading] = useState(true)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode } = useAppStore()
+  const { getAllArchives, setSelectedPoiId, selectedPoiId, isAutoTouring, setAutoTouring, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode, isDirectorMode } = useAppStore()
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -588,6 +588,21 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     }
   }, [showSovietRegion])
 
+  // DirectorMode: 地图跟随讲解飞行
+  useEffect(() => {
+    if (!mapRef.current || !isDirectorMode || !selectedPoiId) return
+    const archive = archives.find(a => a.id === selectedPoiId)
+    if (!archive) return
+    mapRef.current.flyTo({
+      center: [archive.longitude, archive.latitude],
+      zoom: 17,
+      pitch: 65,
+      bearing: -20,
+      duration: 2500,
+      essential: true
+    })
+  }, [selectedPoiId, isDirectorMode])
+
   // 监听 FPS 模式切换
   useEffect(() => {
     if (!mapRef.current) return
@@ -703,19 +718,25 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       let marker = markersRef.current[poi.id]
       
       const renderContent = (
-        <div 
-          className={`w-5 h-5 rounded-full shadow-md cursor-pointer transition-all duration-300 border-2 border-white ${
+        <div className="relative group cursor-pointer flex flex-col items-center pointer-events-auto">
+          <div className={`w-5 h-5 md:w-5 md:h-5 rounded-full shadow-md transition-all duration-300 border-2 border-white ${
             poi.id === selectedPoiId ? 'scale-150 ring-2 ring-[#C41E3A]/40' : 'hover:scale-125'
           }`}
-          style={{
-            backgroundColor: poi.type === 'revolution' ? '#C41E3A' : 
-                           poi.type === 'government' ? '#5C5C5C' : '#8B6914'
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            setSelectedPoiId(poi.id)
-          }}
-        />
+            style={{
+              backgroundColor: poi.type === 'revolution' ? '#C41E3A' : 
+                             poi.type === 'government' ? '#5C5C5C' : '#8B6914'
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedPoiId(poi.id)
+            }}
+          />
+          <div className={`absolute top-full mt-1.5 whitespace-nowrap text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8DFD5] text-[#1A1A1A] shadow-sm transition-opacity pointer-events-none ${
+            poi.id === selectedPoiId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}>
+            {poi.title}
+          </div>
+        </div>
       )
 
       if (!marker) {
@@ -739,6 +760,22 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       }
     })
   }, [archives, selectedPoiId])
+
+  // 底图切换: 使用 setStyle 而不是销毁组件
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+    const currentStyle = map.getStyle()
+    const targetStyle = MAP_STYLES[mapStyle]
+    if (!currentStyle || !currentStyle.name) return
+    const isCurrentlySatellite = currentStyle.name?.includes('satellite') || currentStyle.layers?.some((l: any) => l.id === 'satellite-layer')
+    if ((mapStyle === 'satellite' && isCurrentlySatellite) || (mapStyle === 'museum' && !isCurrentlySatellite)) return
+    setMapLoading(true)
+    map.setStyle(targetStyle as maplibregl.StyleSpecification)
+    map.once('style.load', () => {
+      setMapLoading(false)
+    })
+  }, [mapStyle])
 
   return (
     <div className={cn('w-full h-full relative', className)}>

@@ -41,26 +41,26 @@ export const FpsOverlay: React.FC = () => {
           </div>
           
           <div className="flex items-center justify-between gap-8">
-            <span>旋转视角</span>
+            <span>旋转/俯仰</span>
             <div className="flex gap-1">
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">Q</kbd>
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">E</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">Ctrl</kbd>
+              <span className="text-xs">+</span>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">↑↓←→</kbd>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-8">
-            <span>调整俯仰</span>
+            <span>缩放</span>
             <div className="flex gap-1">
-              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">Ctrl</kbd>
-              <span className="text-xs text-[#5C5C5C]/50">+</span>
-              <span className="text-xs">拖拽</span>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">+</kbd>
+              <kbd className="px-2 py-0.5 rounded bg-[#FEFAF6] border border-[#E8DFD5] text-[#1A1A1A] font-mono text-xs">-</kbd>
             </div>
           </div>
         </div>
 
         <div className="mt-4 pt-3 border-t border-[#E8DFD5] text-xs text-[#5C5C5C] leading-relaxed font-serif">
           <p>您已降落至苏区镇地表。</p>
-          <p className="mt-1">四周的红色光柱即为革命先烈战斗过的坐标。</p>
+          <p className="mt-1">点击地图上的红色坐标标记即可查看革命历史档案。</p>
         </div>
       </div>
 
