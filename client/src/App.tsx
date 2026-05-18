@@ -81,7 +81,7 @@ function App() {
 
       {/* POI 信息卡 */}
       {!showIntro && activeArchive && (
-        <div className="absolute bottom-28 md:bottom-20 right-6 left-6 md:left-auto z-[60] pointer-events-auto">
+        <div className="absolute bottom-28 md:bottom-20 right-6 md:right-24 md:left-auto z-[60] pointer-events-auto">
           <div className="museum-card p-4 md:p-6 rounded-2xl w-full md:max-w-md transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
             <div className={`absolute top-0 left-0 w-full h-1 ${
               activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :

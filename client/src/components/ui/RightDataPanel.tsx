@@ -255,7 +255,7 @@ export const RightDataPanel: React.FC = () => {
       {isMobile && (
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="absolute bottom-28 right-4 z-[50] md:hidden min-w-[48px] min-h-[48px] rounded-full bg-[#C41E3A] text-white shadow-lg flex items-center justify-center gap-1.5 px-4 font-medium text-sm pointer-events-auto touch-manipulation"
+          className="absolute bottom-28 right-4 z-[65] md:hidden min-w-[48px] min-h-[48px] rounded-full bg-[#C41E3A] text-white shadow-lg flex items-center justify-center gap-1.5 px-4 font-medium text-sm pointer-events-auto touch-manipulation"
           aria-label="打开群众互动面板"
         >
           <HeartHandshake size={18} />
@@ -265,7 +265,7 @@ export const RightDataPanel: React.FC = () => {
       )}
       {isMobile ? (
         mobileOpen && (
-          <div className="fixed inset-x-4 top-16 bottom-4 z-[50] md:hidden pointer-events-auto bg-white rounded-2xl shadow-2xl border border-[#E8DFD5] overflow-hidden">
+          <div className="fixed inset-x-4 top-16 bottom-4 z-[65] md:hidden pointer-events-auto bg-white rounded-2xl shadow-2xl border border-[#E8DFD5] overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-[#E8DFD5]">
               <h2 className="text-sm font-bold text-[#1A1A1A] font-serif flex items-center gap-2">
                 <MessageSquareHeart size={16} className="text-[#C41E3A]" /> 群众互动与致敬
