@@ -41,6 +41,16 @@
   - 系统稳定性大幅提升，地图不再因管理面板切换或底图切换出现异常行为。
   - **GitHub `c22aae0` 已推送**。
 
+### [v3.0.6] - 2026-05-18
+- **版本状态**: 第十二轮底图切换穿透修复 — museum/satellite 切换后完全重建自定义图层的闭环
+- **工程推进**:
+  - **P0 底图切换后自定义图层全丢失**: `map.setStyle()` 会完全销毁所有非内置 source/layer。此前切换底图后仅在 `style.load` 回调中 `setMapLoading(false)`，未重建任何自定义图层，导致：3D 地形消失（DEM）、苏区镇边界发光线条消失、16 个 POI 的 100-150m 程序化 3D 白模消失、星火燎原辐射拓扑线消失、历史行军路线消失。
+  - **修复方案**: 引入 `rebuildRef` 将 `initSources()` 函数引用穿透到 style-switch effect 中。切换底图后 `style.load` 回调先重建 DEM 地形源（`terrain-source` + `setTerrain`），再调用 `rebuildRef.current(map)` 重建全部 5 组自定义 source/layer（苏区边界 2 层、3D 白模 1 层、辐射拓扑 2 层、历史路线 1 层）。
+  - 所有自定义图层均有 `!map.getSource()` 守卫，确保 setStyle 清除后再重新注入，不会重复添加。
+- **阶段成果**:
+  - 底图切换从"可切但图层全丢"升级为"无缝切换并完整体现所有 GIS 效果"。TypeScript 零错误 + Vite 构建通过。
+  - **GitHub `d27cd41` 已推送**。
+
 ### [v3.0.4] - 2026-05-18
 - **版本状态**: 第十轮 CSS 层叠上下文穿透修复 — 左侧面板弹窗被右侧面板压制
 - **工程推进**:
