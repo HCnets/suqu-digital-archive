@@ -66,6 +66,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
   const isAdminOpenRef = useRef(isAdminOpen)
   useEffect(() => { isAdminOpenRef.current = isAdminOpen }, [isAdminOpen])
   const routeAnimRef = useRef<number | null>(null)
+  const rebuildRef = useRef<((map: maplibregl.Map) => void) | null>(null)
   
   // 过滤出年份小于等于当前时间轴年份的档案
   const archives = useMemo(() => {
@@ -372,6 +373,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     } else {
       map.once('style.load', initSources)
     }
+    rebuildRef.current = initSources
   }, [])
 
   // 历史行军路线动画逻辑
@@ -680,6 +682,17 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     map.setStyle(targetStyle as maplibregl.StyleSpecification)
     map.once('style.load', () => {
       setMapLoading(false)
+      if (!map.getSource('terrain-source')) {
+        map.addSource('terrain-source', {
+          type: 'raster-dem',
+          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+          encoding: 'terrarium',
+          tileSize: 256,
+          maxzoom: 14
+        })
+        map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 })
+      }
+      if (rebuildRef.current) rebuildRef.current(map)
     })
   }, [mapStyle])
 
