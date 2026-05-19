@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, CloudSnow, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare } from 'lucide-react'
+import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, CloudSnow, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare, Music, Mic, Camera, MapPin, Send, Tv } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FpsOverlay } from '@/components/ui/FpsOverlay'
 import { HeroesPanel } from '@/components/ui/HeroesPanel'
@@ -9,6 +9,14 @@ import { TodaySuqu } from '@/components/ui/TodaySuqu'
 import { RedQuiz } from '@/components/ui/RedQuiz'
 import { PartyDayRoutes } from '@/components/ui/PartyDayRoutes'
 import { CheckInPassport } from '@/components/ui/CheckInPassport'
+import { RedSongPlayer } from '@/components/ui/RedSongPlayer'
+import { PartyOathWall } from '@/components/ui/PartyOathWall'
+import { RedPanorama } from '@/components/ui/RedPanorama'
+import { LongMarchRoute } from '@/components/ui/LongMarchRoute'
+import { OralHistory } from '@/components/ui/OralHistory'
+import { TourGuide } from '@/components/ui/TourGuide'
+import { RedFilmArchive } from '@/components/ui/RedFilmArchive'
+import { PeopleCoCreation } from '@/components/ui/PeopleCoCreation'
 
 const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
   { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
@@ -30,6 +38,14 @@ export const HudDashboard: React.FC = () => {
   const [showRedQuiz, setShowRedQuiz] = useState(false)
   const [showPartyRoutes, setShowPartyRoutes] = useState(false)
   const [showPassport, setShowPassport] = useState(false)
+  const [showSongPlayer, setShowSongPlayer] = useState(false)
+  const [showOathWall, setShowOathWall] = useState(false)
+  const [showPanorama, setShowPanorama] = useState(false)
+  const [showLongMarch, setShowLongMarch] = useState(false)
+  const [showOralHistory, setShowOralHistory] = useState(false)
+  const [showTourGuide, setShowTourGuide] = useState(false)
+  const [showFilmArchive, setShowFilmArchive] = useState(false)
+  const [showCoCreation, setShowCoCreation] = useState(false)
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
   const [visitedPois, setVisitedPois] = useState<string[]>(() => {
     try {
@@ -314,6 +330,71 @@ export const HudDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* 红色互动体验 */}
+      <div className="museum-card p-4 rounded-2xl space-y-3">
+        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
+          <Music size={16} className="text-[#C41E3A]" />
+          红色互动体验
+        </h3>
+        
+        <div className="flex flex-col gap-2">
+          <button 
+            onClick={() => { setShowSongPlayer(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Music size={14} />
+              <span className="text-sm font-medium">苏区红歌馆</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowOathWall(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <ScrollText size={14} />
+              <span className="text-sm font-medium">入党誓词互动墙</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowPanorama(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Camera size={14} />
+              <span className="text-sm font-medium">红色遗址360°全景</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowLongMarch(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Flag size={14} />
+              <span className="text-sm font-medium">长征路线交互沙盘</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowOralHistory(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Mic size={14} />
+              <span className="text-sm font-medium">口述历史录音室</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+        </div>
+      </div>
+
       {/* 红色资源文库 */}
       <div className="museum-card p-4 rounded-2xl space-y-3">
         <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
@@ -378,6 +459,39 @@ export const HudDashboard: React.FC = () => {
             </div>
             <span className="text-xs font-bold text-[#C41E3A]">{visitedPois.length}/16</span>
           </button>
+
+          <button 
+            onClick={() => { setShowTourGuide(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <MapPin size={14} />
+              <span className="text-sm font-medium">红色文旅导览手册</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowFilmArchive(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Tv size={14} />
+              <span className="text-sm font-medium">红色影视资料库</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
+
+          <button 
+            onClick={() => { setShowCoCreation(true); if (isMobile) setCollapsed(true) }}
+            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
+          >
+            <div className="flex items-center gap-2">
+              <Send size={14} />
+              <span className="text-sm font-medium">红色家书 · 薪火相传</span>
+            </div>
+            <ChevronRight size={14} className="opacity-40" />
+          </button>
         </div>
       </div>
       
@@ -414,6 +528,14 @@ export const HudDashboard: React.FC = () => {
       />
     )}
     {showPassport && <CheckInPassport onClose={() => setShowPassport(false)} visitedPois={visitedPois} />}
+    {showSongPlayer && <RedSongPlayer onClose={() => setShowSongPlayer(false)} />}
+    {showOathWall && <PartyOathWall onClose={() => setShowOathWall(false)} />}
+    {showPanorama && <RedPanorama onClose={() => setShowPanorama(false)} />}
+    {showLongMarch && <LongMarchRoute onClose={() => setShowLongMarch(false)} />}
+    {showOralHistory && <OralHistory onClose={() => setShowOralHistory(false)} />}
+    {showTourGuide && <TourGuide onClose={() => setShowTourGuide(false)} />}
+    {showFilmArchive && <RedFilmArchive onClose={() => setShowFilmArchive(false)} />}
+    {showCoCreation && <PeopleCoCreation onClose={() => setShowCoCreation(false)} />}
     </>
   )
 }
