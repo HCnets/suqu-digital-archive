@@ -314,7 +314,7 @@ export const ArchiveDetailModal: React.FC = () => {
             {archive.media && archive.media.length > 0 && !imgFailed ? (
               <div className="w-full aspect-video rounded-2xl overflow-hidden bg-[#FEFAF6] border border-[#E8DFD5] relative group">
                 <img 
-                  src={`/images/archives/${archive.id}.jpg`}
+                  src={`${import.meta.env.BASE_URL}images/archives/${archive.id}.jpg`}
                   alt={archive.media[0]?.caption || archive.title}
                   onError={(e) => {
                     // 本地图片加载失败 → 尝试原始URL → 都失败则显示占位
