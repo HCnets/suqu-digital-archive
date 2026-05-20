@@ -167,14 +167,14 @@ export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) =
                   style={{ borderLeft: `4px solid ${film.accent}` }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: `${film.accent}10` }}>
-                      {film.imageChar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm font-serif text-[#1A1A1A]">{film.title}</h4>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-[#FEFAF6] text-[#5C5C5C] border border-[#E8DFD5]">{film.year}</span>
-                      </div>
+                  {/* CSS 电影海报卡片 —— 替代 emoji */}
+                  <div className="w-14 h-20 rounded-lg flex-shrink-0 flex flex-col items-center justify-center relative overflow-hidden" style={{ backgroundColor: `${film.accent}15`, border: `1.5px solid ${film.accent}30` }}>
+                    <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: film.accent, opacity: 0.6 }} />
+                    <span className="text-[9px] font-black font-serif tracking-widest leading-tight text-center px-1" style={{ color: film.accent }}>
+                      {film.title.length > 4 ? film.title.slice(0, 4) : film.title}
+                    </span>
+                    <span className="text-[7px] font-mono mt-0.5" style={{ color: film.accent, opacity: 0.5 }}>{film.year}</span>
+                    <div className="absolute bottom-0 left-0 w-full h-1" style={{ backgroundColor: film.accent, opacity: 0.3 }} />
                       <div className="flex items-center gap-2 mt-1">
                         {film.type === '电影' && <Tv size={10} className="text-[#C41E3A]" />}
                         {film.type === '电视剧' && <Tv size={10} className="text-[#8B6914]" />}
