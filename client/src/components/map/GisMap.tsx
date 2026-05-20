@@ -591,12 +591,14 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       const color = poi.type === 'revolution' ? '#C41E3A' : 
                     poi.type === 'government' ? '#5C5C5C' : '#8B6914';
       
-      // 生成更高大且发光的建筑体
+      // 生成更高大且发光的建筑体 (基于 poi.id 确定性高度，避免每次渲染跳动)
+      const hash = poi.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+      const deterministicHeight = (hash % 50) + 100 // 100-150米高，同一档案高度恒定
       return {
         type: 'Feature',
         properties: {
           color: color,
-          height: Math.random() * 50 + 100 // 100-150米高
+          height: deterministicHeight,
         },
         geometry: {
           type: 'Polygon',
@@ -671,8 +673,9 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     const map = mapRef.current
     const currentStyle = map.getStyle()
     const targetStyle = MAP_STYLES[mapStyle]
-    if (!currentStyle || !currentStyle.name) return
-    const isCurrentlySatellite = currentStyle.name?.includes('satellite') || currentStyle.layers?.some((l: any) => l.id === 'satellite-layer')
+    if (!currentStyle || !currentStyle.layers) return
+    // 通过 raster 图层 ID 判断当前底图类型（不依赖可选的 style.name 字段）
+    const isCurrentlySatellite = currentStyle.layers?.some((l: any) => l.id === 'satellite-layer') ?? false
     if ((mapStyle === 'satellite' && isCurrentlySatellite) || (mapStyle === 'museum' && !isCurrentlySatellite)) return
     if (routeAnimRef.current) {
       cancelAnimationFrame(routeAnimRef.current)

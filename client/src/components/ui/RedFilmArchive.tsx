@@ -84,6 +84,42 @@ const FILMS: FilmItem[] = [
     imageChar: '🔥',
     accent: '#C41E3A'
   },
+  {
+    title: '建军大业',
+    year: '2017',
+    type: '电影',
+    description: '献礼建军90周年历史大片，聚焦1927年南昌起义到井冈山会师的革命历程，全明星阵容演绎建军伟业。',
+    connection: '南昌起义军余部后来进入海陆丰地区，在苏区镇红军亭与广州起义余部会师，影片中的历史正是苏区故事的起点。',
+    imageChar: '⚡',
+    accent: '#C41E3A'
+  },
+  {
+    title: '绝密使命',
+    year: '2021',
+    type: '电视剧',
+    description: '32集谍战剧，首次聚焦中央红色交通线——从上海到瑞金三千里水陆地下交通线上的绝密故事。',
+    connection: '苏区镇红色交通站是这条交通线的重要支线节点。剧中交通员的经历，与苏区镇交通员李月梅的真实故事惊人相似。',
+    imageChar: '🕵️',
+    accent: '#8B6914'
+  },
+  {
+    title: '古田军号',
+    year: '2019',
+    type: '电影',
+    description: '以一个红军小号手的视角，讲述1929年古田会议前后红军队伍的思想建设和组织建设历程。',
+    connection: '古田会议确立的"思想建党、政治建军"原则，在苏区镇的赤卫队和苏维埃政权建设中同样得到了坚决贯彻。',
+    imageChar: '📯',
+    accent: '#C41E3A'
+  },
+  {
+    title: '觉醒年代',
+    year: '2021',
+    type: '电视剧',
+    description: '43集重大革命历史题材电视剧，全景展现1915-1921年新文化运动到中国共产党成立的思想启蒙历程。',
+    connection: '李大钊、陈独秀等先驱播下的革命火种，经彭湃等人传递到海陆丰、播撒到苏区镇。觉醒的不仅是知识分子，更是千千万万的贫苦农民。',
+    imageChar: '🌅',
+    accent: '#C41E3A'
+  },
 ]
 
 export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) => {

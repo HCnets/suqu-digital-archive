@@ -73,6 +73,46 @@ const PANORAMAS: Panorama[] = [
     lat: 23.3595,
     lng: 115.3415
   },
+  {
+    id: 'zijin-party-committee',
+    title: '中共紫金县委旧址',
+    description: '大革命失败后，中共紫金县委秘密迁至炮子乡深山之中，在此领导了紫金县的武装暴动和苏维埃政权建设。彭湃同志曾多次在此主持会议。',
+    bgColor: '#FDE8EC',
+    accentColor: '#C41E3A',
+    features: ['县委秘密会议室复原', '彭湃同志办公旧址', '革命文物展柜', '历史照片墙'],
+    lat: 23.3580,
+    lng: 115.3400
+  },
+  {
+    id: 'dongjiang-committee',
+    title: '中共东江特委旧址',
+    description: '中共东江特别委员会机关驻地，彭湃同志任书记。在此统一领导海陆惠紫四县的革命斗争，创办《东江红旗》等革命刊物。',
+    bgColor: '#FDE8EC',
+    accentColor: '#C41E3A',
+    features: ['特委机关旧址', '《东江红旗》编辑部复原', '彭湃同志卧室复原', '根据地沙盘模型'],
+    lat: 23.3610,
+    lng: 115.3395
+  },
+  {
+    id: 'soviet-arsenal',
+    title: '苏维埃兵工厂遗址',
+    description: '紫金苏维埃政权在极端困难条件下创建的秘密兵工厂。苏区军民在此制造土枪、大刀、手榴弹，用智慧和汗水为武装斗争提供了宝贵后勤保障。',
+    bgColor: '#E8F5E9',
+    accentColor: '#2E7D32',
+    features: ['兵工厂遗址', '土枪展示区', '工具陈列', '历史场景复原'],
+    lat: 23.3575,
+    lng: 115.3365
+  },
+  {
+    id: 'suqu-transport',
+    title: '苏区红色交通站旧址',
+    description: '连接东江苏区与中央苏区的地下交通线重要节点。交通员们以商贩、郎中等身份为掩护，在此传递情报、护送干部、运送物资。',
+    bgColor: '#FFF8E1',
+    accentColor: '#8B6914',
+    features: ['交通站暗格', '情报传递展', '交通员事迹墙', '秘密通道复原'],
+    lat: 23.3570,
+    lng: 115.3425
+  },
 ]
 
 export const RedPanorama: React.FC<{ onClose: () => void }> = ({ onClose }) => {
