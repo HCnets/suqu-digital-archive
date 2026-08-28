@@ -5,6 +5,25 @@
 
 ---
 
+## 📂 目录结构
+
+| 目录/文件 | 用途 |
+| --- | --- |
+| `client/` | 展示端（React19 + Vite + MapLibre + Three.js），构建产物在 `dist-server/` |
+| `server/` | 后端（Express5 + SQLite/MySQL 双存储），**源码唯一权威**，含 `db/`、`scripts/` |
+| `admin/` | 管理后台（React + Vite），构建产物在 `dist/` |
+| `docs/` | 部署手册、审计报告、验收清单等文档 |
+| `scripts/` | 本地运维脚本（MySQL 启停、图片压缩等） |
+| `tools/` | 可复用素材处理工具（图片提取/压缩/SQL 生成；`optimize-images.cjs` 生成 WebP、`analyze-images.cjs` 资产体检） |
+| `archive/` | **历史归档区**：上线部署包、SQL 历史版本、一次性脚本、调试产物（详见 `archive/README.md`） |
+| `import_sites_v3.sql` | 官方 29 处遗址导入 SQL（**权威版本**） |
+| `szht_cms_full.sql` | 数据库全量 dump |
+| `docker-compose.yml` | 本地 MySQL 8.4 容器定义 |
+
+> 🧹 历史部署包、旧版 SQL、一次性脚本均已归档至 `archive/`，不再散落根目录。
+
+---
+
 ## 🌟 项目纪年表与版本演进 (Time Tree)
 *注：以下纪年表严格遵循时间树规范，只增不减，完整体现版本工程推进及成果。*
 
