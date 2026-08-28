@@ -4,7 +4,38 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node index.js"
+    "test": "node --test",
+    "check": "node --check index.js && node --check lib/utils.js && node --check lib/security.js && node --check db/config.js",
+    "start": "node index.js",
+    "start:prod": "node -r ./scripts/load-env-file.js index.js",
+    "dev": "nodemon index.js",
+    "admin:reset-password": "node scripts/reset-admin-password.js",
+    "db:backup": "node scripts/create-backup.js",
+    "db:backup:mysql": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-backup.js",
+    "acceptance:v1:evidence": "node -r ./scripts/load-mysql-cli-env.js scripts/v1-acceptance-evidence.js",
+    "db:parity:mysql:admin-core": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-admin-core-parity.js",
+    "db:parity:mysql:content-read": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-content-read-parity.js",
+    "db:parity:mysql:runtime-misc": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-runtime-misc-parity.js",
+    "db:bootstrap:smoke": "node scripts/runtime-bootstrap-smoke.js",
+    "db:stores:smoke": "node scripts/runtime-store-factory-smoke.js",
+    "db:status:mysql:smoke": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-runtime-status-smoke.js",
+    "db:cutover:mysql:smoke": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-cutover-readiness-smoke.js",
+    "db:sync:mysql:tail": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-sync-tail-to-mysql.js",
+    "db:publish:mysql:legacy-archives": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-publish-legacy-archives.js",
+    "official:suqu-sites:dry-run": "node -r ./scripts/load-mysql-cli-env.js scripts/official-suqu-sites-dry-run.js",
+    "db:smoke:mysql:server-runtime": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-runtime-server-smoke.js",
+    "db:smoke:mysql:admin-runtime": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-admin-runtime-regression.js",
+    "db:smoke:mysql:acceptance": "npm run db:status:mysql:smoke && npm run db:smoke:mysql:server-runtime && npm run db:smoke:mysql:admin-core && npm run db:smoke:mysql:content-read && npm run db:smoke:mysql:content-write && npm run db:smoke:mysql:runtime-misc && npm run db:smoke:mysql:primary && npm run db:parity:mysql:public && npm run db:smoke:mysql:admin-runtime",
+    "db:parity:mysql:public": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-public-api-parity.js",
+    "db:repair:mysql:auto-increment": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-fix-autoincrement.js",
+    "db:smoke:mysql:admin-core": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-admin-core-flow-smoke.js",
+    "db:smoke:mysql:content-read": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-content-read-smoke.js",
+    "db:smoke:mysql:content-write": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-content-write-smoke.js",
+    "db:smoke:mysql:runtime-misc": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-runtime-misc-smoke.js",
+    "db:migrate:mysql": "node -r ./scripts/load-mysql-cli-env.js scripts/migrate-sqlite-to-mysql.js",
+    "db:preflight:mysql": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-preflight.js",
+    "db:smoke:mysql:primary": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-primary-flow-smoke.js",
+    "db:smoke:mysql": "node -r ./scripts/load-mysql-cli-env.js scripts/mysql-runtime-smoke.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +52,8 @@
   "dependencies": {
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mysql2": "^3.15.1",
+    "sharp": "^0.35.3"
   }
 }
