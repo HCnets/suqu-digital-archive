@@ -4,6 +4,15 @@
 
 ---
 
+> ⚠️ **重要现状说明（2026-08-29）**：本文档主体描述的是 **v3.2.0 之前的旧版静态展示架构**（React 18、前端静态档案数组、后端可选），**已与现行架构脱节**，仅保留作为历史维护参考。现行架构为：
+>
+> - **技术栈**：React **19** + Vite 8 + TypeScript 6（展示端 client/）；Express 5 + **SQLite/MySQL 双运行时**（服务端 server/，生产以 MySQL 为准）；React 管理端（admin/）
+> - **数据流**：前台**零静态内容兜底**，全部内容经后台 CMS **审核后发布**，前台只读已发布数据（`STATIC_ARCHIVES` 已移除）
+> - **版本演进**：请以 `docs/版本说明.md`（v3.3.0+）与 `docs/PHASE_AUDIT.md` 为准；部署/验收/上线流程见 `docs/PRODUCTION_DEPLOYMENT.md`、`docs/V1_DEPLOYMENT_RUNBOOK.md`、`docs/V1_GO_LIVE_CUTOVER_CHECKLIST.md`
+> - 下文"双线部署 / Nginx / 静态档案管理"等章节如与上述文档冲突，**以上述文档为准**
+
+---
+
 ## 1. 项目架构概览
 
 ```
