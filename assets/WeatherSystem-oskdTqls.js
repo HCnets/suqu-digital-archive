@@ -1,0 +1,10 @@
+import{D as e,O as t,a as n,c as r}from"./index-CKK4nJ2f.js";var i=t(e(),1),a=r(),o=e=>{let t=Math.sin(e*9301+49297)*233280;return t-Math.floor(t)},s=()=>{let{weather:e}=n(),t=(0,i.useMemo)(()=>Array.from({length:80},(e,t)=>({left:`${o(t+1)*100}%`,top:`${o(t+81)*-100}%`,height:`${o(t+161)*20+10}px`,duration:`${o(t+241)*.3+.3}s`,delay:`${o(t+321)*2}s`})),[]),r=(0,i.useMemo)(()=>Array.from({length:50},(e,t)=>{let n=o(t+501)*6+3;return{left:`${o(t+401)*100}%`,top:`${o(t+451)*-20}%`,width:`${n}px`,height:`${n}px`,duration:`${o(t+551)*3+4}s`,delay:`${o(t+601)*5}s`}}),[]);if(e===`clear`)return null;let s=e===`rain`?`细雨无声，追忆苏区峥嵘岁月——1927 年至 1930 年间，革命先辈在此浴血奋战，用生命守护信仰、开创红色政权。`:`山河肃穆，缅怀长眠于此的革命英烈——昔日浴血之地，今日红色血脉代代相传、精神永续。`;return(0,a.jsxs)(`div`,{className:`fixed inset-0 pointer-events-none z-[50] overflow-hidden`,children:[(0,a.jsx)(`style`,{children:`
+        @keyframes rain {
+          0% { transform: translateY(-100vh); }
+          100% { transform: translateY(100vh); }
+        }
+        @keyframes snow {
+          0% { transform: translateY(-10vh) rotate(0deg); }
+          100% { transform: translateY(110vh) rotate(360deg); }
+        }
+      `}),e===`rain`&&(0,a.jsx)(`div`,{className:`absolute inset-0`,children:t.map((e,t)=>(0,a.jsx)(`div`,{className:`absolute w-[1px] opacity-40`,style:{left:e.left,top:e.top,height:e.height,background:`linear-gradient(to bottom, transparent, rgba(139, 105, 20, 0.6))`,animation:`rain ${e.duration} linear infinite`,animationDelay:e.delay}},t))}),e===`snow`&&(0,a.jsx)(`div`,{className:`absolute inset-0`,children:r.map((e,t)=>(0,a.jsx)(`div`,{className:`absolute rounded-full bg-white/60`,style:{left:e.left,top:e.top,width:e.width,height:e.height,animation:`snow ${e.duration} linear infinite`,animationDelay:e.delay}},t))}),(0,a.jsx)(`div`,{className:`absolute bottom-10 left-1/2 -translate-x-1/2 z-10 w-[min(88vw,520px)] px-6 py-4 text-center rounded-2xl bg-white/85 backdrop-blur-sm border border-[#E8DFD5] shadow-sm`,children:(0,a.jsx)(`p`,{className:`text-sm text-[#5C5C5C] leading-relaxed font-serif`,children:s})})]})};export{s as WeatherSystem};
