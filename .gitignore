@@ -1,6 +1,45 @@
 node_modules/
 dist/
 dist-server/
+server/data/
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+!server/.env.production.example
+admin/.env
+admin/.env.local
+admin/.env.production
+admin/.npm-cache/
+admin/dist/
+admin/node_modules/
+server/.npm-cache/
+server/.npm-cache-ffmpeg/
+server/.npm-cache-lock/
 *.log
 .DS_Store
 Thumbs.db
+# 以下目录曾被git追踪，如需解除追踪执行:
+# git rm --cached -r server/node_modules/
+# 注意: 此操作会从git索引删除1,500+文件，需谨慎
+
+# npm 缓存（各种命名，均为本机产物不入库）
+.npm-cache*/
+*.npm-cache*/
+.npm-cache-view/
+
+# 本地工具产物/截图
+.codex/
+
+# 归档与部署副本（非当前源码，不入库）
+archive/
+deploy-pkg/
+
+# 根目录一次性审计/生成脚本（可复用工具放 scripts/ 或 tools/）
+/_*.js
+
+# SQLite 运行时文件（server/data/ 已忽略，这里兜底）
+*.db-shm
+*.db-wal
