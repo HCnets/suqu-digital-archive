@@ -21,7 +21,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[苏区镇数字化档案] 渲染错误:', error, errorInfo)
+    console.error('[红色文化数字档案] 渲染错误:', error, errorInfo)
   }
 
   handleReset = () => {

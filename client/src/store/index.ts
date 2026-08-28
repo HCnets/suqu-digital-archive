@@ -1,25 +1,134 @@
 import { create } from 'zustand'
+import type maplibregl from 'maplibre-gl'
+import { API_BASE, shouldUseBackend } from '@/lib/env'
 
 export interface ArchiveData {
   id: string
   title: string
   description: string
+  regionId?: string
+  regionName?: string
+  address?: string
+  coverImage?: string
   longitude: number
   latitude: number
   type: 'government' | 'revolution' | 'culture'
   year: number
+  historyPeriod?: string
+  relatedPeople?: string[]
+  relatedEvents?: string[]
+  publishPositions?: {
+    map: boolean
+    list: boolean
+    home: boolean
+    topic: boolean
+    guide: boolean
+  }
   media?: {
     type: 'image' | 'video'
     url: string
     caption: string
   }[]
+  detailBlocks?: {
+    type: string
+    key?: string
+    title: string
+    order: number
+    enabled: boolean
+  }[]
+  displayTimeline?: {
+    label: string
+    value: string
+  }[]
+  sources?: {
+    sourceType: string
+    sourceTitle: string
+    sourceUrl: string
+    archiveRef: string
+    pageRef: string
+    collector: string
+    collectedAt: string
+    trustLevel: string
+    notes: string
+    createdAt?: number
+  }[]
+  oralHistories?: {
+    narrator: string
+    title: string
+    summary: string
+    transcript: string
+    audioUrl: string
+    videoUrl: string
+    date: string
+  }[]
+  aiNarration?: {
+    text: string
+    audioUrl: string
+    provider: string
+    reviewedAt: string
+  }
+  learningQuestions?: string[]
+  routeTips?: {
+    title: string
+    description: string
+    duration: string
+  }[]
+  publicMessages?: {
+    name: string
+    text: string
+    createdAt?: number
+  }[]
+  trustLevel?: string
+  auditStatus?: string
+  publishedAt?: number | null
+  updatedAt?: number
+  createdAt?: number
   content?: string
+}
+
+type ArchiveApiPayload = ArchiveData[] | { items?: ArchiveData[] }
+
+export interface PublicRegion {
+  id: string
+  parentId: string | null
+  parentName?: string
+  level: string
+  name: string
+  fullName: string
+  code?: string
+  description?: string
+  displayMode: 'current' | 'overview' | 'auto_location'
+  mapMode: 'single' | 'aggregate' | 'mixed'
+  sortOrder?: number
+  isDefault?: boolean
+  isActive?: boolean
+}
+
+export interface PublicMapView {
+  longitude: number
+  latitude: number
+  zoom: number
+  pitch: number
+  bearing: number
+}
+
+export interface PublicRegionConfig {
+  defaultRegion: PublicRegion | null
+  regions: PublicRegion[]
+  displayMode: 'current' | 'overview' | 'auto_location'
+  mapMode: 'single' | 'aggregate' | 'mixed'
+  scopeRegionIds: string[]
+  mapView: PublicMapView
+  generatedAt?: number
 }
 
 interface AppState {
   archives: Record<string, ArchiveData>
   fetchArchives: () => Promise<void>
-  addArchive: (archive: ArchiveData) => Promise<void>
+  regionConfig: PublicRegionConfig
+  selectedRegionId: string
+  fetchRegionConfig: (regionId?: string) => Promise<void>
+  selectRegion: (regionId: string) => Promise<void>
   
   selectedPoiId: string | null
   setSelectedPoiId: (id: string | null) => void
@@ -33,21 +142,12 @@ interface AppState {
   setAutoTouring: (isTouring: boolean) => void
   mapStyle: 'museum' | 'satellite'
   setMapStyle: (style: 'museum' | 'satellite') => void
-  
-  isAdminOpen: boolean
-  setAdminOpen: (isOpen: boolean) => void
-  draftCoords: [number, number] | null
-  setDraftCoords: (coords: [number, number] | null) => void
-  
+
   isIndoorMode: boolean
   setIndoorMode: (isIndoor: boolean) => void
   
   weather: 'clear' | 'rain' | 'snow'
   setWeather: (weather: 'clear' | 'rain' | 'snow') => void
-  showHistoricalRoute: boolean
-  setShowHistoricalRoute: (show: boolean) => void
-  showSovietRegion: boolean
-  setShowSovietRegion: (show: boolean) => void
   isRelicMode: boolean
   setRelicMode: (isRelic: boolean) => void
   activeEvent: string | null
@@ -62,306 +162,287 @@ interface AppState {
   isDirectorMode: boolean
   setDirectorMode: (isDirector: boolean) => void
 
-  mainMapInstance: any
-  setMainMapInstance: (map: any) => void
+  mainMapInstance: maplibregl.Map | null
+  setMainMapInstance: (map: maplibregl.Map | null) => void
 }
 
-const API_BASE = 'http://localhost:3001/api';
-
-const STATIC_ARCHIVES: Record<string, ArchiveData> = {
-  "suqu-red-house": {
-    id: `suqu-red-house`,
-    title: `紫金县苏维埃政府旧址 (红屋)`,
-    year: 1927,
-    type: `revolution`,
-    description: `1927年12月，在此召开了紫金县工农兵代表大会，宣告紫金县苏维埃政府成立。因会场内外张贴红联、悬挂红旗，群众亲切地称之为\u201C红屋\u201D。这是广东省最早成立的县级苏维埃政权之一。`,
-    content: `【思政大课堂：政权归于人民】
-1927年4月，蒋介石发动四一二反革命政变。紫金县党组织按照中共中央和广东省委指示，组织武装暴动。1927年12月，在彭湃同志的直接指导下，紫金县工农兵代表大会在苏区镇（原炮子乡）林氏宗祠召开，正式宣告紫金县苏维埃政府成立。大会选举产生了执行委员会，主席为刘琴西。
-
-【历史的回响】
-红屋原为林氏宗祠，始建于清代。苏维埃政权在此办公期间，发布了《没收地主土地分给农民》等一系列纲领性文件，掀起了东江流域土地革命的高潮。红屋的建立，标志着紫金劳苦大众第一次真正把政权掌握在自己手中。
-
-【启示与传承】
-江山就是人民，人民就是江山。只有始终同人民群众同呼吸、共命运、心连心，党才能赢得人民的衷心拥护。红屋虽小，但它是中国苏维埃运动在广东的一面旗帜，见证了中国共产党人早期探索人民政权建设的伟大实践。`,
-    longitude: 115.3412,
-    latitude: 23.3615,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Zijin_County_Soviet_Government_Site.jpg/800px-Zijin_County_Soviet_Government_Site.jpg`, caption: `紫金县苏维埃政府旧址（红屋）——始建于清代的林氏宗祠，1927年成为苏维埃政权驻地` }]
+const DEFAULT_REGION_CONFIG: PublicRegionConfig = {
+  defaultRegion: null,
+  regions: [],
+  displayMode: 'current',
+  mapMode: 'single',
+  scopeRegionIds: [],
+  mapView: {
+    longitude: 0,
+    latitude: 0,
+    zoom: 2,
+    pitch: 0,
+    bearing: 0,
   },
-  "blood-field": {
-    id: `blood-field`,
-    title: `血田遗址`,
-    year: 1928,
-    type: `revolution`,
-    description: `1928年春，国民党反动派对紫金苏区进行残酷\u201C围剿\u201D。450多名红军指战员、苏维埃干部和革命群众在此惨遭集体杀害，烈士的鲜血染红了整片水田，\u201C血田\u201D由此得名。`,
-    content: `【思政大课堂：信仰的底色是忠诚】
-1928年3月，国民党反动派调集重兵，对海陆惠紫苏区发动残酷的\u201C围剿\u201D。在紫金苏区炮子村，红军第四师、第二师余部及苏区赤卫队依托地形进行了顽强阻击。由于敌我力量悬殊，弹尽粮绝，防线最终被突破。
+}
 
-【血洒苏区，浩气长存】
-反动派进村后，对手无寸铁的革命群众、苏维埃干部和红军伤病员进行了惨绝人寰的大屠杀。据《紫金县志》记载，先后有450多名革命先烈在炮子村的一块水田中被集体杀害。烈士的鲜血染红了整片稻田，经久不褪，当地群众悲痛地将这块水田称为\u201C血田\u201D。
-
-【赓续红色血脉】
-血田是苏区军民用生命捍卫信仰的铁血见证。今天我们重温这段悲壮历史，就是要铭记先烈遗志，在新的长征路上坚定信念、勇毅前行。`,
-    longitude: 115.3385,
-    latitude: 23.3590,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Blood_Field_Memorial_Zijin.jpg/800px-Blood_Field_Memorial_Zijin.jpg`, caption: `血田遗址纪念碑——1928年450余名革命先烈在此壮烈牺牲` }]
-  },
-  "zijin-farmers-association": {
-    id: `zijin-farmers-association`,
-    title: `紫金县总农会旧址`,
-    year: 1923,
-    type: `revolution`,
-    description: `全国最早建立的农会组织之一，受彭湃同志海丰农民运动直接影响而成立。在这里，农民第一次团结起来，发出了\u201C打倒土豪劣绅、一切权力归农会\u201D的时代强音。`,
-    content: `【思政大课堂：唤醒千百万劳苦大众】
-1923年元旦，在海丰县总农会成立的影响下，紫金县的先进知识分子和农民骨干便开始秘密串联。同年春，紫金县总农会在炮子乡正式成立，成为东江地区继海丰之后第二个县级农会组织。
-
-【群众路线的生动实践】
-农会成立后，领导农民开展减租减息、反抗苛捐杂税的斗争，迅速将一盘散沙的农民凝聚成一股不可战胜的力量。农会推行的\u201C二五减租\u201D政策，使广大贫苦农民第一次感受到了组织的力量。
-
-【历史启示】
-农会的历史，就是一部生动的党的群众路线实践史。它深刻印证了：一切为了群众，一切依靠群众，从群众中来，到群众中去，是我们党的生命线和根本工作路线。`,
-    longitude: 115.3445,
-    latitude: 23.3605,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Peasant_Association_Memorial_Zijin.jpg/800px-Peasant_Association_Memorial_Zijin.jpg`, caption: `紫金县总农会旧址——1923年成立，东江地区最早的县级农会之一` }]
-  },
-  "suqu-monument": {
-    id: `suqu-monument`,
-    title: `苏区革命烈士纪念碑`,
-    year: 1958,
-    type: `revolution`,
-    description: `1958年，经国务院批准，炮子乡正式命名为\u201C苏区乡\u201D（后改为苏区镇），成为全国唯一以\u201C苏区\u201D命名的乡镇。同年修建此碑以纪念历次革命战争中牺牲的苏区籍烈士。`,
-    content: `【思政大课堂：不忘初心，牢记使命】
-紫金县苏区镇是全国唯一以\u201C苏区\u201D命名的乡镇——这个独一无二的地名，本身就是一座永恒的丰碑。为了新中国的成立，苏区人民付出了极其惨重的代价。仅1928年一年间，苏区就有1500多名革命群众和红军指战员献出了宝贵生命。
-
-【全民思政实践的精神高地】
-1958年，为缅怀革命先烈，弘扬苏区精神，在此修建了\u201C苏区革命烈士纪念碑\u201D。碑身正面镌刻着\u201C革命烈士永垂不朽\u201D八个大字。
-
-【新时代的担当】
-今天，无论是共产党员、共青团员、少先队员还是普通群众，都在此缅怀先烈。这要求我们在新时代必须传承革命先辈\u201C敢教日月换新天\u201D的斗争精神，为实现中华民族伟大复兴的中国梦而不懈奋斗。`,
-    longitude: 115.3430,
-    latitude: 23.3640,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Suqu_Revolutionary_Martyr_Monument.jpg/800px-Suqu_Revolutionary_Martyr_Monument.jpg`, caption: `苏区革命烈士纪念碑——全国唯一以\u2018苏区\u2019命名乡镇的精神地标` }]
-  },
-  "red-army-pavilion": {
-    id: `red-army-pavilion`,
-    title: `红军亭`,
-    year: 1927,
-    type: `revolution`,
-    description: `中国工农革命军第二师（红二师）和第四师（红四师）在此驻扎、集结、誓师的重要场所。南昌起义军余部和广州起义军余部曾在此历史性会师。`,
-    content: `【思政大课堂：星火燎原的革命力量】
-红军亭位于苏维埃政府旧址红屋附近。1927年，南昌起义军余部在董朗、颜昌颐率领下进入海陆丰地区，改编为中国工农革命军第二师（红二师）。同年末，广州起义军余部在叶镛、徐向前率领下抵达紫金，改编为红四师。两支英雄部队在紫金苏区胜利会师，红军亭便是当年部队驻扎、集结、誓师出征的重要场所。
-
-【军民鱼水情】
-在红军亭驻扎期间，红军战士与苏区百姓同吃同住同劳动，结下了深厚的军民鱼水情。苏区群众自发为红军缝制军衣、筹集粮草、救护伤员。红军亭见证了中国革命在低潮时期，火种在偏远山区不仅没有熄灭，反而呈星火燎原之势的伟大历史转折。`,
-    longitude: 115.3420,
-    latitude: 23.3625,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Red_Army_Pavilion_Zijin.jpg/800px-Red_Army_Pavilion_Zijin.jpg`, caption: `红军亭——南昌起义与广州起义余部在此会师誓师` }]
-  },
-  "zijin-party-committee": {
-    id: `zijin-party-committee`,
-    title: `中共紫金县委旧址`,
-    year: 1927,
-    type: `revolution`,
-    description: `大革命失败后，中共紫金县委秘密迁至炮子乡，在此领导了紫金县的武装暴动和苏维埃政权建设。彭湃同志曾多次在此主持会议、部署斗争。`,
-    content: `【思政大课堂：深山里的红色中枢】
-1927年四一二反革命政变后，国民党反动派大肆屠杀共产党人和革命群众。中共紫金县委被迫从县城秘密迁至炮子乡深山之中。在极其艰苦的条件下，县委在此起草并发布了《紫金县武装暴动计划》，点燃了紫金土地革命的烽火。
-
-【彭湃同志的紫金足迹】
-时任中共东江特委书记的彭湃同志曾多次亲临此处，主持召开县委扩大会议，传达党的八七会议精神，指导紫金的武装斗争和土地革命。
-
-【历史启示】
-这个不起眼的深山驻地，是当年紫金革命斗争的指挥中枢。它告诉我们：只要坚持党的领导，再偏远的地方也能成为革命的坚强堡垒。`,
-    longitude: 115.3400,
-    latitude: 23.3580,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Zijin_Party_Committee_Former_Site.jpg/800px-Zijin_Party_Committee_Former_Site.jpg`, caption: `中共紫金县委旧址——深山里的红色中枢，彭湃同志曾在此主持多次重要会议` }]
-  },
-  "soviet-arsenal": {
-    id: `soviet-arsenal`,
-    title: `苏维埃兵工厂遗址`,
-    year: 1928,
-    type: `revolution`,
-    description: `紫金苏维埃政权自行建立的武器修造工场。在敌人严密封锁下，苏区军民自力更生，在此制造和修理土枪、大刀、手榴弹等武器，为武装斗争提供了宝贵的后勤保障。`,
-    content: `【思政大课堂：自力更生的革命精神】
-1928年，面对国民党反动派的军事\u201C围剿\u201D和经济封锁，紫金苏维埃政权在极其困难的条件下，于炮子乡深山之中秘密建立了兵工厂。没有钢材，就收集废铁熔炼；没有火药，就用土硝、硫磺、木炭自行配制；没有技术人员，就从铁匠、木匠中培养。
-
-【群众的智慧与力量】
-兵工厂虽然简陋，但在苏区军民的共同努力下，每月能修理步枪数十支、制造大刀长矛上百件、配制黑火药数十斤。这些看似简陋的武器，却成为了红军打击敌人的有力工具。兵工厂的历史告诉我们：只要紧紧依靠人民群众，就没有克服不了的困难。`,
-    longitude: 115.3365,
-    latitude: 23.3575,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Soviet_Arsenal_Ruins_Zijin.jpg/800px-Soviet_Arsenal_Ruins_Zijin.jpg`, caption: `苏维埃兵工厂遗址——苏区军民自力更生制造土枪大刀` }]
-  },
-  "red-army-hospital": {
-    id: `red-army-hospital`,
-    title: `红军医院旧址`,
-    year: 1928,
-    type: `revolution`,
-    description: `苏区军民在极端困难条件下自办的战地医疗所。没有药品，群众上山采草药；没有纱布，妇女撕开自己的被单煮沸消毒代用。`,
-    content: `【思政大课堂：生命至上的革命人道主义】
-1928年反\u201C围剿\u201D期间，大量红军伤员急需救治。紫金苏维埃政府在炮子乡设立了红军医院。说是医院，其实不过是几间茅草屋、几张木板床。但就是这样一个简陋的医疗所，在苏区群众的全力支持下，挽救了许多红军战士的生命。
-
-【群众是真正的铜墙铁壁】
-没有西药，当地草医郎中带领群众上山采集中草药；没有纱布绷带，苏区妇女把自己的被单撕开，用开水煮沸消毒后代替；没有手术器械，铁匠铺连夜打制。一位老阿婆把自己养了多年的老母鸡杀了炖汤，一口一口喂给重伤员。这所医院是军民鱼水情深的最生动写照。`,
-    longitude: 115.3370,
-    latitude: 23.3600,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Red_Army_Hospital_Site_Zijin.jpg/800px-Red_Army_Hospital_Site_Zijin.jpg`, caption: `红军医院旧址——军民一体的战地医疗所` }]
-  },
-  "dongjiang-committee": {
-    id: `dongjiang-committee`,
-    title: `中共东江特委旧址`,
-    year: 1928,
-    type: `revolution`,
-    description: `中共东江特别委员会曾在此设址办公，统一领导海丰、陆丰、紫金、惠阳等县的革命斗争。这里是东江流域苏维埃运动的指挥中枢。`,
-    content: `【思政大课堂：一盘棋的革命战略】
-1928年，为统一领导东江流域的革命斗争，中共广东省委决定成立东江特别委员会。特委机关曾设在紫金炮子乡，彭湃同志任书记。在特委的统一领导下，海陆惠紫四县的苏维埃运动连成一片，形成了面积约3000平方公里、人口超百万的东江苏区。
-
-【薪火相传】
-东江特委在炮子乡期间，不仅指挥军事斗争，还创办了《东江红旗》等革命刊物，开办党校培训干部，领导土地改革，使东江苏区成为当时全国重要的革命根据地之一。`,
-    longitude: 115.3395,
-    latitude: 23.3610,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Dongjiang_Special_Committee_Site.jpg/800px-Dongjiang_Special_Committee_Site.jpg`, caption: `中共东江特委旧址——彭湃同志任书记，统一领导海陆惠紫四县东江苏区` }]
-  },
-  "suqu-mass-line-hall": {
-    id: `suqu-mass-line-hall`,
-    title: `苏区群众路线教育实践馆`,
-    year: 2020,
-    type: `government`,
-    description: `面向全体人民的新时代思政教育大课堂。通过数字化技术让红色历史\u201C活\u201D起来，让苏区精神\u201C传\u201D下去，是全国红色村组织振兴的重要试点项目。`,
-    content: `【思政大课堂：新时代的红色传承】
-从昔日的革命老区到今天的数字孪生示范镇，这里是面向全体人民的思政教育中枢。教育馆通过虚拟现实、全息投影和在线互动技术，打破了时空限制，让全国乃至全世界的群众都能\u201C云游\u201D苏区、重温党史。
-
-【数字化思政实践】
-通过\u201C线上致敬\u201D、\u201C党史学习\u201D、\u201C群众心声留言板\u201D等互动形式，思政教育不再是单向的灌输，而是成为群众自发参与、自我教育的生动实践。这里实现了跨越百年的时空对话，让红色基因在数字时代焕发出更加璀璨的光芒。`,
-    longitude: 115.3450,
-    latitude: 23.3580,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Suqu_Mass_Line_Hall.jpg/800px-Suqu_Mass_Line_Hall.jpg`, caption: `苏区群众路线教育实践馆——全国红色村组织振兴试点` }]
-  },
-  "suqu-party-square": {
-    id: `suqu-party-square`,
-    title: `苏区党建文化广场`,
-    year: 2021,
-    type: `culture`,
-    description: `集党建宣传、群众文化、红色教育于一体的开放式公共空间。广场中心矗立着党徽雕塑，四周环绕着苏区革命历史浮雕墙。`,
-    content: `【思政大课堂：润物无声的红色文化】
-苏区党建文化广场是苏区镇新时代基层党建和群众文化融合的典范。广场采用开放式设计，不设围墙，寓意\u201C党与人民群众零距离\u201D。广场上的革命历史浮雕墙以时间为轴，生动再现了1923年至1949年紫金苏区的革命历程。
-
-【党群连心桥】
-每逢七一、国庆等重要节点，广场上都会举行新党员入党宣誓、老党员重温誓词仪式。平日里，这里是群众跳广场舞、唱红歌、开展文化活动的欢乐场所。`,
-    longitude: 115.3440,
-    latitude: 23.3630,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Suqu_Party_Square.jpg/800px-Suqu_Party_Square.jpg`, caption: `苏区党建文化广场——开放式设计不设围墙，寓意党与人民群众零距离` }]
-  },
-  "scholar-culture-hall": {
-    id: `scholar-culture-hall`,
-    title: `苏区红色书院`,
-    year: 2023,
-    type: `culture`,
-    description: `依托苏区红色资源打造的学习教育基地。设有红色阅览室、党史大讲堂、VR沉浸式体验区，面向全社会免费开放。`,
-    content: `【思政大课堂：书香里的红色基因】
-苏区红色书院是广东省推动红色文化传承的重点文化惠民工程。书院藏书三万余册，其中红色文献专题区收藏了大量珍贵的党史、革命史研究资料。书院定期邀请党史专家、老党员开展\u201C苏区大讲堂\u201D活动，面向青少年开办\u201C小小讲解员\u201D培训。
-
-【全民阅读与红色教育融合】
-书院的VR体验区通过数字技术，让参观者\u201C穿越\u201D回1927年的红屋，亲身感受苏维埃政权成立的庄严时刻。红色书院的建成为苏区红色教育注入了浓厚的文化气息，实现了从\u201C参观式\u201D到\u201C沉浸式\u201D学习体验的升级。`,
-    longitude: 115.3415,
-    latitude: 23.3595,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Suqu_Red_Academy.jpg/800px-Suqu_Red_Academy.jpg`, caption: `苏区红色书院——藏书三万余册，VR体验区可沉浸式学党史` }]
-  },
-  "suqu-education-base": {
-    id: `suqu-education-base`,
-    title: `广东省党员教育基地 (苏区)`,
-    year: 2019,
-    type: `government`,
-    description: `中共广东省委组织部授牌的省级党员教育基地。每年接待来自全省各地的党员干部数万人次，开展党性教育和革命传统教育。`,
-    content: `【思政大课堂：锤炼党性的红色熔炉】
-2019年，经中共广东省委组织部批准，苏区镇被列为广东省党员教育基地。基地整合了红屋、血田、红军亭、革命烈士纪念碑等核心红色资源，开发了\u201C重走红军路\u201D、\u201C忆苦思甜饭\u201D、\u201C苏区精神专题党课\u201D等一系列体验式教学课程。
-
-【铸魂育人的实践探索】
-基地创新推出了\u201C看一次展览、听一次党课、走一次红军路、吃一顿红军餐、写一篇心得体会\u201D的\u201C五个一\u201D教学模式，让党员干部在亲身体验中接受精神洗礼。`,
-    longitude: 115.3460,
-    latitude: 23.3620,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Guangdong_Party_Education_Base_Suqu.jpg/800px-Guangdong_Party_Education_Base_Suqu.jpg`, caption: `广东省党员教育基地（苏区）——\u2018五个一\u2019教学模式锤炼党性` }]
-  },
-  "suqu-town-hall": {
-    id: `suqu-town-hall`,
-    title: `苏区镇人民政府`,
-    year: 1958,
-    type: `government`,
-    description: `全国唯一以\u201C苏区\u201D命名的乡镇——苏区镇的行政中心。从战火纷飞的革命老区到欣欣向荣的红色文旅名镇，见证了时代的伟大变迁。`,
-    content: `【从革命热土到振兴典范】
-1958年，国务院正式批准将紫金县炮子乡命名为\u201C苏区乡\u201D（后改为苏区镇），这是全国唯一获此殊荣的乡镇。六十余年来，苏区镇党委政府一届接着一届干，带领苏区人民实现了从站起来、富起来到强起来的伟大飞跃。
-
-【乡村振兴的苏区答卷】
-近年来，苏区镇以红色文化为引领，大力发展红色旅游和特色农业，实现了全域脱贫奔康。宽阔的柏油路通到了每个自然村，新建的安置小区让老区人民住上了暖心房。`,
-    longitude: 115.3480,
-    latitude: 23.3560,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Suqu_Town_Hall.jpg/800px-Suqu_Town_Hall.jpg`, caption: `苏区镇人民政府——全国唯一以\u2018苏区\u2019命名的乡镇行政中心` }]
-  },
-  "paozi-village-defense": {
-    id: `paozi-village-defense`,
-    title: `炮子村阻击战遗址`,
-    year: 1928,
-    type: `revolution`,
-    description: `1928年3月，红二师、红四师与苏区赤卫队在此依托山势地形与敌军展开殊死搏斗，以少敌多、以弱抗强，掩护了苏维埃政府和群众安全转移。这是一场可歌可泣的苏区保卫战。`,
-    content: `【思政大课堂：牺牲与担当】
-1928年3月，国民党反动派纠集数千兵力分三路向炮子村苏区发起总攻。面对数倍于己的敌人，红二师、红四师余部及当地赤卫队共约600余人，在炮子村外围山头构筑防线，展开了长达三天三夜的殊死阻击。
-
-【壮烈的阻击战】
-战斗中，红军战士子弹打光了就用石头砸，石头用完了就拼刺刀、肉搏。赤卫队员黄木生拉响最后一颗手榴弹与数名敌军同归于尽。年仅16岁的红军小战士钟火妹在运送弹药途中中弹牺牲，牺牲时双手仍紧紧抱着弹药箱。三天后，苏维埃政府和大部分群众安全转移，但留守阻击的红军指战员几乎全部壮烈牺牲。
-
-【永恒的精神丰碑】
-炮子村阻击战是东江苏区保卫战中最壮烈的一页。先烈们用生命诠释了什么叫"牺牲小我、成就大我"。今天，当我们站在这片被鲜血浸染的土地上，更应当铭记：和平来之不易，幸福需要守护。`,
-    longitude: 115.3330,
-    latitude: 23.3585,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Paozi_Village_Battle_Site.jpg/800px-Paozi_Village_Battle_Site.jpg`, caption: `炮子村阻击战遗址——1928年600余名红军赤卫队员殊死阻击敌军三天三夜` }]
-  },
-  "suqu-red-transport-station": {
-    id: `suqu-red-transport-station`,
-    title: `苏区红色交通站旧址`,
-    year: 1928,
-    type: `revolution`,
-    description: `土地革命战争时期，中共中央建立的地下交通网络在苏区镇的重要节点。承担着传递情报、护送干部、运送物资等绝密任务，是连接东江苏区与中央苏区的"红色血脉"。`,
-    content: `【思政大课堂：隐蔽战线的忠诚】
-1928年至1934年间，中共中央建立了从上海经香港、汕头、大埔进入中央苏区的秘密交通线。紫金县苏区镇（炮子乡）是这条红色交通线的重要支线节点。交通员们化装成商贩、郎中、挑夫，冒着生命危险传递党的机密文件、护送领导干部、运送药品武器。
-
-【无声的英雄】
-交通站设在炮子村一间不起眼的杂货铺地下。交通员白天是普通百姓，夜晚则化身红色信使。据《东江革命根据地史》记载，经由苏区交通站护送的党政军领导干部达数十人，传递机密文件数百件。交通员李月梅在执行任务途中被捕，敌人严刑拷打，她至死没有吐露半个字。
-
-【忠诚的底色】
-红色交通站是革命战争年代的"隐秘动脉"，交通员们用生命和忠诚织就了一张无形的革命大网。他们的故事告诉我们：忠诚不是口号，而是生死关头的不变信仰。`,
-    longitude: 115.3425,
-    latitude: 23.3570,
-    media: [{ type: `image`, url: `https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Suqu_Red_Transport_Station.jpg/800px-Suqu_Red_Transport_Station.jpg`, caption: `苏区红色交通站旧址——连接东江苏区与中央苏区的秘密交通线节点` }]
+const reportBackendIssue = (message: string, error: unknown) => {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.warn(`[红色文化数字档案] ${message}`, error)
   }
-};
+}
+
+const isArchiveType = (value: unknown): value is ArchiveData['type'] => {
+  return value === 'government' || value === 'revolution' || value === 'culture'
+}
+
+const normalizeArchive = (item: Partial<ArchiveData>): ArchiveData | null => {
+  const longitude = Number(item.longitude)
+  const latitude = Number(item.latitude)
+  const year = Number(item.year)
+  const id = String(item.id || '').trim()
+  const title = String(item.title || '').trim()
+  if (!id || !title || !Number.isFinite(longitude) || !Number.isFinite(latitude)) return null
+  if (longitude === 0 && latitude === 0) return null
+
+  const coverImage = String(item.coverImage || '').trim()
+  const media = Array.isArray(item.media)
+    ? item.media.map((entry) => ({
+        type: entry?.type === 'video' ? 'video' as const : 'image' as const,
+        url: String(entry?.url || '').trim(),
+        caption: String(entry?.caption || '').trim(),
+      })).filter((entry) => entry.url)
+    : []
+  if (coverImage && media.length === 0) {
+    media.push({ type: 'image', url: coverImage, caption: title })
+  }
+  const sources = Array.isArray(item.sources)
+    ? item.sources.map((source) => ({
+        sourceType: String(source?.sourceType || '').trim(),
+        sourceTitle: String(source?.sourceTitle || '').trim(),
+        sourceUrl: String(source?.sourceUrl || '').trim(),
+        archiveRef: String(source?.archiveRef || '').trim(),
+        pageRef: String(source?.pageRef || '').trim(),
+        collector: String(source?.collector || '').trim(),
+        collectedAt: String(source?.collectedAt || '').trim(),
+        trustLevel: String(source?.trustLevel || '').trim(),
+        notes: String(source?.notes || '').trim(),
+        createdAt: Number(source?.createdAt || 0) || undefined,
+      })).filter((source) => source.sourceTitle || source.archiveRef || source.notes)
+    : []
+  const displayTimeline = Array.isArray(item.displayTimeline)
+    ? item.displayTimeline.map((entry) => ({
+        label: String(entry?.label || '').trim(),
+        value: String(entry?.value || '').trim(),
+      })).filter((entry) => entry.label && entry.value)
+    : []
+  const detailBlocks = Array.isArray(item.detailBlocks)
+    ? item.detailBlocks.map((entry, index) => ({
+        type: String(entry?.type || entry?.key || '').trim(),
+        key: String(entry?.key || entry?.type || '').trim(),
+        title: String(entry?.title || '').trim(),
+        order: Number(entry?.order || index + 1),
+        enabled: entry?.enabled === undefined ? true : Boolean(entry.enabled),
+      })).filter((entry) => entry.type && entry.title && entry.enabled)
+    : []
+  const relatedPeople = Array.isArray(item.relatedPeople)
+    ? item.relatedPeople.map(entry => String(entry || '').trim()).filter(Boolean)
+    : []
+  const relatedEvents = Array.isArray(item.relatedEvents)
+    ? item.relatedEvents.map(entry => String(entry || '').trim()).filter(Boolean)
+    : []
+  const oralHistories = Array.isArray(item.oralHistories)
+    ? item.oralHistories.map(entry => ({
+        narrator: String(entry?.narrator || '').trim(),
+        title: String(entry?.title || '').trim(),
+        summary: String(entry?.summary || '').trim(),
+        transcript: String(entry?.transcript || '').trim(),
+        audioUrl: String(entry?.audioUrl || '').trim(),
+        videoUrl: String(entry?.videoUrl || '').trim(),
+        date: String(entry?.date || '').trim(),
+      })).filter(entry => entry.narrator || entry.title || entry.transcript || entry.audioUrl || entry.videoUrl)
+    : []
+  const learningQuestions = Array.isArray(item.learningQuestions)
+    ? item.learningQuestions.map(entry => String(entry || '').trim()).filter(Boolean)
+    : []
+  const routeTips = Array.isArray(item.routeTips)
+    ? item.routeTips.map(entry => ({
+        title: String(entry?.title || '').trim(),
+        description: String(entry?.description || '').trim(),
+        duration: String(entry?.duration || '').trim(),
+      })).filter(entry => entry.title || entry.description || entry.duration)
+    : []
+  const publicMessages = Array.isArray(item.publicMessages)
+    ? item.publicMessages.map(entry => ({
+        name: String(entry?.name || '').trim(),
+        text: String(entry?.text || '').trim(),
+        createdAt: Number(entry?.createdAt || 0) || undefined,
+      })).filter(entry => entry.text)
+    : []
+
+  return {
+    id,
+    title,
+    description: String(item.description || '').trim(),
+    regionId: String(item.regionId || '').trim(),
+    regionName: String(item.regionName || '').trim(),
+    address: String(item.address || '').trim(),
+    coverImage,
+    longitude,
+    latitude,
+    type: isArchiveType(item.type) ? item.type : 'revolution',
+    year: Number.isFinite(year) ? year : 0,
+    historyPeriod: String(item.historyPeriod || '').trim(),
+    relatedPeople,
+    relatedEvents,
+    publishPositions: item.publishPositions,
+    media,
+    detailBlocks,
+    displayTimeline,
+    sources,
+    oralHistories,
+    aiNarration: item.aiNarration
+      ? {
+          text: String(item.aiNarration.text || '').trim(),
+          audioUrl: String(item.aiNarration.audioUrl || '').trim(),
+          provider: String(item.aiNarration.provider || '').trim(),
+          reviewedAt: String(item.aiNarration.reviewedAt || '').trim(),
+        }
+      : undefined,
+    learningQuestions,
+    routeTips,
+    publicMessages,
+    trustLevel: String(item.trustLevel || '').trim(),
+    auditStatus: String(item.auditStatus || '').trim(),
+    publishedAt: Number(item.publishedAt || 0) || null,
+    updatedAt: Number(item.updatedAt || 0) || undefined,
+    createdAt: Number(item.createdAt || 0) || undefined,
+    content: String(item.content || '').trim(),
+  }
+}
+
+const normalizeArchivePayload = (payload: ArchiveApiPayload) => {
+  const rows = Array.isArray(payload) ? payload : Array.isArray(payload.items) ? payload.items : []
+  return rows.map(normalizeArchive).filter((item): item is ArchiveData => Boolean(item))
+}
+
+const isDisplayMode = (value: unknown): value is PublicRegionConfig['displayMode'] => {
+  return value === 'current' || value === 'overview' || value === 'auto_location'
+}
+
+const isMapMode = (value: unknown): value is PublicRegionConfig['mapMode'] => {
+  return value === 'single' || value === 'aggregate' || value === 'mixed'
+}
+
+const normalizeMapView = (value: Partial<PublicMapView> | undefined): PublicMapView => ({
+  longitude: Number.isFinite(Number(value?.longitude)) ? Number(value?.longitude) : DEFAULT_REGION_CONFIG.mapView.longitude,
+  latitude: Number.isFinite(Number(value?.latitude)) ? Number(value?.latitude) : DEFAULT_REGION_CONFIG.mapView.latitude,
+  zoom: Number.isFinite(Number(value?.zoom)) ? Number(value?.zoom) : DEFAULT_REGION_CONFIG.mapView.zoom,
+  pitch: Number.isFinite(Number(value?.pitch)) ? Number(value?.pitch) : DEFAULT_REGION_CONFIG.mapView.pitch,
+  bearing: Number.isFinite(Number(value?.bearing)) ? Number(value?.bearing) : DEFAULT_REGION_CONFIG.mapView.bearing,
+})
+
+const normalizePublicRegion = (region: Partial<PublicRegion>): PublicRegion | null => {
+  const id = String(region?.id || '').trim()
+  const name = String(region?.name || '').trim()
+  if (!id || !name) return null
+  const displayMode = isDisplayMode(region.displayMode) ? region.displayMode : DEFAULT_REGION_CONFIG.displayMode
+  const mapMode = isMapMode(region.mapMode) ? region.mapMode : DEFAULT_REGION_CONFIG.mapMode
+  return {
+    id,
+    parentId: region.parentId ? String(region.parentId) : null,
+    parentName: String(region.parentName || ''),
+    level: String(region.level || 'town'),
+    name,
+    fullName: String(region.fullName || name),
+    code: String(region.code || ''),
+    description: String(region.description || ''),
+    displayMode,
+    mapMode,
+    sortOrder: Number(region.sortOrder || 0),
+    isDefault: Boolean(region.isDefault),
+    isActive: region.isActive === undefined ? true : Boolean(region.isActive),
+  }
+}
+
+const normalizeRegionConfig = (payload: Partial<PublicRegionConfig>): PublicRegionConfig => {
+  const regions = Array.isArray(payload?.regions)
+    ? payload.regions.map(normalizePublicRegion).filter((region): region is PublicRegion => Boolean(region))
+    : []
+  const defaultRegion = normalizePublicRegion(payload?.defaultRegion || {})
+  const displayMode = isDisplayMode(payload?.displayMode) ? payload.displayMode : defaultRegion?.displayMode || DEFAULT_REGION_CONFIG.displayMode
+  const mapMode = isMapMode(payload?.mapMode) ? payload.mapMode : defaultRegion?.mapMode || DEFAULT_REGION_CONFIG.mapMode
+  const scopeRegionIds = Array.isArray(payload?.scopeRegionIds)
+    ? payload.scopeRegionIds.map((id) => String(id || '').trim()).filter(Boolean)
+    : []
+
+  return {
+    defaultRegion,
+    regions,
+    displayMode,
+    mapMode,
+    scopeRegionIds,
+    mapView: normalizeMapView(payload?.mapView),
+    generatedAt: Number(payload?.generatedAt || 0) || Date.now(),
+  }
+}
+
+const getArchiveRegionId = (archive: ArchiveData) => archive.regionId || ''
+
+const EMPTY_ARCHIVES: Record<string, ArchiveData> = {}
 
 export const useAppStore = create<AppState>()(
   (set, get) => ({
-    archives: STATIC_ARCHIVES,
+    archives: EMPTY_ARCHIVES,
+    regionConfig: DEFAULT_REGION_CONFIG,
+    selectedRegionId: DEFAULT_REGION_CONFIG.defaultRegion?.id || '',
+    fetchRegionConfig: async (regionId) => {
+      if (!shouldUseBackend()) return
+      try {
+        const targetRegionId = String(regionId || get().selectedRegionId || '').trim()
+        const query = targetRegionId ? `?regionId=${encodeURIComponent(targetRegionId)}` : ''
+        const response = await fetch(`${API_BASE}/regions/public-config${query}`)
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const payload = await response.json() as Partial<PublicRegionConfig>
+        const regionConfig = normalizeRegionConfig(payload)
+        set({ regionConfig, selectedRegionId: regionConfig.defaultRegion?.id || targetRegionId })
+      } catch (error) {
+        set({ regionConfig: DEFAULT_REGION_CONFIG, selectedRegionId: '' })
+        reportBackendIssue('后端地区配置读取失败，当前不展示本地地区兜底数据。', error)
+      }
+    },
+    selectRegion: async (regionId) => {
+      const nextRegionId = String(regionId || '').trim()
+      set({ selectedRegionId: nextRegionId })
+      await get().fetchRegionConfig(nextRegionId)
+    },
     fetchArchives: async () => {
-      if (!('__TAURI__' in window) && window.location.protocol !== 'http:' && window.location.hostname !== 'localhost') return
+      if (!shouldUseBackend()) {
+        set({ archives: EMPTY_ARCHIVES })
+        return
+      }
       try {
-        const response = await fetch(`${API_BASE}/archives`);
-        const data: ArchiveData[] = await response.json();
-        const archivesMap = data.reduce((acc, curr) => ({...acc, [curr.id]: curr}), {});
-        set({ archives: archivesMap });
-      } catch (_error) {
+        const response = await fetch(`${API_BASE}/archives`)
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const payload = await response.json() as ArchiveApiPayload
+        const data = normalizeArchivePayload(payload)
+        if (data.length === 0) {
+          set({ archives: EMPTY_ARCHIVES })
+          return
+        }
+        const archivesMap = data.reduce<Record<string, ArchiveData>>((acc, curr) => ({ ...acc, [curr.id]: curr }), {})
+        set({ archives: archivesMap })
+      } catch (error) {
+        set({ archives: EMPTY_ARCHIVES })
+        reportBackendIssue('后端档案读取失败，当前不展示未审核的前端兜底档案。', error)
       }
     },
-    addArchive: async (archive) => {
-      try {
-        const response = await fetch(`${API_BASE}/archives`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(archive)
-        });
-        const savedArchive = await response.json()
-        set({ archives: { ...get().archives, [savedArchive.id]: savedArchive } })
-      } catch (_err) {
-      }
-    },
-    
     selectedPoiId: null,
     setSelectedPoiId: (id) => set({ selectedPoiId: id }),
     getArchiveData: (id) => get().archives[id] || null,
-    getAllArchives: () => Object.values(get().archives),
+    getAllArchives: () => {
+      const archives = Object.values(get().archives)
+      const config = get().regionConfig
+      if (!config || config.displayMode === 'overview') return archives
+      const scopedRegionIds = new Set(config.scopeRegionIds || [])
+      if (scopedRegionIds.size === 0) return archives
+      return archives.filter((archive) => scopedRegionIds.has(getArchiveRegionId(archive)))
+    },
     isDetailModalOpen: false,
     setDetailModalOpen: (isOpen) => set({ isDetailModalOpen: isOpen }),
     currentYear: 2026,
@@ -370,21 +451,12 @@ export const useAppStore = create<AppState>()(
     setAutoTouring: (isTouring) => set({ isAutoTouring: isTouring }),
     mapStyle: 'museum',
     setMapStyle: (style) => set({ mapStyle: style }),
-    
-    isAdminOpen: false,
-    setAdminOpen: (isOpen) => set({ isAdminOpen: isOpen, draftCoords: null }),
-    draftCoords: null,
-    setDraftCoords: (coords) => set({ draftCoords: coords }),
-    
+
     isIndoorMode: false,
     setIndoorMode: (isIndoor) => set({ isIndoorMode: isIndoor }),
     
     weather: 'clear',
     setWeather: (weather) => set({ weather }),
-    showHistoricalRoute: false,
-    setShowHistoricalRoute: (show) => set({ showHistoricalRoute: show }),
-    showSovietRegion: false,
-    setShowSovietRegion: (show) => set({ showSovietRegion: show }),
 
     isRelicMode: false,
     setRelicMode: (isRelic) => set({ isRelicMode: isRelic }),

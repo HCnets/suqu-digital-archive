@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import type maplibregl from 'maplibre-gl'
 import { useAppStore } from '@/store'
 import { X, MoveHorizontal } from 'lucide-react'
 import { GisMap } from '../map/GisMap'
@@ -8,19 +9,19 @@ export const SwipeMode: React.FC = () => {
   const [dividerX, setDividerX] = useState(50)
   const isDragging = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const historicalMapInstance = useRef<any>(null)
+  const [historicalMapInstance, setHistoricalMapInstance] = useState<maplibregl.Map | null>(null)
 
-  // 同步两个地图的相机
+  // 同步两个地图的相机（historicalMapInstance 用 state，第二张图异步就绪后 effect 会重跑，避免竞态）
   useEffect(() => {
-    if (!isSwipeMode || !mainMapInstance || !historicalMapInstance.current) return
+    if (!isSwipeMode || !mainMapInstance || !historicalMapInstance) return
 
     const mainMap = mainMapInstance
-    const histMap = historicalMapInstance.current
+    const histMap = historicalMapInstance
 
     let isSyncingLeft = false
     let isSyncingRight = false
 
-    const syncMaps = (source: any, target: any, flagSetter: (val: boolean) => void, flagGetter: () => boolean) => {
+    const syncMaps = (source: maplibregl.Map, target: maplibregl.Map, flagSetter: (val: boolean) => void, flagGetter: () => boolean) => {
       if (flagGetter()) return
       flagSetter(true)
       target.jumpTo({
@@ -42,7 +43,7 @@ export const SwipeMode: React.FC = () => {
       mainMap.off('move', onMainMove)
       histMap.off('move', onHistMove)
     }
-  }, [isSwipeMode, mainMapInstance])
+  }, [isSwipeMode, mainMapInstance, historicalMapInstance])
 
   useEffect(() => {
     if (!isSwipeMode) return
@@ -79,27 +80,17 @@ export const SwipeMode: React.FC = () => {
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend', handleTouchEnd)
-      if (historicalMapInstance.current) {
-        historicalMapInstance.current.remove()
-        historicalMapInstance.current = null
+      if (historicalMapInstance) {
+        historicalMapInstance.remove()
+        setHistoricalMapInstance(null)
       }
     }
-  }, [isSwipeMode])
+  }, [isSwipeMode, historicalMapInstance])
 
   if (!isSwipeMode) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-transparent pointer-events-none" ref={containerRef}>
-      
-      {/* 底部：右半部分，现代地图 (直接透传 mainMap) - 实际上我们只需要把整个 SwipeMode 背景变透明，让 App 的 mainMap 露出来即可！
-          但是为了确保层级，我们在 SwipeMode 里直接挖个洞或者盖一层 */}
-      
-      {/* 
-        优雅的实现：
-        App.tsx 里的 mainMap 始终在底层。
-        SwipeMode 里，我们只渲染一个覆盖全屏的 historicalMap，然后用 clip-path 裁剪它，让它只显示左半边。
-        这样右半边自然就露出了底层的 mainMap！
-      */}
 
       {/* 左半部分：1927年历史 */}
       <div 
@@ -110,10 +101,11 @@ export const SwipeMode: React.FC = () => {
           <GisMap 
             className="w-full h-full" 
             mapId="historical-map" 
-            onMapLoad={(map) => historicalMapInstance.current = map}
+            onMapLoad={(map) => setHistoricalMapInstance(map)}
+            timeLockYear={1930}
           />
           
-          {/* 复古/战争滤镜叠加层 */}
+          {/* 复古/战争滤镜叠加层（仅作老照片质感，点位由 timeLockYear 真实过滤） */}
           <div className="absolute inset-0 pointer-events-none" style={{
             background: 'linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(139, 69, 19, 0.2) 100%)',
             mixBlendMode: 'multiply',
@@ -122,22 +114,25 @@ export const SwipeMode: React.FC = () => {
 
           {/* 历史标识牌 */}
           <div className="absolute top-8 left-8 museum-card p-4 rounded-2xl pointer-events-none">
-            <div className="text-[#C41E3A] font-mono text-xs uppercase tracking-[0.2em]">
-              民国 16年 · 1927
+            <div className="text-party-red font-mono text-xs uppercase tracking-[0.2em]">
+              历史视角 · 1930 年前建立
             </div>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
-              苏维埃政权成立
+            <h2 className="text-2xl font-black text-party-ink mt-1 font-serif">
+              苏维埃政权初创
             </h2>
+            <p className="text-xs text-party-ink-light mt-1 max-w-[220px] leading-relaxed">
+              本侧仅显示 1930 年及以前建立的革命旧址（按档案年代真实过滤）。
+            </p>
           </div>
         </div>
       </div>
 
       {/* 现代标识牌 (悬浮在右侧) */}
       <div className="absolute top-8 right-8 z-20 museum-card p-4 rounded-2xl pointer-events-none">
-        <div className="text-[#8B6914] font-mono text-xs uppercase tracking-[0.2em]">
+        <div className="text-party-gold font-mono text-xs uppercase tracking-[0.2em]">
           公元 2026
         </div>
-        <h2 className="text-2xl font-black text-[#1A1A1A] mt-1 font-serif">
+        <h2 className="text-2xl font-black text-party-ink mt-1 font-serif">
           新时代数字苏区
         </h2>
       </div>

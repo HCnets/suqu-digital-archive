@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://hcnets.github.io/suqu-digital-archive/sitemap.xml
+
+Sitemap: https://szht.online/sitemap.xml

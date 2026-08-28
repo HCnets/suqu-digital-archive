@@ -1,84 +1,152 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
+import { asRecordArray, asText, fetchPublishedContents } from '@/lib/cmsContent'
 
-const HISTORICAL_EVENTS: Record<number, { title: string, subtitle: string }> = {
-  1923: { title: "紫金县总农会成立", subtitle: "海陆惠紫农民运动的星星之火" },
-  1927: { title: "紫金苏维埃政权成立", subtitle: "星火燎原，武装暴动" },
-  1928: { title: "血战炮子村", subtitle: "可歌可泣的苏区保卫战" },
-  1949: { title: "中华人民共和国成立", subtitle: "中国人民从此站起来了" },
-  1958: { title: "国务院命名「苏区乡」", subtitle: "全国唯一以苏区命名的乡镇" },
-  1978: { title: "改革开放", subtitle: "春天的故事在南粤大地奏响" },
-  2019: { title: "广东省党员教育基地", subtitle: "苏区列入省级党性教育熔炉" },
-  2020: { title: "群众路线教育实践馆", subtitle: "红色村组织振兴试点落成" },
-  2021: { title: "苏区党建文化广场", subtitle: "党群连心，红色文化润物无声" },
-  2023: { title: "苏区红色书院", subtitle: "书香里的红色基因代代相传" },
-  2026: { title: "新时代数字苏区", subtitle: "红色基因，数字孪生" }
+type TimelineEvent = {
+  year: number
+  title: string
+  subtitle: string
+}
+
+type TimelineConfig = {
+  minYear: number
+  maxYear: number
+  marks: number[]
+  events: TimelineEvent[]
+  helperText: string
+}
+
+function normalizeEvents(value: unknown) {
+  return asRecordArray(value)
+    .map((item) => ({
+      year: Number(item.year),
+      title: asText(item.title) || asText(item.name),
+      subtitle: asText(item.subtitle) || asText(item.summary) || asText(item.description),
+    }))
+    .filter(item => Number.isInteger(item.year) && item.title && item.subtitle)
+    .sort((a, b) => a.year - b.year)
+}
+
+function normalizeMarks(value: unknown, events: TimelineEvent[], minYear: number, maxYear: number) {
+  const raw = Array.isArray(value) && value.length ? value : events.map(item => item.year)
+  return Array.from(new Set(raw
+    .map(item => Number(typeof item === 'object' && item !== null ? (item as { year?: unknown }).year : item))
+    .filter(year => Number.isInteger(year) && year >= minYear && year <= maxYear)))
+    .sort((a, b) => a - b)
+}
+
+async function fetchTimelineConfig() {
+  const items = await fetchPublishedContents('timeline', 1)
+  const item = items[0]
+  if (!item) return null
+
+  const data = item.data || {}
+  const minYear = Number(data.minYear || data.min_year)
+  const maxYear = Number(data.maxYear || data.max_year)
+  if (!Number.isInteger(minYear) || !Number.isInteger(maxYear) || maxYear <= minYear) return null
+
+  const events = normalizeEvents(data.events || data.items)
+  const marks = normalizeMarks(data.marks || data.markYears || data.mark_years, events, minYear, maxYear)
+  const helperText = asText(data.helperText) || asText(data.helper_text) || item.body || ''
+  const inRangeEvents = events.filter(event => event.year >= minYear && event.year <= maxYear)
+  if (!inRangeEvents.length || !marks.length || !helperText) return null
+
+  return {
+    minYear,
+    maxYear,
+    marks,
+    events: inRangeEvents,
+    helperText,
+  }
 }
 
 export const TimeSlider: React.FC = () => {
   const { currentYear, setCurrentYear, setActiveEvent } = useAppStore()
+  const [config, setConfig] = useState<TimelineConfig | null>(null)
 
-  const minYear = 1920
-  const maxYear = 2030
-  const marks = [1927, 1949, 1958, 1978, 2026]
+  // 时间轴配置只加载一次（内部有 30s 缓存 + 去重）
+  useEffect(() => {
+    let cancelled = false
+    fetchTimelineConfig()
+      .then(next => {
+        if (!cancelled) setConfig(next)
+      })
+      .catch(() => {
+        if (!cancelled) setConfig(null)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  // 当前年份越界时收敛到配置范围（独立 effect，避免拖拽时反复重拉配置）
+  useEffect(() => {
+    if (!config) return
+    if (currentYear < config.minYear) setCurrentYear(config.minYear)
+    if (currentYear > config.maxYear) setCurrentYear(config.maxYear)
+  }, [config, currentYear, setCurrentYear])
+
+  const eventByYear = useMemo(() => {
+    const entries = (config?.events || []).map(event => [event.year, event] as const)
+    return new Map(entries)
+  }, [config?.events])
+  const activeEvent = eventByYear.get(currentYear)
 
   useEffect(() => {
-    if (HISTORICAL_EVENTS[currentYear]) {
-      setActiveEvent?.(HISTORICAL_EVENTS[currentYear].title)
-    } else {
-      setActiveEvent?.(null)
-    }
-  }, [currentYear, setActiveEvent])
+    setActiveEvent?.(activeEvent?.title || null)
+  }, [activeEvent, setActiveEvent])
+
+  if (!config) return null
+
+  const range = Math.max(1, config.maxYear - config.minYear)
+  const progress = Math.min(100, Math.max(0, ((currentYear - config.minYear) / range) * 100))
 
   return (
-    <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 md:px-8 pointer-events-auto z-40">
-      {/* 编年史大事件提示 */}
-      {HISTORICAL_EVENTS[currentYear] && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 md:mb-8 text-center pointer-events-none w-full animate-in slide-in-from-bottom-4 fade-in duration-500">
-          <div className="inline-flex flex-col items-center p-4 md:p-6 rounded-2xl bg-white border border-[#E8DFD5] shadow-lg">
-            <h1 className="text-3xl md:text-6xl font-black tracking-widest font-serif text-[#C41E3A]">
+    <div className="fixed inset-x-4 bottom-20 z-40 pointer-events-auto md:bottom-8 md:left-[360px] md:right-[360px]">
+      {activeEvent && (
+        <div className="absolute bottom-full left-1/2 hidden w-full -translate-x-1/2 text-center pointer-events-none animate-in slide-in-from-bottom-4 fade-in duration-500 md:mb-8 md:block">
+          <div className="inline-flex flex-col items-center p-4 md:p-6 rounded-2xl bg-white border border-museum-border shadow-lg">
+            <h1 className="text-3xl md:text-6xl font-black tracking-widest font-serif text-party-red">
               {currentYear}
             </h1>
-            <h2 className="text-lg md:text-xl font-bold text-[#1A1A1A] tracking-wide mt-1 font-serif">
-              {HISTORICAL_EVENTS[currentYear].title}
+            <h2 className="text-lg md:text-xl font-bold text-party-ink tracking-wide mt-1 font-serif">
+              {activeEvent.title}
             </h2>
-            <p className="text-[#5C5C5C] text-xs md:text-sm mt-1 font-medium">
-              {HISTORICAL_EVENTS[currentYear].subtitle}
+            <p className="text-party-ink-light text-xs md:text-sm mt-1 font-medium">
+              {activeEvent.subtitle}
             </p>
           </div>
-          <div className="w-px h-6 md:h-8 mx-auto mt-2 bg-gradient-to-b from-[#C41E3A]/40 to-transparent" />
+          <div className="w-px h-6 md:h-8 mx-auto mt-2 bg-gradient-to-b from-party-red to-transparent" />
         </div>
       )}
 
-      <div className="museum-card p-4 md:p-6 rounded-2xl flex flex-col gap-4 md:gap-5">
-        <div className="flex justify-between items-center text-[#5C5C5C]">
-          <span className="text-xs md:text-sm font-medium">{minYear}</span>
-          <span className="text-2xl md:text-3xl font-bold text-[#1A1A1A] font-serif">
+      <div className="museum-card flex flex-col gap-3 rounded-xl p-3 md:rounded-2xl md:p-5 md:gap-5">
+        <div className="flex justify-between items-center text-party-ink-light">
+          <span className="text-xs md:text-sm font-medium">{config.minYear}</span>
+          <span className="text-xl md:text-3xl font-bold text-party-ink font-serif">
             {currentYear}
           </span>
-          <span className="text-xs md:text-sm font-medium">{maxYear}</span>
+          <span className="text-xs md:text-sm font-medium">{config.maxYear}</span>
         </div>
 
-        <div className="relative w-full h-2 bg-[#FEFAF6] rounded-full mt-2 border border-[#E8DFD5]">
-          <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#C41E3A] to-[#8B6914] rounded-full"
-            style={{ width: `${((currentYear - minYear) / (maxYear - minYear)) * 100}%` }}
+        <div className="relative w-full h-2 bg-museum-bg rounded-full mt-2 border border-museum-border">
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-party-red to-party-gold rounded-full"
+            style={{ width: `${progress}%` }}
           />
 
-          {marks.map(mark => {
-            const leftPercent = ((mark - minYear) / (maxYear - minYear)) * 100
+          {config.marks.map(mark => {
+            const leftPercent = Math.min(100, Math.max(0, ((mark - config.minYear) / range) * 100))
             const isPassed = currentYear >= mark
             return (
-              <div 
+              <div
                 key={mark}
                 className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center"
                 style={{ left: `${leftPercent}%` }}
               >
                 <div className={`w-3 h-3 rounded-full border-2 border-white transition-colors duration-300 ${
-                  isPassed ? 'bg-[#C41E3A] shadow-sm' : 'bg-[#E8DFD5]'
+                  isPassed ? 'bg-party-red shadow-sm' : 'bg-museum-border'
                 }`} />
                 <span className={`absolute top-4 text-xs font-medium transition-colors duration-300 ${
-                  isPassed ? 'text-[#C41E3A] font-bold' : 'text-[#5C5C5C]/50'
+                  isPassed ? 'text-party-red font-bold' : 'text-party-ink-light'
                 }`}>
                   {mark}
                 </span>
@@ -88,17 +156,17 @@ export const TimeSlider: React.FC = () => {
 
           <input
             type="range"
-            min={minYear}
-            max={maxYear}
+            min={config.minYear}
+            max={config.maxYear}
             value={currentYear}
             onChange={(e) => setCurrentYear(parseInt(e.target.value))}
             className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-8 opacity-0 cursor-pointer"
             aria-label="拖动时间轴以浏览不同年份的档案"
           />
         </div>
-        
-        <div className="text-center mt-2 text-xs text-[#5C5C5C]/50 font-medium">
-          拖动时间轴以回溯苏区镇历史档案变迁
+
+        <div className="hidden text-center mt-2 text-xs text-party-ink-light font-medium md:block">
+          {config.helperText}
         </div>
       </div>
     </div>

@@ -1,13 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
-
 @import "tailwindcss";
 
 @layer base {
-  html {
-    font-family: 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  :root {
+    --font-heritage-sans: "Inter", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --font-heritage-title: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", "Microsoft YaHei", "PingFang SC", serif;
   }
+
+  html {
+    font-family: var(--font-heritage-sans);
+    font-kerning: normal;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   .font-serif {
-    font-family: 'Noto Serif SC', STZhongsong, "华文中宋", serif;
+    font-family: var(--font-heritage-title);
   }
 }
 
@@ -20,6 +29,7 @@
   --color-party-red-light: #FDE8EC;
   --color-party-gold: #8B6914;
   --color-party-gold-light: #FFF8E1;
+  --color-party-gold-line: #D8C4A8;
   --color-party-ink: #1A1A1A;
   --color-party-ink-light: #5C5C5C;
 }
@@ -29,6 +39,7 @@
     @apply m-0 p-0 w-screen h-screen overflow-hidden;
     background-color: #FEFAF6;
     color: #1A1A1A;
+    font-feature-settings: "kern";
   }
 
   button,
@@ -61,6 +72,19 @@
   .party-btn-gold {
     @apply border border-[#8B6914]/30 bg-[#FFF8E1] hover:bg-[#FFF8E1]/80 text-[#8B6914] font-medium rounded-lg transition-colors duration-200;
   }
+
+  .font-display {
+    font-family: var(--font-heritage-title);
+  }
+
+  .font-reading {
+    font-family: var(--font-heritage-sans);
+    line-height: 1.75;
+  }
+
+  .title-balance {
+    text-wrap: balance;
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -74,12 +98,6 @@
   border-radius: 2px;
 }
 
-@media (max-width: 1024px) {
-  .hud-panel, .right-panel {
-    width: 260px !important;
-  }
-}
-
 @media (max-width: 768px) {
   body {
     overscroll-behavior: none;
@@ -91,28 +109,12 @@
     touch-action: manipulation;
   }
 
-  .hud-panel, .right-panel {
-    width: 100vw !important;
-    max-width: 320px !important;
-    top: 72px !important;
-  }
-
-  .right-panel {
-    top: auto !important;
-    bottom: 120px !important;
-    right: 8px !important;
-  }
-
   .museum-card button,
   .party-btn-primary,
   .party-btn-outline,
   .party-btn-gold {
     min-height: 48px !important;
     font-size: 0.875rem !important;
-  }
-
-  .top-marker {
-    font-size: 1.125rem !important;
   }
 
   /* 地图控件触控适配 */
@@ -125,14 +127,21 @@
     width: 40px !important;
     height: 40px !important;
   }
+
+  .maplibregl-ctrl-bottom-right {
+    bottom: 8.75rem !important;
+    right: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .maplibregl-ctrl-bottom-right {
+    bottom: 1rem !important;
+    right: 1rem !important;
+  }
 }
 
 @media (max-width: 480px) {
-  .hud-panel, .right-panel {
-    max-width: 280px !important;
-    font-size: 0.8125rem !important;
-  }
-
   .museum-card h3 {
     font-size: 0.875rem !important;
   }

@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
-import { X, MapPin, Clock, Users, Play, CheckCircle2, Flag, BookOpen, Heart, Stars, Shield } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { X, MapPin, Clock, Users, Play, Flag, BookOpen, Heart, Stars, Shield } from 'lucide-react'
+import { asStringArray, asText, fetchPublishedContents, type PublicContentItem } from '@/lib/cmsContent'
+import { useAppStore } from '@/store'
 
 interface Route {
   id: string
@@ -14,73 +16,33 @@ interface Route {
   opening: string
 }
 
-const ROUTES: Route[] = [
-  {
-    id: 'route-a',
-    title: '初心之旅',
-    subtitle: '情感冲击线',
-    target: '全体参观者',
-    duration: '约30分钟',
-    icon: <Heart size={18} />,
-    color: '#C41E3A',
-    pois: ['suqu-red-house', 'blood-field', 'suqu-monument'],
-    description: '从苏维埃政权诞生地出发，走到革命先烈洒热血的地方，最后在纪念碑前缅怀思念。这条线路以最直接的情感冲击，唤起参观者对革命先烈的深切敬意。',
-    opening: '欢迎开启"初心之旅"。让我们从红屋开始——1927年12月，紫金县苏维埃政府在这里诞生，这是广东省最早成立的县级苏维埃政权之一。'
-  },
-  {
-    id: 'route-b',
-    title: '理论之路',
-    subtitle: '政治站位线',
-    target: '党员干部、团员骨干',
-    duration: '约45分钟',
-    icon: <BookOpen size={18} />,
-    color: '#5C5C5C',
-    pois: ['zijin-party-committee', 'dongjiang-committee', 'zijin-mass-education-center', 'suqu-party-building-square'],
-    description: '深入党的组织领导体系——从县委旧址到东江特委，再到群众路线教育实践馆，系统学习党的组织建设、群众路线和根据地治理经验。',
-    opening: '欢迎开启"理论之路"。这条线路将带您系统了解中国共产党如何在苏区建立组织体系、领导武装斗争、贯彻群众路线。'
-  },
-  {
-    id: 'route-c',
-    title: '少年信仰',
-    subtitle: '青少年传承线',
-    target: '中小学生、少先队员',
-    duration: '约25分钟',
-    icon: <Stars size={18} />,
-    color: '#8B6914',
-    pois: ['paozi-village-defense', 'red-army-pavilion', 'suqu-red-academy'],
-    description: '专为青少年设计的信仰培育路线。从16岁小战士钟火妹的故事开始，到红军亭认识革命火种的传递，最后在红色书院感受书香中的红色基因。',
-    opening: '欢迎开启"少年信仰"之旅。今天我们要认识一位16岁的英雄——钟火妹哥哥。他在炮子村阻击战中运送弹药，牺牲时双手还紧紧抱着弹药箱……'
-  },
-  {
-    id: 'route-d',
-    title: '群众路线',
-    subtitle: '人民至上体验线',
-    target: '基层干部、群众代表',
-    duration: '约40分钟',
-    icon: <Users size={18} />,
-    color: '#2E7D32',
-    pois: ['zijin-farmers-association', 'blood-field', 'suqu-mass-line-hall', 'suqu-monument'],
-    description: '从农会旧址出发，体会"一切为了群众、一切依靠群众"的历史渊源。经血田感受人民付出的巨大牺牲，在群众路线教育实践馆领悟新时代的群众路线内涵。',
-    opening: '欢迎开启"群众路线"之旅。1923年，紫金县总农会在这里成立——这是党在基层发动群众、组织群众的最早实践之一。让我们从农会出发，重走这条"从群众中来，到群众中去"的路。'
-  },
-  {
-    id: 'route-e',
-    title: '隐蔽战线',
-    subtitle: '无名英雄追忆线',
-    target: '党史研究者、公安干警',
-    duration: '约35分钟',
-    icon: <Shield size={18} />,
-    color: '#5C5C5C',
-    pois: ['suqu-red-transport-station', 'zijin-party-committee', 'dongjiang-committee', 'blood-field'],
-    description: '探访红色交通站和党的秘密机关。了解交通员李月梅等人如何在白色恐怖下传递情报、护送干部。这是一条向隐蔽战线的无名英雄致敬的特殊路线。',
-    opening: '欢迎开启"隐蔽战线"追忆之旅。在苏区镇的红色交通站旧址，我们将追寻那些没有留下姓名、却用生命守护革命火种的英雄足迹……'
-  },
-]
-
 export const PartyDayRoutes: React.FC<{ onClose: () => void; onStartRoute: (poiIds: string[], opening: string) => void }> = ({ onClose, onStartRoute }) => {
+  const [routes, setRoutes] = useState<Route[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null)
+  const getAllArchives = useAppStore(state => state.getAllArchives)
 
-  const route = ROUTES.find(r => r.id === selectedRoute)
+  useEffect(() => {
+    let cancelled = false
+    async function loadRoutes() {
+      setLoading(true)
+      try {
+        const items = await fetchPublishedContents('party_route', 100)
+        const cmsRoutes = items.map(contentToPartyRoute).filter(Boolean) as Route[]
+        if (!cancelled) setRoutes(cmsRoutes)
+      } catch {
+        if (!cancelled) setRoutes([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    loadRoutes()
+    return () => { cancelled = true }
+  }, [])
+
+  const route = routes.find(r => r.id === selectedRoute)
+  const archiveList = getAllArchives()
+  const archiveTitle = (poiId: string) => archiveList.find(archive => archive.id === poiId)?.title || poiId
 
   if (route) {
     return (
@@ -115,20 +77,7 @@ export const PartyDayRoutes: React.FC<{ onClose: () => void; onStartRoute: (poiI
               <div key={poiId} className="flex items-center gap-3 p-3 rounded-xl bg-[#FEFAF6] border border-[#E8DFD5]">
                 <span className="w-6 h-6 rounded-full bg-[#C41E3A] text-white text-xs flex items-center justify-center font-bold">{idx + 1}</span>
                 <span className="text-sm font-medium text-[#1A1A1A]">
-                  {poiId === 'suqu-red-house' ? '红屋 · 苏维埃政府旧址' :
-                   poiId === 'blood-field' ? '血田遗址' :
-                   poiId === 'suqu-monument' ? '革命烈士纪念碑' :
-                   poiId === 'zijin-party-committee' ? '紫金县委旧址' :
-                   poiId === 'dongjiang-committee' ? '东江特委旧址' :
-                   poiId === 'zijin-mass-education-center' ? '群众路线教育实践馆' :
-                   poiId === 'suqu-mass-line-hall' ? '群众路线教育实践馆' :
-                   poiId === 'suqu-party-building-square' ? '党建文化广场' :
-                   poiId === 'suqu-party-square' ? '党建文化广场' :
-                   poiId === 'paozi-village-defense' ? '炮子村阻击战遗址' :
-                   poiId === 'red-army-pavilion' ? '红军亭' :
-                   poiId === 'suqu-red-academy' ? '苏区红色书院' :
-                   poiId === 'zijin-farmers-association' ? '紫金县总农会旧址' :
-                   poiId === 'suqu-red-transport-station' ? '红色交通站旧址' : poiId}
+                  {archiveTitle(poiId)}
                 </span>
               </div>
             ))}
@@ -157,8 +106,18 @@ export const PartyDayRoutes: React.FC<{ onClose: () => void; onStartRoute: (poiI
           主题党日活动路线
         </h2>
         <p className="text-sm text-[#5C5C5C] mb-6">选择一条学习路线，系统将自动导航讲解</p>
-        <div className="space-y-3">
-          {ROUTES.map(r => (
+        {loading ? (
+          <div className="py-12 text-center">
+            <div className="w-10 h-10 rounded-full border-2 border-[#E8DFD5] border-t-[#C41E3A] animate-spin mx-auto mb-4" />
+            <p className="text-sm text-[#5C5C5C]">正在读取已发布的党日路线</p>
+          </div>
+        ) : routes.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[#E8DFD5] bg-[#FEFAF6] p-4 text-sm leading-relaxed text-[#5C5C5C]">
+            当前暂无已审核发布的主题党日路线。
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {routes.map(r => (
             <button
               key={r.id}
               onClick={() => setSelectedRoute(r.id)}
@@ -179,9 +138,44 @@ export const PartyDayRoutes: React.FC<{ onClose: () => void; onStartRoute: (poiI
                 </div>
               </div>
             </button>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+function contentToPartyRoute(item: PublicContentItem): Route | null {
+  const data = item.data || {}
+  const id = asText(data.id) || item.id || item.title
+  const title = asText(data.title) || item.title
+  const pois = asStringArray(data.pois)
+  const description = asText(data.description) || item.body || item.summary || ''
+  const opening = asText(data.opening)
+  const subtitle = asText(data.subtitle) || item.summary || ''
+  const target = asText(data.target)
+  const duration = asText(data.duration)
+
+  if (!id || !title || !subtitle || !target || !duration || !description || !opening || pois.length === 0) return null
+  return {
+    id,
+    title,
+    subtitle,
+    target,
+    duration,
+    icon: routeIcon(asText(data.iconKey) || item.category || title),
+    color: asText(data.color) || '#C41E3A',
+    pois,
+    description,
+    opening,
+  }
+}
+
+function routeIcon(value: string) {
+  if (value.includes('book') || value.includes('theory')) return <BookOpen size={18} />
+  if (value.includes('star') || value.includes('youth')) return <Stars size={18} />
+  if (value.includes('shield') || value.includes('secret')) return <Shield size={18} />
+  if (value.includes('people') || value.includes('mass')) return <Users size={18} />
+  return <Heart size={18} />
 }

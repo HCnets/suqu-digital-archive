@@ -1,233 +1,132 @@
-import React, { useRef, useEffect } from 'react'
-import { useAppStore } from '@/store'
-import { X, Box } from 'lucide-react'
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import React from 'react'
+import { useAppStore, type ArchiveData } from '@/store'
+import { X, Image as ImageIcon, Landmark, MapPin, Calendar, ShieldCheck } from 'lucide-react'
+
+const resolveAssetUrl = (url?: string) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return url
+  return `/${url.replace(/^\.?\//, '')}`
+}
+
+const getArchiveTypeLabel = (type?: ArchiveData['type']) => {
+  if (type === 'government') return '党政服务点位'
+  if (type === 'culture') return '群众文化阵地'
+  return '红色革命遗址'
+}
 
 export const RelicShowcaseMode: React.FC = () => {
   const { isRelicMode, setRelicMode, selectedPoiId, getArchiveData } = useAppStore()
-  const mountRef = useRef<HTMLDivElement>(null)
-  
   const archive = selectedPoiId ? getArchiveData(selectedPoiId) : null
-
-  useEffect(() => {
-    if (!isRelicMode || !mountRef.current) return
-
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#FEFAF6')
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
-    camera.position.set(0, 2, 5)
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.0
-    mountRef.current.appendChild(renderer.domElement)
-
-    const controls = new OrbitControls(camera, renderer.domElement)
-    controls.enableDamping = true
-    controls.dampingFactor = 0.08
-    controls.autoRotate = true
-    controls.autoRotateSpeed = 1.2
-
-    const ambientLight = new THREE.AmbientLight(0xfff8f0, 0.5)
-    scene.add(ambientLight)
-
-    const keyLight = new THREE.DirectionalLight(0xffeedd, 1.2)
-    keyLight.position.set(5, 5, 5)
-    scene.add(keyLight)
-
-    const fillLight = new THREE.DirectionalLight(0xeeddcc, 0.6)
-    fillLight.position.set(-3, 2, -2)
-    scene.add(fillLight)
-
-    const accentLight = new THREE.PointLight(0xC41E3A, 1.0, 10)
-    accentLight.position.set(0, -1, 2)
-    scene.add(accentLight)
-
-    const relicGroup = new THREE.Group()
-
-    const baseGeometry = new THREE.CylinderGeometry(1.5, 1.6, 0.2, 32)
-    const baseMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x3D322B,
-      roughness: 0.7,
-      metalness: 0.1
-    })
-    const base = new THREE.Mesh(baseGeometry, baseMaterial)
-    base.position.y = -0.5
-    relicGroup.add(base)
-
-    const ringGeometry = new THREE.RingGeometry(1.2, 1.3, 32)
-    const ringMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xC41E3A, 
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending
-    })
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial)
-    ring.rotation.x = Math.PI / 2
-    ring.position.y = -0.39
-    relicGroup.add(ring)
-
-    const relicGeometry = archive?.id === 'suqu-red-house'
-      ? new THREE.CylinderGeometry(0.5, 0.55, 1.2, 32)
-      : archive?.id === 'blood-field'
-      ? new THREE.OctahedronGeometry(0.6, 0)
-      : archive?.id === 'soviet-arsenal'
-      ? new THREE.ConeGeometry(0.5, 1.4, 6)
-      : archive?.id === 'paozi-village-defense'
-      ? new THREE.TorusKnotGeometry(0.45, 0.12, 64, 8)
-      : archive?.id === 'red-army-pavilion'
-      ? new THREE.DodecahedronGeometry(0.6, 0)
-      : archive?.id === 'suqu-red-transport-station'
-      ? new THREE.TorusGeometry(0.45, 0.18, 16, 32)
-      : archive?.id === 'dongjiang-committee'
-      ? new THREE.IcosahedronGeometry(0.6, 0)
-      : new THREE.BoxGeometry(1, 1.5, 1)
-    
-    const canvas = document.createElement('canvas')
-    canvas.width = 256
-    canvas.height = 256
-    const context = canvas.getContext('2d')
-    if (context) {
-      const baseHue = archive?.id === 'suqu-red-house' ? 10
-        : archive?.id === 'blood-field' ? 0
-        : archive?.id === 'soviet-arsenal' ? 20
-        : archive?.id === 'paozi-village-defense' ? 340
-        : archive?.id === 'red-army-pavilion' ? 30
-        : archive?.id === 'suqu-red-transport-station' ? 15
-        : archive?.id === 'dongjiang-committee' ? 25
-        : 20
-      context.fillStyle = `hsl(${baseHue}, 30%, 45%)`
-      context.fillRect(0, 0, 256, 256)
-      for (let i = 0; i < 5000; i++) {
-        context.fillStyle = Math.random() > 0.5 
-          ? `hsl(${baseHue + 5}, 25%, ${35 + Math.random() * 15}%)` 
-          : `hsl(${baseHue - 5}, 20%, ${25 + Math.random() * 10}%)`
-        context.fillRect(Math.random() * 256, Math.random() * 256, 2, 2)
-      }
-    }
-    const texture = new THREE.CanvasTexture(canvas)
-    
-    const relicMaterial = new THREE.MeshStandardMaterial({
-      map: texture,
-      roughness: 0.85,
-      metalness: 0.05,
-      bumpMap: texture,
-      bumpScale: 0.05
-    })
-    const relic = new THREE.Mesh(relicGeometry, relicMaterial)
-    relic.position.y = 0.45
-    relicGroup.add(relic)
-
-    const particleGeometry = new THREE.BufferGeometry()
-    const particleCount = 100
-    const posArray = new Float32Array(particleCount * 3)
-    for(let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 3
-    }
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
-    const particleMaterial = new THREE.PointsMaterial({
-      size: 0.02,
-      color: 0xC41E3A,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending
-    })
-    const particles = new THREE.Points(particleGeometry, particleMaterial)
-    relicGroup.add(particles)
-
-    scene.add(relicGroup)
-
-    let animationId: number
-    const clock = new THREE.Clock()
-
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime()
-      controls.update()
-      
-      const positions = particles.geometry.attributes.position.array as Float32Array
-      for(let i = 1; i < particleCount * 3; i += 3) {
-        positions[i] += 0.005
-        if(positions[i] > 2) {
-          positions[i] = -1
-        }
-      }
-      particles.geometry.attributes.position.needsUpdate = true
-
-      ringMaterial.opacity = 0.3 + 0.3 * Math.sin(elapsedTime * 2)
-      renderer.render(scene, camera)
-      animationId = requestAnimationFrame(animate)
-    }
-
-    animate()
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
-    }
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      cancelAnimationFrame(animationId)
-      window.speechSynthesis?.cancel()
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement)
-      }
-      renderer.dispose()
-      scene.clear()
-    }
-  }, [isRelicMode])
+  const primaryMedia = archive?.media?.find(item => item.type === 'image') || archive?.media?.[0]
+  const imageUrl = resolveAssetUrl(primaryMedia?.url || archive?.coverImage)
+  const typeLabel = getArchiveTypeLabel(archive?.type)
 
   if (!isRelicMode) return null
 
   return (
-    <div className="fixed inset-0 z-[60] pointer-events-auto animate-in fade-in duration-700" style={{ backgroundColor: '#FEFAF6' }}>
-      <div ref={mountRef} className="absolute inset-0 cursor-move" />
-      
-      <button 
-        onClick={() => setRelicMode(false)}
-        className="absolute top-8 right-8 z-10 p-3 rounded-xl bg-white border border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FDE8EC] hover:border-[#C41E3A]/30 transition-all min-w-[48px] min-h-[48px] flex items-center justify-center touch-manipulation"
-        aria-label="退出文物全息展台"
-      >
-        <X size={22} />
-      </button>
-
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-6 pointer-events-none">
-        <div className="museum-card p-8 rounded-3xl relative overflow-hidden">
-          
-          <div className="flex items-center gap-4 mb-4 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-[#FDE8EC] text-[#C41E3A] flex items-center justify-center border border-[#C41E3A]/20">
-              <Box size={24} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-[#1A1A1A] tracking-wide font-serif">
-                {archive?.title || '苏区革命文物'} · 全息扫描档案
-              </h2>
-              <p className="text-[#5C5C5C] text-sm mt-1">
-                三维激光扫描 · 数字空间中 1:1 重建历史痕迹
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#FEFAF6] pointer-events-auto animate-in fade-in duration-300">
+      <header className="relative z-10 flex items-center justify-between border-b border-[#E8DFD5] bg-white/92 px-5 py-4 shadow-sm backdrop-blur-md md:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#C41E3A]/20 bg-[#FDE8EC] text-[#C41E3A]">
+            <Landmark size={22} />
           </div>
-
-          <p className="text-[#5C5C5C] leading-relaxed relative z-10 text-sm md:text-base font-serif">
-            当前展示文物源自 <span className="text-[#C41E3A] font-bold">{archive?.title}</span>。
-            通过三维扫描技术，在数字空间中 1:1 重建了历史遗迹的岁月痕迹。
-            您可以拖拽鼠标全方位观察文物细节。
-          </p>
-          
-          <div className="mt-6 flex gap-4 border-t border-[#E8DFD5] pt-4 relative z-10 font-mono text-xs text-[#5C5C5C]">
-            <span>扫描精度: 0.1mm</span>
-            <span>材质分析: 花岗岩 / 黄铜</span>
-            <span className="ml-auto text-[#C41E3A] font-medium">状态: 实时渲染中</span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-wide text-[#8B6914]">档案影像展陈</p>
+            <h2 className="truncate text-lg font-bold text-[#1A1A1A] md:text-2xl">
+              {archive?.title || '未选择档案点位'}
+            </h2>
           </div>
         </div>
-      </div>
+        <button
+          onClick={() => setRelicMode(false)}
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#E8DFD5] bg-white text-[#5C5C5C] transition-all hover:border-[#C41E3A]/30 hover:bg-[#FDE8EC] hover:text-[#C41E3A]"
+          aria-label="退出档案影像展陈"
+        >
+          <X size={22} />
+        </button>
+      </header>
+
+      <main className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1.25fr)_420px]">
+        <section className="relative flex min-h-[52vh] items-center justify-center overflow-hidden bg-[#F4EFE8] p-4 md:p-8">
+          <div className="absolute inset-0 opacity-70" style={{ background: 'radial-gradient(circle at 48% 38%, rgba(196,30,58,0.08), transparent 38%), linear-gradient(135deg, rgba(216,196,168,0.45), rgba(254,250,246,0.92))' }} />
+          {imageUrl ? (
+            <figure className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/80 bg-white shadow-2xl shadow-[#5A281B]/12">
+              <div className="relative min-h-[280px] bg-[#1A1A1A] md:min-h-[520px]">
+                <img
+                  src={imageUrl}
+                  alt={primaryMedia?.caption || archive?.title || '档案图片'}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full max-h-[68vh] w-full object-contain"
+                />
+              </div>
+              <figcaption className="border-t border-[#E8DFD5] bg-white px-4 py-3 text-sm leading-relaxed text-[#5C5C5C]">
+                {primaryMedia?.caption || archive?.title || '已审核档案素材'}
+              </figcaption>
+            </figure>
+          ) : (
+            <div className="relative z-10 flex min-h-[360px] w-full max-w-3xl flex-col items-center justify-center rounded-2xl border border-dashed border-[#D8C4A8] bg-white/85 p-8 text-center">
+              <ImageIcon size={42} className="text-[#C41E3A]" />
+              <h3 className="mt-5 text-xl font-bold text-[#1A1A1A]">暂无可展示影像</h3>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-[#5C5C5C]">
+                补充并审核图片或视频资料后，这里会同步展示。
+              </p>
+            </div>
+          )}
+        </section>
+
+        <aside className="border-l border-[#E8DFD5] bg-white p-5 md:p-7">
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-[#E8DFD5] bg-[#FEFAF6] p-4">
+              <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#C41E3A]/20 bg-white px-3 py-1 text-[#C41E3A]">
+                  <ShieldCheck size={13} />
+                  已审核发布
+                </span>
+                <span className="rounded-full border border-[#E8DFD5] bg-white px-3 py-1 text-[#8B6914]">{typeLabel}</span>
+              </div>
+              <h3 className="mt-4 text-2xl font-bold leading-snug text-[#1A1A1A]">{archive?.title || '未选择档案点位'}</h3>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#5C5C5C]">
+                {archive?.year && (
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar size={14} className="text-[#C41E3A]" />
+                    {archive.year}年
+                  </span>
+                )}
+                {archive && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin size={14} className="text-[#C41E3A]" />
+                    地图点位已绑定
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <section className="rounded-2xl border border-[#E8DFD5] p-4">
+              <h4 className="text-base font-bold text-[#C41E3A]">档案简介</h4>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-loose text-[#5C5C5C]">
+                {archive?.description || '暂无简介。'}
+              </p>
+            </section>
+
+            {archive?.content && (
+              <section className="rounded-2xl border border-[#E8DFD5] p-4">
+                <h4 className="text-base font-bold text-[#C41E3A]">历史文献</h4>
+                <p className="mt-3 max-h-[260px] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-loose text-[#5C5C5C]">
+                  {archive.content}
+                </p>
+              </section>
+            )}
+
+            <section className="rounded-2xl border border-[#8B6914]/20 bg-[#FFF8E1] p-4">
+              <p className="text-sm leading-relaxed text-[#5C5C5C]">
+                当前展示已审核的档案影像与文字资料。后续补充实测资料后，将以主管部门审核内容为准同步更新。
+              </p>
+            </section>
+          </div>
+        </aside>
+      </main>
     </div>
   )
 }

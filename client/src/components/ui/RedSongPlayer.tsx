@@ -1,167 +1,47 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Music, ChevronDown } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Music, ChevronDown } from 'lucide-react'
+import { asStringArray, asText, fetchPublishedContents, type PublicContentItem } from '@/lib/cmsContent'
 
 interface Song {
+  id: string
   title: string
   source: string
   lyrics: string[]
   year: string
 }
 
-const SONGS: Song[] = [
-  {
-    title: '十送红军',
-    source: '东江客家话版 · 民歌改编',
-    year: '1934',
-    lyrics: [
-      '一送红军下了山，秋风细雨缠绵绵',
-      '山上野鹿声声号，树树梧桐叶落完',
-      '问一声亲人红军啊，几时人马再回山',
-      '三送红军到拿山，山上包谷金灿灿',
-      '包谷种子红军种，包谷棒棒穷人搬',
-      '紧紧拉着红军手，红军啊撒下种子红了天',
-      '五送红军过了坡，鸿雁阵阵空中过',
-      '鸿雁能够捎书信，鸿雁啊飞到天涯海角',
-      '千言万语嘱咐红军啊，捎信多把革命说',
-      '十送红军转回来，武陵山巅搭高台',
-      '台高十丈白玉柱，雕龙绣凤放光彩',
-      '红军啊这台名叫望红台'
-    ]
-  },
-  {
-    title: '映山红',
-    source: '电影《闪闪的红星》插曲',
-    year: '1974',
-    lyrics: [
-      '夜半三更哟盼天明，寒冬腊月哟盼春风',
-      '若要盼得哟红军来，岭上开遍哟映山红',
-      '若要盼得哟红军来，岭上开遍哟映山红',
-      '岭上开遍哟映山红，岭上开遍哟映山红',
-      '映山红哟映山红，英雄儿女哟血染成',
-      '火映红星哟星更亮，血洒红旗哟旗更红',
-      '高举红旗哟朝前迈，革命鲜花哟代代红'
-    ]
-  },
-  {
-    title: '八月桂花遍地开',
-    source: '鄂豫皖苏区民歌',
-    year: '1929',
-    lyrics: [
-      '八月桂花遍地开，鲜红的旗帜竖呀竖起来',
-      '张灯又结彩呀，张灯又结彩呀',
-      '光辉灿烂闪出新世界',
-      '红军队伍真威风，百战百胜最英勇',
-      '活捉张辉瓒呀，活捉张辉瓒呀',
-      '打垮了反动派的气焰',
-      '一杆红旗飘在空中，红军队伍要扩充',
-      '保卫工农新政权，带领群众闹革命',
-      '红色战士最光荣'
-    ]
-  },
-  {
-    title: '田仔骂田公',
-    source: '彭湃 1923年创作 · 海陆丰民歌调',
-    year: '1923',
-    lyrics: [
-      '冬呀冬，田仔骂田公',
-      '田公着厝食白米，田仔耕田耕到死',
-      '田是公家的，他耕无道理',
-      '死是大家死，无是田仔死',
-      '你勿惊，大家团结起',
-      '联合起，你勿惊'
-    ]
-  },
-  {
-    title: '苏区山歌',
-    source: '炮子乡民间采风',
-    year: '1928',
-    lyrics: [
-      '炮子山头红旗飘，苏区人民志气高',
-      '打倒土豪分田地，耕者有其田自豪',
-      '红军阿哥你慢走，革命成功再回头',
-      '妹在房中绣红旗，一针一线情意长',
-      '红旗插到南京去，全国工农得解放'
-    ]
-  },
-  {
-    title: '南泥湾',
-    source: '延安时期经典 · 郭兰英原唱',
-    year: '1943',
-    lyrics: [
-      '花篮的花儿香，听我来唱一唱',
-      '来到了南泥湾，南泥湾好地方',
-      '好地方来好风光，到处是庄稼遍地是牛羊',
-      '往年的南泥湾，处处是荒山',
-      '如今南泥湾，是陕北的好江南',
-      '又战斗来又生产，三五九旅是模范',
-      '咱们走向前，鲜花送模范'
-    ]
-  },
-  {
-    title: '红星照我去战斗',
-    source: '电影《闪闪的红星》插曲 · 李双江原唱',
-    year: '1974',
-    lyrics: [
-      '小小竹排江中游，巍巍青山两岸走',
-      '雄鹰展翅飞，哪怕风雨骤',
-      '革命重担挑肩上，党的教导记心头',
-      '革命代代如潮涌，前赴后继跟党走',
-      '砸碎万恶的旧世界，万里江山披锦绣',
-      '万里江山披锦绣'
-    ]
-  },
-  {
-    title: '山丹丹花开红艳艳',
-    source: '陕北民歌 · 革命历史歌曲',
-    year: '1971',
-    lyrics: [
-      '一道道的那个山来哟一道道水',
-      '咱们中央红军到陕北',
-      '一杆杆的那个红旗哟一杆杆枪',
-      '咱们的队伍势力壮',
-      '千家万户哎咳哎咳哟把门开',
-      '快把咱亲人迎进来',
-      '热腾腾的油糕摆上桌',
-      '滚滚的米酒捧给亲人喝',
-      '围定亲人热炕上坐，知心的话儿飞出心窝窝',
-      '山丹丹的那个开花哟红艳艳',
-      '毛主席领导咱打江山'
-    ]
-  },
-  {
-    title: '红梅赞',
-    source: '歌剧《江姐》主题曲',
-    year: '1964',
-    lyrics: [
-      '红岩上红梅开，千里冰霜脚下踩',
-      '三九严寒何所惧，一片丹心向阳开',
-      '红梅花儿开，朵朵放光彩',
-      '昂首怒放花万朵，香飘云天外',
-      '唤醒百花齐开放，高歌欢庆新春来'
-    ]
-  },
-  {
-    title: '歌唱祖国',
-    source: '王莘 1950年创作',
-    year: '1950',
-    lyrics: [
-      '五星红旗迎风飘扬，胜利歌声多么响亮',
-      '歌唱我们亲爱的祖国，从今走向繁荣富强',
-      '越过高山，越过平原，跨过奔腾的黄河长江',
-      '宽广美丽的土地，是我们亲爱的家乡',
-      '英雄的人民站起来了，我们团结友爱坚强如钢'
-    ]
-  },
-]
-
 export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [songs, setSongs] = useState<Song[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showLyrics, setShowLyrics] = useState(false)
   const [lyricLine, setLyricLine] = useState(0)
+  const [loading, setLoading] = useState(true)
   const lyricTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const song = SONGS[currentIdx]
+  const song = songs[currentIdx] || null
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadSongs() {
+      setLoading(true)
+      try {
+        const items = await fetchPublishedContents('song', 100)
+        const cmsSongs = items.map(contentToSong).filter(Boolean) as Song[]
+        if (!cancelled) {
+          setSongs(cmsSongs)
+          setCurrentIdx(0)
+          setLyricLine(0)
+        }
+      } catch {
+        if (!cancelled) setSongs([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    loadSongs()
+    return () => { cancelled = true }
+  }, [])
 
   const stopLyrics = useCallback(() => {
     if (lyricTimerRef.current) {
@@ -171,6 +51,7 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   }, [])
 
   const startLyrics = useCallback(() => {
+    if (!song) return
     stopLyrics()
     setLyricLine(0)
     lyricTimerRef.current = setInterval(() => {
@@ -182,9 +63,10 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         return prev + 1
       })
     }, 3500)
-  }, [song.lyrics.length, stopLyrics])
+  }, [song, stopLyrics])
 
   const handlePlay = () => {
+    if (!song) return
     if (isPlaying) {
       setIsPlaying(false)
       stopLyrics()
@@ -207,17 +89,19 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   }
 
   const handlePrev = () => {
+    if (songs.length === 0) return
     setIsPlaying(false)
     stopLyrics()
     if (window.speechSynthesis) window.speechSynthesis.cancel()
-    setCurrentIdx(prev => (prev - 1 + SONGS.length) % SONGS.length)
+    setCurrentIdx(prev => (prev - 1 + songs.length) % songs.length)
   }
 
   const handleNext = () => {
+    if (songs.length === 0) return
     setIsPlaying(false)
     stopLyrics()
     if (window.speechSynthesis) window.speechSynthesis.cancel()
-    setCurrentIdx(prev => (prev + 1) % SONGS.length)
+    setCurrentIdx(prev => (prev + 1) % songs.length)
   }
 
   useEffect(() => {
@@ -225,7 +109,7 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
       stopLyrics()
       if (window.speechSynthesis) window.speechSynthesis.cancel()
     }
-  }, [])
+  }, [stopLyrics])
 
   return (
     <div className="fixed inset-0 z-[85] flex items-center justify-center p-4 pointer-events-auto animate-in fade-in duration-300">
@@ -240,46 +124,61 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             <Music size={28} />
           </div>
           <h2 className="text-xl font-bold text-[#1A1A1A] font-serif">苏区红歌馆</h2>
-          <p className="text-xs text-[#5C5C5C] mt-1">红色旋律 · 时代回声</p>
+          <p className="text-xs text-[#5C5C5C] mt-1">仅展示已审核发布的红歌资料</p>
         </div>
 
         <div className="bg-[#FEFAF6] rounded-2xl p-5 mb-4 border border-[#E8DFD5]">
-          <h3 className="text-lg font-bold text-[#C41E3A] font-serif text-center">{song.title}</h3>
-          <p className="text-xs text-[#5C5C5C] text-center mt-1">{song.source} · {song.year}年</p>
-          
-          <div className="mt-4 space-y-1.5 min-h-[120px]">
-            {song.lyrics.slice(0, isPlaying ? lyricLine + 1 : song.lyrics.length).map((line, i) => (
-              <p
-                key={i}
-                className={`text-sm leading-relaxed font-serif transition-all duration-500 ${
-                  isPlaying && i === lyricLine
-                    ? 'text-[#C41E3A] font-bold text-base'
-                    : 'text-[#5C5C5C]'
-                }`}
-              >
-                {line}
-              </p>
-            ))}
-          </div>
+          {loading ? (
+            <div className="min-h-[160px] flex flex-col items-center justify-center text-center">
+              <div className="w-9 h-9 rounded-full border-2 border-[#E8DFD5] border-t-[#C41E3A] animate-spin mb-3" />
+              <p className="text-sm text-[#5C5C5C]">正在读取已审核发布的红歌资料</p>
+            </div>
+          ) : song ? (
+            <>
+              <h3 className="text-lg font-bold text-[#C41E3A] font-serif text-center">{song.title}</h3>
+              <p className="text-xs text-[#5C5C5C] text-center mt-1">{song.source} · {song.year}</p>
+
+              <div className="mt-4 space-y-1.5 min-h-[120px]">
+                {song.lyrics.slice(0, isPlaying ? lyricLine + 1 : song.lyrics.length).map((line, i) => (
+                  <p
+                    key={i}
+                    className={`text-sm leading-relaxed font-serif transition-all duration-500 ${
+                      isPlaying && i === lyricLine
+                        ? 'text-[#C41E3A] font-bold text-base'
+                        : 'text-[#5C5C5C]'
+                    }`}
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="min-h-[160px] flex items-center justify-center text-center">
+              <p className="text-sm text-[#5C5C5C] leading-relaxed">当前暂无已审核发布的红歌资料。</p>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-center gap-4 mb-4">
-          <button onClick={handlePrev} className="p-2 min-w-[44px] min-h-[44px] rounded-full hover:bg-[#FEFAF6] text-[#5C5C5C] hover:text-[#C41E3A] transition-all flex items-center justify-center">
+          <button onClick={handlePrev} disabled={!song} className="p-2 min-w-[44px] min-h-[44px] rounded-full hover:bg-[#FEFAF6] text-[#5C5C5C] hover:text-[#C41E3A] transition-all flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none" aria-label="上一首">
             <SkipBack size={20} />
           </button>
           <button
             onClick={handlePlay}
-            className="w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-[#C41E3A] text-white shadow-lg hover:bg-[#A01830] transition-all flex items-center justify-center"
+            disabled={!song}
+            className="w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-[#C41E3A] text-white shadow-lg hover:bg-[#A01830] transition-all flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
+            aria-label={isPlaying ? '暂停播放' : '播放红歌'}
           >
             {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
           </button>
-          <button onClick={handleNext} className="p-2 min-w-[44px] min-h-[44px] rounded-full hover:bg-[#FEFAF6] text-[#5C5C5C] hover:text-[#C41E3A] transition-all flex items-center justify-center">
+          <button onClick={handleNext} disabled={!song} className="p-2 min-w-[44px] min-h-[44px] rounded-full hover:bg-[#FEFAF6] text-[#5C5C5C] hover:text-[#C41E3A] transition-all flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none" aria-label="下一首">
             <SkipForward size={20} />
           </button>
         </div>
 
         <div className="flex justify-center gap-1.5 mb-4">
-          {SONGS.map((_, i) => (
+          {songs.map((_, i) => (
             <button
               key={i}
               onClick={() => { setCurrentIdx(i); setIsPlaying(false); stopLyrics(); if (window.speechSynthesis) window.speechSynthesis.cancel() }}
@@ -292,7 +191,8 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
 
         <button
           onClick={() => setShowLyrics(!showLyrics)}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] text-[#5C5C5C] hover:bg-[#FEFAF6] transition-all text-sm font-medium"
+          disabled={!song}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] text-[#5C5C5C] hover:bg-[#FEFAF6] transition-all text-sm font-medium disabled:opacity-40 disabled:pointer-events-none"
         >
           <ChevronDown size={16} className={`transition-transform ${showLyrics ? 'rotate-180' : ''}`} />
           {showLyrics ? '收起歌词' : '展开完整歌词'}
@@ -301,9 +201,9 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         {showLyrics && (
           <div className="mt-3 p-4 rounded-xl bg-[#FEFAF6] border border-[#E8DFD5] max-h-48 overflow-y-auto custom-scrollbar">
             <h4 className="text-sm font-bold text-[#1A1A1A] mb-2 font-serif">歌单列表</h4>
-            {SONGS.map((s, i) => (
+            {songs.map((s, i) => (
               <button
-                key={i}
+                key={s.id}
                 onClick={() => { setCurrentIdx(i); setIsPlaying(false); stopLyrics(); setShowLyrics(false) }}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
                   i === currentIdx ? 'bg-[#FDE8EC] text-[#C41E3A] font-bold' : 'text-[#5C5C5C] hover:bg-[#FEFAF6]'
@@ -319,4 +219,19 @@ export const RedSongPlayer: React.FC<{ onClose: () => void }> = ({ onClose }) =>
       </div>
     </div>
   )
+}
+
+function contentToSong(item: PublicContentItem): Song | null {
+  const data = item.data || {}
+  const lyrics = asStringArray(data.lyrics)
+  const bodyLyrics = item.body
+    ? item.body.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+    : []
+  const nextLyrics = lyrics.length > 0 ? lyrics : bodyLyrics
+  const title = asText(data.title) || item.title
+  const source = asText(data.source) || item.summary || item.category || ''
+  const year = asText(data.year) || asText(data.years) || ''
+
+  if (!title || !source || !year || nextLyrics.length === 0) return null
+  return { id: item.id || title, title, source, year, lyrics: nextLyrics }
 }

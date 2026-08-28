@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, Heart, Send, MessageCircle, ScrollText, User, RefreshCw } from 'lucide-react'
+import { asRecordArray, asText, fetchPublishedContents, type PublicContentItem } from '@/lib/cmsContent'
+import { API_BASE } from '@/lib/env'
 
 interface Letter {
   author: string
@@ -9,88 +11,116 @@ interface Letter {
   avatar: string
 }
 
-const LETTERS: Letter[] = [
-  {
-    author: '彭 湃',
-    role: '中国农民运动领袖 · 1929年就义',
-    excerpt: '冰妹：从此永别，望妹努力前进。兄谢你的爱！万望保重！余言不尽！',
-    fullText: '冰妹：从此永别，望妹努力前进。兄谢你的爱！万望保重！余言不尽！你的湃。\n\n这是彭湃同志1929年8月30日于上海龙华英勇就义前给夫人许冰的最后一封信。五天前，因叛徒出卖被捕。狱中受尽酷刑，始终坚贞不屈。',
-    avatar: '🌟'
-  },
-  {
-    author: '钟火妹',
-    role: '苏区镇少年英雄 · 1928年牺牲 · 年仅16岁',
-    excerpt: '阿爸阿妈：我不怕。我们苏区人，从来都是站着死，不会跪着活。',
-    fullText: '阿爸阿妈：我不怕。我们苏区人，从来都是站着死，不会跪着活。我不会说出苏维埃政府的去向，你们放心。来生还做你们的女儿。\n\n这是钟火妹就义前通过狱友传出的话。1928年3月，她与钟一朋等17位烈士在血田英勇牺牲。',
-    avatar: '🌸'
-  },
-  {
-    author: '李月梅',
-    role: '苏区镇交通员 · 1933年牺牲',
-    excerpt: '同志们：情报已经送出，我不后悔。革命成功的那天，别忘了我们。',
-    fullText: '同志们：情报已经送出，我不后悔。革命成功的那天，别忘了我们。南方的映山红开了吗？我好像闻到了——那是红军的颜色。\n\n这是李月梅被俘前的最后一句话。她成功将情报送达后被捕，1933年牺牲于紫金县。',
-    avatar: '🌺'
-  },
-  {
-    author: '黄木生',
-    role: '苏区赤卫队员 · 1928年牺牲',
-    excerpt: '家人们：我无憾。等红旗插遍全中国，你们就知道了——我们这些人的命，没白丢。',
-    fullText: '家人们：我无憾。等红旗插遍全中国，你们就知道了——我们这些人的命，没白丢。告诉孩子们，好好读书，新中国的天下要靠他们来建设。\n\n这是黄木生在炮子村阻击战最后的夜晚，托同村赤卫队员转达给家人的口信。次日，他拉响手榴弹与敌军同归于尽。',
-    avatar: '🏔️'
-  },
-  {
-    author: '钟一朋',
-    role: '炮子村赤卫队副队长 · 1928年牺牲',
-    excerpt: '同志们：炮子村没有叛徒。苏维埃万岁！',
-    fullText: '同志们：炮子村没有叛徒。苏维埃万岁！你们不用为我报仇，你们要活着看到革命胜利的那一天。告诉我的儿女，他们的父亲是站着死的。\n\n这是钟一朋在血田就义前的最后呐喊。他与钟火妹等17位烈士一同牺牲在血田中。',
-    avatar: '⚔️'
-  },
-]
-
-interface Message {
+type Message = {
   id: string
   author: string
   text: string
   time: string
   inReplyTo: string
+  pending?: boolean
 }
 
-const STORAGE_KEY = 'suqu_people_messages'
-
-const loadMessages = (): Message[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch { return [] }
+type ApiMessage = {
+  id: string
+  name: string
+  identity: string
+  text: string
+  createdAt: number
+  inReplyTo?: string
 }
 
-const saveMessages = (msgs: Message[]) => {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)) } catch {}
+function toDisplayMessage(item: ApiMessage, pending = false): Message {
+  return {
+    id: item.id,
+    author: item.name,
+    text: item.text,
+    time: new Date(item.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    inReplyTo: item.inReplyTo || '',
+    pending,
+  }
 }
 
 export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [letters, setLetters] = useState<Letter[]>([])
   const [selectedLetter, setSelectedLetter] = useState<number>(0)
+  const [isLoadingLetters, setIsLoadingLetters] = useState(true)
   const [userName, setUserName] = useState('')
   const [userText, setUserText] = useState('')
-  const [messages, setMessages] = useState<Message[]>(loadMessages)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [pendingMessages, setPendingMessages] = useState<Message[]>([])
   const [showWall, setShowWall] = useState(false)
+  const displayMessages = [...pendingMessages, ...messages]
+  const activeLetter = letters[selectedLetter] || letters[0] || null
 
   useEffect(() => {
-    saveMessages(messages)
-  }, [messages])
-
-  const handleSubmit = useCallback(() => {
-    if (!userText.trim()) return
-    const msg: Message = {
-      id: Date.now().toString(36),
-      author: userName.trim() || '匿名同志',
-      text: userText.trim(),
-      time: new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      inReplyTo: LETTERS[selectedLetter].author
+    let cancelled = false
+    async function loadPrompts() {
+      try {
+        const items = await fetchPublishedContents('cocreation', 100)
+        const cmsLetters = items.flatMap(contentToLetters)
+        if (!cancelled) {
+          setLetters(cmsLetters)
+          setSelectedLetter(0)
+        }
+      } catch {
+        if (!cancelled) setLetters([])
+      } finally {
+        if (!cancelled) setIsLoadingLetters(false)
+      }
     }
-    setMessages(prev => [msg, ...prev])
-    setUserText('')
-  }, [userName, userText, selectedLetter])
+    loadPrompts()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadMessages() {
+      try {
+        const response = await fetch(`${API_BASE}/messages?pageSize=100`)
+        if (!response.ok) return
+        const payload = await response.json() as { items?: ApiMessage[] }
+        const items = Array.isArray(payload.items) ? payload.items : []
+        if (!cancelled) {
+          setMessages(items.map(item => toDisplayMessage(item)))
+          setPendingMessages(prev => prev.filter(pending => !items.some(item => item.id === pending.id)))
+        }
+      } catch {
+        // Keep the wall usable when the API is unavailable.
+      }
+    }
+    loadMessages()
+    return () => { cancelled = true }
+  }, [])
+
+  const handleSubmit = useCallback(async () => {
+    if (!userText.trim() || !activeLetter) return
+    try {
+      const response = await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userName.trim() || '匿名同志',
+          identity: '共创留言',
+          text: userText.trim(),
+          inReplyTo: activeLetter.author,
+        }),
+      })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(payload?.error?.message || '提交失败')
+      const submitted = payload?.message ? toDisplayMessage({
+        id: payload.message.id,
+        name: payload.message.name,
+        identity: payload.message.identity,
+        text: payload.message.text,
+        createdAt: payload.message.createdAt,
+        inReplyTo: payload.message.inReplyTo,
+      }, true) : null
+      if (submitted) setPendingMessages(prev => [submitted, ...prev])
+      setUserText('')
+    } catch {
+      // Keep the composer responsive even if the backend request fails.
+    }
+  }, [userName, userText, activeLetter])
 
   return (
     <div className="fixed inset-0 z-[85] pointer-events-auto animate-in fade-in duration-300">
@@ -117,76 +147,100 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
               </p>
             </div>
 
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {LETTERS.map((l, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedLetter(i)}
-                  className={`flex-shrink-0 p-3 rounded-xl border min-w-[120px] text-center transition-all ${
-                    i === selectedLetter
-                      ? 'bg-[#FDE8EC] border-[#C41E3A]/40 shadow-sm'
-                      : 'bg-white border-[#E8DFD5] hover:bg-[#FEFAF6]'
-                  }`}
-                >
-                  <div className="text-xl mb-1">{l.avatar}</div>
-                  <div className="text-xs font-bold font-serif">{l.author}</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="p-5 rounded-2xl border-2 border-[#E8DFD5] bg-[#FEFAF6] mb-6">
-              <div className="text-center mb-3">
-                <div className="text-3xl mb-2">{LETTERS[selectedLetter].avatar}</div>
-                <h3 className="text-lg font-black font-serif text-[#C41E3A]">{LETTERS[selectedLetter].author}</h3>
-                <p className="text-[10px] text-[#5C5C5C]">{LETTERS[selectedLetter].role}</p>
+            {isLoadingLetters ? (
+              <div className="py-12 text-center rounded-xl border border-[#E8DFD5] bg-[#FEFAF6]">
+                <div className="text-sm font-bold text-[#1A1A1A] font-serif">正在读取已审核发布的共创素材</div>
+                <p className="text-xs text-[#8C7A68] mt-2">公开端不会展示未经后台审核的本地家书。</p>
               </div>
-              <div className="w-12 h-px bg-[#C41E3A] mx-auto my-3 opacity-30" />
-              <blockquote className="text-sm text-[#1A1A1A] leading-relaxed font-serif text-center italic px-4 mb-4">
-                "——{LETTERS[selectedLetter].excerpt}——"
-              </blockquote>
-              <p className="text-xs text-[#5C5C5C] leading-relaxed whitespace-pre-line border-t border-[#E8DFD5] pt-3 mt-3">
-                {LETTERS[selectedLetter].fullText.split('\n\n')[1]}
-              </p>
-            </div>
+            ) : !activeLetter ? (
+              <div className="py-12 text-center rounded-xl border border-[#E8DFD5] bg-[#FEFAF6]">
+                <div className="text-4xl mb-3">📮</div>
+                <div className="text-sm font-bold text-[#1A1A1A] font-serif">暂无已审核发布的共创素材</div>
+                <p className="text-xs text-[#8C7A68] mt-2 px-6 leading-relaxed">
+                  请先在后台创建并终审发布“群众共创”内容，公开端才会开放续写入口。
+                </p>
+                <button
+                  onClick={() => setShowWall(true)}
+                  className="mt-5 text-xs text-[#C41E3A] hover:underline inline-flex items-center gap-1 justify-center"
+                >
+                  <MessageCircle size={12} />
+                  查看薪火相传墙 ({displayMessages.length} 封续信)
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                  {letters.map((l, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedLetter(i)}
+                      className={`flex-shrink-0 p-3 rounded-xl border min-w-[120px] text-center transition-all ${
+                        i === selectedLetter
+                          ? 'bg-[#FDE8EC] border-[#C41E3A]/40 shadow-sm'
+                          : 'bg-white border-[#E8DFD5] hover:bg-[#FEFAF6]'
+                      }`}
+                    >
+                      <div className="text-xl mb-1">{l.avatar}</div>
+                      <div className="text-xs font-bold font-serif">{l.author}</div>
+                    </button>
+                  ))}
+                </div>
 
-            <div className="mb-3">
-              <input
-                type="text"
-                placeholder="你的名字（选填）"
-                value={userName}
-                onChange={e => setUserName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-[#E8DFD5] text-sm bg-white text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none"
-                maxLength={12}
-              />
-            </div>
-            <div className="mb-3">
-              <textarea
-                placeholder={`写一封给 ${LETTERS[selectedLetter].author} 同志的回信...`}
-                value={userText}
-                onChange={e => setUserText(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-[#E8DFD5] text-sm bg-white text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none resize-none h-28"
-                maxLength={500}
-              />
-              <p className="text-[10px] text-[#D4C5B2] text-right mt-1">{userText.length}/500</p>
-            </div>
-            <button
-              onClick={handleSubmit}
-              disabled={!userText.trim()}
-              className="w-full py-3 min-h-[44px] rounded-xl party-btn-primary disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <Send size={16} />
-              寄出这封信
-            </button>
+                <div className="p-5 rounded-2xl border-2 border-[#E8DFD5] bg-[#FEFAF6] mb-6">
+                  <div className="text-center mb-3">
+                    <div className="text-3xl mb-2">{activeLetter.avatar}</div>
+                    <h3 className="text-lg font-black font-serif text-[#C41E3A]">{activeLetter.author}</h3>
+                    <p className="text-[10px] text-[#5C5C5C]">{activeLetter.role}</p>
+                  </div>
+                  <div className="w-12 h-px bg-[#C41E3A] mx-auto my-3 opacity-30" />
+                  <blockquote className="text-sm text-[#1A1A1A] leading-relaxed font-serif text-center italic px-4 mb-4">
+                    "——{activeLetter.excerpt}——"
+                  </blockquote>
+                  <p className="text-xs text-[#5C5C5C] leading-relaxed whitespace-pre-line border-t border-[#E8DFD5] pt-3 mt-3">
+                    {activeLetter.fullText.split('\n\n')[1] || activeLetter.fullText}
+                  </p>
+                </div>
 
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setShowWall(true)}
-                className="text-xs text-[#C41E3A] hover:underline flex items-center gap-1 justify-center"
-              >
-                <MessageCircle size={12} />
-                查看薪火相传墙 ({messages.length} 封续信)
-              </button>
-            </div>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="你的名字（选填）"
+                    value={userName}
+                    onChange={e => setUserName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-[#E8DFD5] text-sm bg-white text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none"
+                    maxLength={12}
+                  />
+                </div>
+                <div className="mb-3">
+                  <textarea
+                    placeholder={`写一封给 ${activeLetter.author} 同志的回信...`}
+                    value={userText}
+                    onChange={e => setUserText(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-[#E8DFD5] text-sm bg-white text-[#1A1A1A] placeholder:text-[#D4C5B2] focus:border-[#C41E3A]/40 focus:outline-none resize-none h-28"
+                    maxLength={500}
+                  />
+                  <p className="text-[10px] text-[#D4C5B2] text-right mt-1">{userText.length}/500</p>
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!userText.trim()}
+                  className="w-full py-3 min-h-[44px] rounded-xl party-btn-primary disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Send size={16} />
+                  寄出这封信
+                </button>
+
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setShowWall(true)}
+                    className="text-xs text-[#C41E3A] hover:underline flex items-center gap-1 justify-center"
+                  >
+                    <MessageCircle size={12} />
+                    查看薪火相传墙 ({displayMessages.length} 封续信)
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="p-6 flex-1">
@@ -202,7 +256,7 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
               薪火相传墙
             </h3>
 
-            {messages.length === 0 ? (
+            {displayMessages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-4xl mb-3">📮</div>
                 <p className="text-sm text-[#5C5C5C] font-serif">还未有人寄出回信</p>
@@ -210,7 +264,7 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
             ) : (
               <div className="space-y-3">
-                {messages.map(msg => (
+                {displayMessages.map(msg => (
                   <div key={msg.id} className="p-4 rounded-xl bg-[#FEFAF6] border border-[#E8DFD5]">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-6 h-6 rounded-full bg-[#FDE8EC] flex items-center justify-center text-xs">
@@ -218,6 +272,7 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
                       </div>
                       <span className="font-bold text-xs text-[#1A1A1A] font-serif">{msg.author}</span>
                       <span className="text-[10px] text-[#D4C5B2]">回复 {msg.inReplyTo}</span>
+                      {msg.pending && <span className="text-[10px] text-[#C41E3A]">待审核</span>}
                       <span className="ml-auto text-[10px] text-[#D4C5B2]">{msg.time}</span>
                     </div>
                     <p className="text-sm text-[#5C5C5C] leading-relaxed font-serif">{msg.text}</p>
@@ -226,14 +281,14 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
               </div>
             )}
 
-            {messages.length > 0 && (
+            {pendingMessages.length > 0 && (
               <div className="mt-4 text-center">
                 <button
-                  onClick={() => setMessages([])}
+                  onClick={() => setPendingMessages([])}
                   className="text-xs text-[#D4C5B2] hover:text-[#C41E3A] transition-all flex items-center gap-1 mx-auto"
                 >
                   <RefreshCw size={10} />
-                  清空留言（仅本地）
+                  清空待审留言
                 </button>
               </div>
             )}
@@ -242,4 +297,26 @@ export const PeopleCoCreation: React.FC<{ onClose: () => void }> = ({ onClose })
       </div>
     </div>
   )
+}
+
+function contentToLetters(item: PublicContentItem): Letter[] {
+  const data = item.data || {}
+  const entries = asRecordArray(data.prompts).length > 0
+    ? asRecordArray(data.prompts)
+    : asRecordArray(data.letters).length > 0
+      ? asRecordArray(data.letters)
+      : [data]
+
+  return entries.map(entry => {
+    const author = asText(entry.author) || asText(entry.name)
+    const fullText = asText(entry.fullText) || asText(entry.full_text) || asText(entry.text) || item.body || ''
+    if (!author || !fullText) return null
+    return {
+      author,
+      role: asText(entry.role) || asText(entry.subtitle) || item.summary || '',
+      excerpt: asText(entry.excerpt) || asText(entry.summary) || fullText.slice(0, 80),
+      fullText,
+      avatar: asText(entry.avatar) || '✦',
+    }
+  }).filter(Boolean) as Letter[]
 }

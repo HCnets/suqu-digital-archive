@@ -1,77 +1,78 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react'
-import maplibregl from 'maplibre-gl'
+/**
+ * 苏区红色地图组件（helpers 已拆到 gis-* 文件）
+ */
+import React from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import maplibregl from 'maplibre-gl'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
-import { createRoot } from 'react-dom/client'
+import { ensureGuideMapLayers, escapeHtml, getArchivePointData, getDisplayModeLabel, getMapModeLabel, getMapStyle, getMapView } from './gis-map-utils'
+import { ARCHIVE_TYPE_META, ArchiveModelMarker, getArchiveModelPreset, getArchiveTypeMeta } from './gis-model-presets'
+import type { BuildingFeature } from './gis-types'
+import { GUIDE_LABELS } from './gis-guide-data'
 
-const MAP_STYLES = {
-  museum: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  satellite: {
-    version: 8,
-    sources: {
-      'esri-satellite': {
-        type: 'raster',
-        tiles: [
-          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        ],
-        tileSize: 256,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-      }
-    },
-    layers: [
-      {
-        id: 'satellite-layer',
-        type: 'raster',
-        source: 'esri-satellite',
-        minzoom: 0,
-        maxzoom: 22
-      }
-    ]
-  } as maplibregl.StyleSpecification
-}
-
-const INITIAL_VIEW_STATE = {
-  longitude: 115.3415,
-  latitude: 23.3610,
-  zoom: 15,
-  pitch: 60,
-  bearing: -20,
-}
-
-// 模拟太空坠入的初始高空状态
-const SPACE_VIEW_STATE = {
-  zoom: 4,
-  pitch: 0,
-  bearing: 0
-}
-
-interface GisMapProps {
-  className?: string
-  mapId?: string
-  initialStyle?: string
-  onMapLoad?: (map: maplibregl.Map) => void
-}
-
-export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, onMapLoad }) => {
+export const GisMap: React.FC<GisMapProps> = ({ className, initialStyle, onMapLoad, timeLockYear }) => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
-  const markersRef = useRef<Record<string, maplibregl.Marker>>({})
+  const popupRef = useRef<maplibregl.Popup | null>(null)
+  const archiveInteractionsReadyRef = useRef(false)
+  const guideLabelRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const archiveModelRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const guideLabelFrameRef = useRef<number | null>(null)
   const [mapLoading, setMapLoading] = useState(true)
+  const [mapInstanceVersion, setMapInstanceVersion] = useState(0)
   
-  const { getAllArchives, setSelectedPoiId, selectedPoiId, currentYear, mapStyle, isAdminOpen, setDraftCoords, showHistoricalRoute, showSovietRegion, activeEvent, isFpsMode, isDirectorMode } = useAppStore()
+  const { archives: storeArchives, getAllArchives, setSelectedPoiId, selectedPoiId, currentYear, mapStyle, isFpsMode, isDirectorMode, regionConfig, selectedRegionId, selectRegion } = useAppStore()
   
   const selectedPoiIdRef = useRef(selectedPoiId)
   useEffect(() => { selectedPoiIdRef.current = selectedPoiId }, [selectedPoiId])
-  const isAdminOpenRef = useRef(isAdminOpen)
-  useEffect(() => { isAdminOpenRef.current = isAdminOpen }, [isAdminOpen])
-  const routeAnimRef = useRef<number | null>(null)
   const rebuildRef = useRef<((map: maplibregl.Map) => void) | null>(null)
+  const appliedRegionViewRef = useRef('')
+  const configuredMapView = useMemo(() => getMapView(regionConfig.mapView), [regionConfig.mapView])
+  const regionName = regionConfig.defaultRegion?.fullName || regionConfig.defaultRegion?.name || '未配置地区'
   
   // 过滤出年份小于等于当前时间轴年份的档案
-  const archives = useMemo(() => {
-    return getAllArchives().filter(poi => poi.year <= currentYear)
-  }, [getAllArchives, currentYear])
+  // timeLockYear 用于时空对照的历史侧：锁定只看某一年份及以前建立的点位
+  // storeArchives 作为依赖确保档案数据加载后触发重新计算
+  const effectiveYear = timeLockYear ?? currentYear
+  const archives = useMemo(
+    () => getAllArchives().filter(poi => poi.year <= effectiveYear),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveYear, getAllArchives, storeArchives]
+  )
+
+  const archiveTypeStats = useMemo(() => {
+    return archives.reduce<Record<keyof typeof ARCHIVE_TYPE_META, number>>((acc, poi) => {
+      const type = poi.type === 'government' || poi.type === 'culture' || poi.type === 'revolution' ? poi.type : 'revolution'
+      acc[type] += 1
+      return acc
+    }, { revolution: 0, government: 0, culture: 0 })
+  }, [archives])
+
+  const selectArchivePoint = React.useCallback((archive: (typeof archives)[number]) => {
+    setSelectedPoiId(archive.id)
+
+    const map = mapRef.current
+    if (!map) return
+
+    popupRef.current?.remove()
+    popupRef.current = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 18,
+      className: 'suqu-archive-popup',
+    })
+      .setLngLat([archive.longitude, archive.latitude])
+      .setHTML(`
+        <div style="min-width:150px;max-width:220px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="font-size:12px;color:#8B6914;margin-bottom:4px;">${escapeHtml(getArchiveTypeMeta(archive.type).label)}</div>
+          <div style="font-size:14px;line-height:1.45;font-weight:700;color:#1A1A1A;">${escapeHtml(archive.title || '档案点位')}</div>
+          <div style="margin-top:8px;font-size:12px;color:#5C5C5C;">已定位到档案点位</div>
+        </div>
+      `)
+      .addTo(map)
+  }, [setSelectedPoiId])
 
   // 初始化地图
   useEffect(() => {
@@ -80,60 +81,41 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: initialStyle ? MAP_STYLES[initialStyle as keyof typeof MAP_STYLES] : MAP_STYLES[mapStyle],
-      center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
-      zoom: SPACE_VIEW_STATE.zoom, // 从高空开始
-      pitch: SPACE_VIEW_STATE.pitch,
-      bearing: SPACE_VIEW_STATE.bearing,
+      style: getMapStyle(initialStyle || mapStyle),
+      center: [configuredMapView.longitude, configuredMapView.latitude],
+      zoom: configuredMapView.zoom,
+      pitch: configuredMapView.pitch,
+      bearing: configuredMapView.bearing,
       attributionControl: false,
-      interactive: false // 坠入期间禁止交互
+      interactive: true,
+      fadeDuration: 0,
+      refreshExpiredTiles: false,
+      maxTileCacheSize: 256,
+      maxTileCacheZoomLevels: 8,
+      cancelPendingTileRequestsWhileZooming: true,
     })
 
     map.addControl(new maplibregl.NavigationControl({
       visualizePitch: true
     }), 'bottom-right')
 
-    map.on('load', () => {
+    const loadFallback = window.setTimeout(() => {
       setMapLoading(false)
-      setTimeout(() => {
-        map.flyTo({
-          center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
-          zoom: INITIAL_VIEW_STATE.zoom,
-          pitch: INITIAL_VIEW_STATE.pitch,
-          bearing: INITIAL_VIEW_STATE.bearing,
-          duration: 4000,
-          essential: true,
-          curve: 1.5,
-        })
-        
-        // 动画结束后恢复交互
-        setTimeout(() => {
-          map.dragPan.enable()
-          map.scrollZoom.enable()
-          map.boxZoom.enable()
-          map.dragRotate.enable()
-          map.keyboard.enable()
-          map.doubleClickZoom.enable()
-          map.touchZoomRotate.enable()
-        }, 4000)
-      }, 500)
+    }, 2000)
 
-      // 1. 插入 3D 地形 (DEM) — 使用 AWS Terrain Tiles (Terrarium 编码), 稳定可靠无需 API Key
-      map.addSource('terrain-source', {
-        type: 'raster-dem',
-        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-        encoding: 'terrarium',
-        tileSize: 256,
-        maxzoom: 14
-      });
-      map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 });
+    map.on('load', () => {
+      window.clearTimeout(loadFallback)
+      setMapLoading(false)
+      if (rebuildRef.current) rebuildRef.current(map)
+      setMapInstanceVersion(version => version + 1)
 
       // 添加 3D 建筑图层 (如果底图支持)
       if (map.getSource('openmaptiles') || map.getSource('carto')) {
         const layers = map.getStyle().layers;
         let labelLayerId;
         for (let i = 0; i < layers.length; i++) {
-          if (layers[i].type === 'symbol' && (layers[i].layout as any)['text-field']) {
+          const layout = layers[i].layout as { 'text-field'?: unknown } | undefined
+          if (layers[i].type === 'symbol' && layout?.['text-field']) {
             labelLayerId = layers[i].id;
             break;
           }
@@ -156,82 +138,79 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       }
     })
 
-    map.on('click', (e) => {
-        if (isAdminOpenRef.current) {
-          setDraftCoords([e.lngLat.lng, e.lngLat.lat])
-        } else {
-          if (selectedPoiIdRef.current) setSelectedPoiId(null)
-        }
-      })
+    map.on('click', (event) => {
+      if (map.getLayer('archive-points-layer')) {
+        const clickedArchivePoint = map.queryRenderedFeatures(event.point, {
+          layers: ['archive-points-layer', 'archive-points-halo', 'archive-points-hit'],
+        })
+        if (clickedArchivePoint.length > 0) return
+      }
+      popupRef.current?.remove()
+      popupRef.current = null
+      if (selectedPoiIdRef.current) setSelectedPoiId(null)
+    })
       
       mapRef.current = map
+      setMapInstanceVersion(version => version + 1)
       if (onMapLoad) onMapLoad(map)
 
       return () => {
+        window.clearTimeout(loadFallback)
+        popupRef.current?.remove()
+        popupRef.current = null
+        archiveInteractionsReadyRef.current = false
         map.remove()
         mapRef.current = null
       }
-    }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialStyle, onMapLoad, setSelectedPoiId])
 
-  // 渲染/更新 Markers
+  useEffect(() => {
+    if (!mapRef.current || isFpsMode) return
+    const map = mapRef.current
+    const viewKey = `${regionConfig.defaultRegion?.id || 'none'}:${configuredMapView.longitude}:${configuredMapView.latitude}:${configuredMapView.zoom}:${configuredMapView.pitch}:${configuredMapView.bearing}`
+    if (appliedRegionViewRef.current === viewKey) return
+
+    const applyRegionView = () => {
+      const nextView = {
+        center: [configuredMapView.longitude, configuredMapView.latitude] as [number, number],
+        zoom: configuredMapView.zoom,
+        pitch: configuredMapView.pitch,
+        bearing: configuredMapView.bearing,
+      }
+      // 统一用 jumpTo：flyTo 在 style 未加载完成时可能失效（高德瓦片在 localhost 下被拒导致 style 永不 loaded）
+      map.jumpTo(nextView)
+      appliedRegionViewRef.current = viewKey
+      window.requestAnimationFrame(() => {
+        setMapInstanceVersion(version => version + 1)
+      })
+    }
+
+    // 直接定位：jumpTo/flyTo 不依赖 style 加载完成（高德瓦片在本地/localhost 下可能被拒导致 style 永不 loaded）
+    applyRegionView()
+    if (!map.isStyleLoaded()) {
+      // style 若最终加载完成，再对齐一次视图确保瓦片就位
+      map.once('load', () => {
+        if (appliedRegionViewRef.current === viewKey) {
+          const nextView = {
+            center: [configuredMapView.longitude, configuredMapView.latitude] as [number, number],
+            zoom: configuredMapView.zoom,
+            pitch: configuredMapView.pitch,
+            bearing: configuredMapView.bearing,
+          }
+          map.jumpTo(nextView)
+        }
+      })
+    }
+  }, [configuredMapView, isFpsMode, regionConfig.defaultRegion?.id])
+  // 初始化地图图层
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
 
-    const initSources = () => {
-      // 添加苏区镇边界图层 (模拟数据)
-      if (!map.getSource('suqu-boundary')) {
-        // 模拟苏区镇的边界点，围绕中心点 115.3400, 23.3600
-        const boundaryData = {
-          'type': 'FeatureCollection',
-          'features': [
-            {
-              'type': 'Feature',
-              'geometry': {
-                'type': 'Polygon',
-                'coordinates': [
-                  [
-                    [115.3200, 23.3400],
-                    [115.3600, 23.3350],
-                    [115.3750, 23.3550],
-                    [115.3650, 23.3800],
-                    [115.3350, 23.3850],
-                    [115.3150, 23.3650],
-                    [115.3200, 23.3400]
-                  ]
-                ]
-              }
-            }
-          ]
-        }
-
-        map.addSource('suqu-boundary', {
-          'type': 'geojson',
-          'data': boundaryData as any
-        });
-
-        // 边界填充半透明发光
-        map.addLayer({
-          'id': 'suqu-boundary-fill',
-          'type': 'fill',
-          'source': 'suqu-boundary',
-          'paint': {
-            'fill-color': '#3b82f6',
-            'fill-opacity': 0.1
-          }
-        });
-
-        // 边界线发光
-        map.addLayer({
-          'id': 'suqu-boundary-line',
-          'type': 'line',
-          'source': 'suqu-boundary',
-          'paint': {
-            'line-color': '#60a5fa',
-            'line-width': 2,
-            'line-opacity': 0.8
-          }
-        });
+  const initSources = () => {
+      if (mapStyle === 'museum') {
+        ensureGuideMapLayers(map)
       }
 
       // 添加程序化 3D 建筑白模图层 (用于突出档案点)
@@ -248,245 +227,144 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
           'id': 'poi-3d-buildings-layer',
           'type': 'fill-extrusion',
           'source': 'poi-3d-buildings',
+          'minzoom': 11.5,
           'paint': {
             // 使用 feature properties 里的颜色
             'fill-extrusion-color': ['get', 'color'],
-            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              11.5,
+              0,
+              13.5,
+              ['get', 'height'],
+            ],
             'fill-extrusion-base': 0,
-            'fill-extrusion-opacity': 0.85
+            'fill-extrusion-opacity': 0.72,
+            'fill-extrusion-vertical-gradient': false
           }
         });
       }
 
-      // 3. 星火燎原：革命辐射拓扑网 (模拟从苏区镇向外辐射的连接线)
-      if (!map.getSource('spark-topology')) {
-        map.addSource('spark-topology', {
+      if (!map.getSource('archive-points')) {
+        map.addSource('archive-points', {
           type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: [
-              // 海陆丰方向
-              {
-                type: 'Feature',
-                properties: { target: '海丰' },
-                geometry: {
-                  type: 'LineString',
-                  coordinates: [[115.3415, 23.3610], [115.3300, 23.2000], [115.3500, 22.9500]]
-                }
-              },
-              // 广州方向
-              {
-                type: 'Feature',
-                properties: { target: '广州起义' },
-                geometry: {
-                  type: 'LineString',
-                  coordinates: [[115.3415, 23.3610], [114.5000, 23.4000], [113.2644, 23.1291]]
-                }
-              },
-              // 延安方向 (示意)
-              {
-                type: 'Feature',
-                properties: { target: '中央苏区' },
-                geometry: {
-                  type: 'LineString',
-                  coordinates: [[115.3415, 23.3610], [115.0000, 24.5000], [115.5000, 25.8000]]
-                }
-              }
-            ]
-          }
-        });
+          data: getArchivePointData(archives, selectedPoiIdRef.current),
+        })
 
-        // 基础辐射线
         map.addLayer({
-          'id': 'spark-topology-line',
-          'type': 'line',
-          'source': 'spark-topology',
-          'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
+          id: 'archive-points-hit',
+          type: 'circle',
+          source: 'archive-points',
+          paint: {
+            'circle-color': '#FFFFFF',
+            'circle-radius': ['case', ['get', 'selected'], 20, 14],
+            'circle-opacity': 0.01,
           },
-          'paint': {
-            'line-color': '#C41E3A',
-            'line-width': 2,
-            'line-opacity': 0.25,
-          }
-        });
-        
+        })
+
         map.addLayer({
-          'id': 'spark-topology-flow',
-          'type': 'line',
-          'source': 'spark-topology',
-          'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
+          id: 'archive-points-halo',
+          type: 'circle',
+          source: 'archive-points',
+          paint: {
+            'circle-color': '#FFFFFF',
+            'circle-radius': ['case', ['get', 'selected'], 14, 10],
+            'circle-opacity': 0.95,
+            'circle-stroke-color': '#D8C4A8',
+            'circle-stroke-width': 1,
           },
-          'paint': {
-            'line-color': '#C41E3A',
-            'line-width': 3,
-            'line-opacity': 0.5,
-            'line-dasharray': [0, 4, 3]
-          }
-        });
+        })
+
+        map.addLayer({
+          id: 'archive-points-layer',
+          type: 'circle',
+          source: 'archive-points',
+          paint: {
+            'circle-color': [
+              'match',
+              ['get', 'type'],
+              'revolution',
+              ARCHIVE_TYPE_META.revolution.color,
+              'government',
+              ARCHIVE_TYPE_META.government.color,
+              ARCHIVE_TYPE_META.culture.color,
+            ],
+            'circle-radius': ['case', ['get', 'selected'], 9, 6.5],
+            'circle-stroke-color': '#FFFFFF',
+            'circle-stroke-width': 2,
+            'circle-opacity': 0.96,
+          },
+        })
+
+        if (!archiveInteractionsReadyRef.current) {
+          map.on('mouseenter', 'archive-points-hit', () => {
+            map.getCanvas().style.cursor = 'pointer'
+          })
+          map.on('mouseleave', 'archive-points-hit', () => {
+            map.getCanvas().style.cursor = ''
+          })
+          map.on('click', 'archive-points-hit', (event) => {
+            const feature = event.features?.[0]
+            if (!feature) return
+            const id = feature?.properties?.id
+            const geometry = feature?.geometry
+            if (typeof id !== 'string' || geometry?.type !== 'Point') return
+            const [longitude, latitude] = geometry.coordinates as [number, number]
+            const title = escapeHtml(feature.properties?.title || '档案点位')
+            const typeLabel = escapeHtml(feature.properties?.typeLabel || '红色档案')
+
+            setSelectedPoiId(id)
+            popupRef.current?.remove()
+            popupRef.current = new maplibregl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+              offset: 18,
+              className: 'suqu-archive-popup',
+            })
+              .setLngLat([longitude, latitude])
+              .setHTML(`
+                <div style="min-width:150px;max-width:220px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+                  <div style="font-size:12px;color:#8B6914;margin-bottom:4px;">${typeLabel}</div>
+                  <div style="font-size:14px;line-height:1.45;font-weight:700;color:#1A1A1A;">${title}</div>
+                  <div style="margin-top:8px;font-size:12px;color:#5C5C5C;">已定位到档案点位</div>
+                </div>
+              `)
+              .addTo(map)
+          })
+          archiveInteractionsReadyRef.current = true
+        }
       }
 
-      // 添加历史行军路线 (模拟数据)
-      if (!map.getSource('historical-route')) {
-        map.addSource('historical-route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: [
-                [115.3100, 23.3300],
-                [115.3200, 23.3400],
-                [115.3350, 23.3550],
-                [115.3400, 23.3600],
-                [115.3500, 23.3650],
-                [115.3600, 23.3800]
-              ]
-            }
-          }
-        });
-
-        map.addLayer({
-          'id': 'historical-route-line',
-          'type': 'line',
-          'source': 'historical-route',
-          'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          'paint': {
-            'line-color': '#C41E3A',
-            'line-width': 4,
-            'line-opacity': 0,
-            'line-dasharray': [0, 2, 2]
-          }
-        });
+      if (map.getSource('archive-points')) {
+        (map.getSource('archive-points') as maplibregl.GeoJSONSource).setData(
+          getArchivePointData(archives, selectedPoiIdRef.current),
+        )
       }
+    }
+
+    let initialLayerFallback: number | undefined
+    const initSourcesIfReady = () => {
+      if (!map.isStyleLoaded()) return
+      initSources()
     }
 
     if (map.isStyleLoaded()) {
       initSources()
     } else {
-      map.once('style.load', initSources)
+      map.once('style.load', initSourcesIfReady)
+      map.once('load', initSourcesIfReady)
+      initialLayerFallback = window.setTimeout(initSourcesIfReady, 1200)
     }
+
     rebuildRef.current = initSources
-  }, [])
-
-  // 历史行军路线动画逻辑
-  useEffect(() => {
-    if (!mapRef.current) return
-    const map = mapRef.current
-
-    const animateDashArray = (step: number) => {
-      if (!map.getLayer('historical-route-line')) return
-
-      const opacity = 0.5 + 0.5 * Math.sin(step / 10);
-      
-      if (map.getLayer('historical-route-line')) {
-        map.setPaintProperty('historical-route-line', 'line-opacity', opacity);
-      }
-      
-      if (map.getLayer('spark-topology-flow')) {
-        const sparkOpacity = 0.4 + 0.6 * Math.sin(step / 5);
-        map.setPaintProperty('spark-topology-flow', 'line-opacity', sparkOpacity);
-      }
-
-      routeAnimRef.current = requestAnimationFrame(() => animateDashArray(step + 1))
-    }
-
-    const updateRouteVisibility = () => {
-      if (!map.getLayer('historical-route-line')) return
-      
-      if (showHistoricalRoute) {
-        map.setPaintProperty('historical-route-line', 'line-opacity', 0.8)
-        map.setPaintProperty('historical-route-line', 'line-dasharray', [2, 2])
-        routeAnimRef.current = requestAnimationFrame(() => animateDashArray(0))
-        
-        map.flyTo({
-          center: [115.3350, 23.3550],
-          zoom: 13.5,
-          pitch: 45,
-          duration: 2000
-        })
-      } else {
-        if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current)
-        routeAnimRef.current = null
-        map.setPaintProperty('historical-route-line', 'line-opacity', 0)
-      }
-    }
-
-    if (map.isStyleLoaded()) {
-      updateRouteVisibility()
-    } else {
-      map.once('style.load', updateRouteVisibility)
-    }
-
     return () => {
-      if (routeAnimRef.current) cancelAnimationFrame(routeAnimRef.current)
-      routeAnimRef.current = null
+      if (initialLayerFallback) window.clearTimeout(initialLayerFallback)
+      map.off('style.load', initSourcesIfReady)
+      map.off('load', initSourcesIfReady)
     }
-  }, [showHistoricalRoute])
-
-  useEffect(() => {
-    if (!mapRef.current) return
-    const map = mapRef.current
-    const SOURCE_ID = 'soviet-region-source'
-    const LAYER_ID = 'soviet-region-fill'
-    const OUTLINE_ID = 'soviet-region-outline'
-
-    if (showSovietRegion) {
-      if (!map.getSource(SOURCE_ID)) {
-        map.addSource(SOURCE_ID, {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: { name: '海陆惠紫苏区' },
-            geometry: {
-              type: 'Polygon',
-              coordinates: [[
-                [114.40, 23.72],
-                [115.72, 23.72],
-                [115.75, 22.78],
-                [114.38, 22.80],
-                [114.40, 23.72]
-              ]]
-            }
-          }
-        })
-        map.addLayer({
-          id: LAYER_ID,
-          type: 'fill',
-          source: SOURCE_ID,
-          paint: {
-            'fill-color': '#C41E3A',
-            'fill-opacity': 0.12
-          }
-        })
-        map.addLayer({
-          id: OUTLINE_ID,
-          type: 'line',
-          source: SOURCE_ID,
-          paint: {
-            'line-color': '#C41E3A',
-            'line-width': 2,
-            'line-opacity': 0.6,
-            'line-dasharray': [4, 3]
-          }
-        })
-      }
-
-      const bounds: [[number, number], [number, number]] = [[114.38, 22.78], [115.75, 23.72]]
-      map.fitBounds(bounds, { padding: 100, duration: 2000 })
-    } else {
-      if (map.getLayer(OUTLINE_ID)) map.removeLayer(OUTLINE_ID)
-      if (map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID)
-      if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID)
-    }
-  }, [showSovietRegion])
+  }, [archives, mapInstanceVersion, mapStyle, setSelectedPoiId])
 
   // DirectorMode: 地图跟随讲解飞行
   useEffect(() => {
@@ -501,7 +379,13 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       duration: 2500,
       essential: true
     })
-  }, [selectedPoiId, isDirectorMode])
+  }, [archives, selectedPoiId, isDirectorMode])
+
+  useEffect(() => {
+    if (selectedPoiId) return
+    popupRef.current?.remove()
+    popupRef.current = null
+  }, [selectedPoiId])
 
   // 监听 FPS 模式切换
   useEffect(() => {
@@ -511,7 +395,7 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     if (isFpsMode) {
       // 进入第一人称模式：拉低视角，贴近地面
       map.flyTo({
-        center: [115.3415, 23.3610], // 苏区镇中心
+        center: [configuredMapView.longitude, configuredMapView.latitude],
         zoom: 18.5,                  // 极度放大
         pitch: 85,                   // 几乎平视
         bearing: 0,
@@ -524,81 +408,32 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
     } else {
       // 退出第一人称模式：回到高空俯瞰
       map.flyTo({
-        center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
-        zoom: INITIAL_VIEW_STATE.zoom,
-        pitch: INITIAL_VIEW_STATE.pitch,
-        bearing: INITIAL_VIEW_STATE.bearing,
+        center: [configuredMapView.longitude, configuredMapView.latitude],
+        zoom: configuredMapView.zoom,
+        pitch: configuredMapView.pitch,
+        bearing: configuredMapView.bearing,
         duration: 3000,
         essential: true
       })
     }
-  }, [isFpsMode])
+  }, [configuredMapView, isFpsMode])
 
-  // 全局环境光与编年史大事件剧场联动
+  // 更新档案点位和 3D 白模
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
-
-    const updateEnvironment = () => {
-      if (!map.isStyleLoaded()) return
-      
-      if (mapStyle !== 'satellite') return
-      
-      if (activeEvent === '紫金苏维埃政权成立' || activeEvent === '血战炮子村') {
-        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.6)
-        map.setPaintProperty('satellite-layer', 'raster-saturation', -0.5)
-        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 320)
-      } else if (activeEvent === '苏维埃兵工厂建立') {
-        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 0.7)
-        map.setPaintProperty('satellite-layer', 'raster-saturation', 0.2)
-        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 40)
-      } else {
-        map.setPaintProperty('satellite-layer', 'raster-brightness-max', 1.0)
-        map.setPaintProperty('satellite-layer', 'raster-saturation', 0)
-        map.setPaintProperty('satellite-layer', 'raster-hue-rotate', 0)
-      }
-    }
-
-    if (map.isStyleLoaded()) {
-      updateEnvironment()
-    } else {
-      map.once('style.load', updateEnvironment)
-    }
-  }, [activeEvent, mapStyle])
-
-  // 渲染/更新 Markers 和 3D 白模
-  useEffect(() => {
-    if (!mapRef.current) return
-    const map = mapRef.current
-
-    const currentArchiveIds = new Set(archives.map(a => a.id))
-    Object.keys(markersRef.current).forEach(id => {
-      if (!currentArchiveIds.has(id)) {
-        const el = markersRef.current[id].getElement()
-        if (el && (el as any)._reactRoot) {
-          (el as any)._reactRoot.unmount()
-        }
-        markersRef.current[id].remove()
-        delete markersRef.current[id]
-        if (selectedPoiId === id) setSelectedPoiId(null)
-      }
-    })
 
     // 更新 3D 白模数据源
-    const buildingFeatures = archives.map(poi => {
-      // 围绕坐标点生成一个小正方形 (模拟建筑占地)
-      const offset = 0.0003;
-      const color = poi.type === 'revolution' ? '#C41E3A' : 
-                    poi.type === 'government' ? '#5C5C5C' : '#8B6914';
-      
-      // 生成更高大且发光的建筑体 (基于 poi.id 确定性高度，避免每次渲染跳动)
-      const hash = poi.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-      const deterministicHeight = (hash % 50) + 100 // 100-150米高，同一档案高度恒定
+    const isCompactViewport = typeof window !== 'undefined' && window.innerWidth < 640
+    const shouldShowDepthMarkers = !isCompactViewport
+    const buildingFeatures: BuildingFeature[] = shouldShowDepthMarkers ? archives.map(poi => {
+      const preset = getArchiveModelPreset(poi)
+      const offset = preset.footprintOffset
       return {
         type: 'Feature',
         properties: {
-          color: color,
-          height: deterministicHeight,
+          color: preset.base,
+          height: preset.extrusionHeight,
         },
         geometry: {
           type: 'Polygon',
@@ -611,97 +446,247 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
           ]]
         }
       }
-    });
+    }) : [];
 
     if (map.isStyleLoaded() && map.getSource('poi-3d-buildings')) {
       (map.getSource('poi-3d-buildings') as maplibregl.GeoJSONSource).setData({
         type: 'FeatureCollection',
-        features: buildingFeatures as any
+        features: buildingFeatures
       });
     }
+    if (map.isStyleLoaded() && map.getSource('archive-points')) {
+      (map.getSource('archive-points') as maplibregl.GeoJSONSource).setData(getArchivePointData(archives, selectedPoiId))
+    }
+  }, [archives, mapInstanceVersion, selectedPoiId])
 
-    archives.forEach(poi => {
-      let marker = markersRef.current[poi.id]
-      
-      const renderContent = (
-        <div className="relative group cursor-pointer flex flex-col items-center pointer-events-auto">
-          <div className={`w-5 h-5 md:w-5 md:h-5 rounded-full shadow-md transition-all duration-300 border-2 border-white ${
-            poi.id === selectedPoiId ? 'scale-150 ring-2 ring-[#C41E3A]/40' : 'hover:scale-125'
-          }`}
-            style={{
-              backgroundColor: poi.type === 'revolution' ? '#C41E3A' : 
-                             poi.type === 'government' ? '#5C5C5C' : '#8B6914'
-            }}
-            onClick={(e) => {
-              e.stopPropagation()
-              setSelectedPoiId(poi.id)
-            }}
-          />
-          <div className={`absolute top-full mt-1.5 whitespace-nowrap text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8DFD5] text-[#1A1A1A] shadow-sm transition-opacity pointer-events-none ${
-            poi.id === selectedPoiId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          }`}>
-            {poi.title}
-          </div>
-        </div>
-      )
+  useEffect(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
 
-      if (!marker) {
-        const el = document.createElement('div')
-        const root = createRoot(el)
-        ;(el as any)._reactRoot = root
-
-        root.render(renderContent)
-
-        marker = new maplibregl.Marker({ element: el })
-          .setLngLat([poi.longitude, poi.latitude])
-          .addTo(map)
-          
-        markersRef.current[poi.id] = marker
-      } else {
-        // Update selected state style
-        const el = marker.getElement()
-        if ((el as any)._reactRoot) {
-          (el as any)._reactRoot.render(renderContent)
-        }
+    const setHeavyLayerVisibility = (visibility: 'visible' | 'none') => {
+      if (map.getLayer('poi-3d-buildings-layer')) {
+        map.setLayoutProperty('poi-3d-buildings-layer', 'visibility', visibility)
       }
-    })
-  }, [archives, selectedPoiId])
+    }
+
+    const positionGuideLabels = () => {
+      guideLabelFrameRef.current = null
+      setHeavyLayerVisibility('visible')
+      const shouldShowLabels = mapStyle === 'museum' && map.getZoom() >= 10.8
+      GUIDE_LABELS.forEach((label) => {
+        const element = guideLabelRefs.current[label.id]
+        if (!element) return
+        if (!shouldShowLabels) {
+          element.style.opacity = '0'
+          element.style.visibility = 'hidden'
+          return
+        }
+        const point = map.project([label.longitude, label.latitude])
+        const yOffset = label.kind === 'town' ? -24 : 18
+        element.style.opacity = '1'
+        element.style.visibility = 'visible'
+        element.style.transform = `translate3d(${Math.round(point.x)}px, ${Math.round(point.y + yOffset)}px, 0) translate(-50%, -50%)`
+      })
+
+      const shouldShowModels = map.getZoom() >= 11.2
+      archives.forEach((archive) => {
+        const element = archiveModelRefs.current[archive.id]
+        if (!element) return
+        if (!shouldShowModels) {
+          element.style.opacity = '0'
+          element.style.visibility = 'hidden'
+          return
+        }
+        const point = map.project([archive.longitude, archive.latitude])
+        const modelPreset = getArchiveModelPreset(archive)
+        element.style.opacity = '1'
+        element.style.visibility = 'visible'
+        element.style.transform = `translate3d(${Math.round(point.x)}px, ${Math.round(point.y - modelPreset.offsetY)}px, 0) translate(-50%, -100%)`
+      })
+    }
+
+    const hideGuideLabels = () => {
+      setHeavyLayerVisibility('none')
+      GUIDE_LABELS.forEach((label) => {
+        const element = guideLabelRefs.current[label.id]
+        if (!element) return
+        element.style.opacity = '0'
+        element.style.visibility = 'hidden'
+      })
+      archives.forEach((archive) => {
+        const element = archiveModelRefs.current[archive.id]
+        if (!element) return
+        element.style.opacity = '0'
+        element.style.visibility = 'hidden'
+      })
+    }
+
+    const scheduleGuideLabelPosition = () => {
+      if (guideLabelFrameRef.current !== null) return
+      guideLabelFrameRef.current = window.requestAnimationFrame(positionGuideLabels)
+    }
+
+    scheduleGuideLabelPosition()
+    // rAF 兜底：页面后台/低功耗时 rAF 可能暂停，用 setTimeout 保证 marker 最终定位（幂等，无副作用）
+    const labelFallback = window.setTimeout(positionGuideLabels, 400)
+    map.on('movestart', hideGuideLabels)
+    map.on('dragstart', hideGuideLabels)
+    map.on('zoomstart', hideGuideLabels)
+    map.on('moveend', scheduleGuideLabelPosition)
+    map.on('zoomend', scheduleGuideLabelPosition)
+    map.on('rotateend', scheduleGuideLabelPosition)
+    map.on('pitchend', scheduleGuideLabelPosition)
+    map.on('resize', scheduleGuideLabelPosition)
+    return () => {
+      window.clearTimeout(labelFallback)
+      map.off('movestart', hideGuideLabels)
+      map.off('dragstart', hideGuideLabels)
+      map.off('zoomstart', hideGuideLabels)
+      map.off('moveend', scheduleGuideLabelPosition)
+      map.off('zoomend', scheduleGuideLabelPosition)
+      map.off('rotateend', scheduleGuideLabelPosition)
+      map.off('pitchend', scheduleGuideLabelPosition)
+      map.off('resize', scheduleGuideLabelPosition)
+      if (guideLabelFrameRef.current !== null) {
+        window.cancelAnimationFrame(guideLabelFrameRef.current)
+        guideLabelFrameRef.current = null
+      }
+    }
+  }, [archives, mapInstanceVersion, mapStyle])
 
   // 底图切换: 使用 setStyle 而不是销毁组件
   useEffect(() => {
     if (!mapRef.current) return
     const map = mapRef.current
     const currentStyle = map.getStyle()
-    const targetStyle = MAP_STYLES[mapStyle]
+    const targetStyle = getMapStyle(mapStyle)
     if (!currentStyle || !currentStyle.layers) return
     // 通过 raster 图层 ID 判断当前底图类型（不依赖可选的 style.name 字段）
-    const isCurrentlySatellite = currentStyle.layers?.some((l: any) => l.id === 'satellite-layer') ?? false
+    const isCurrentlySatellite = currentStyle.layers?.some((layer) => layer.id === 'satellite-layer') ?? false
     if ((mapStyle === 'satellite' && isCurrentlySatellite) || (mapStyle === 'museum' && !isCurrentlySatellite)) return
-    if (routeAnimRef.current) {
-      cancelAnimationFrame(routeAnimRef.current)
-      routeAnimRef.current = null
-    }
     setMapLoading(true)
-    map.setStyle(targetStyle as maplibregl.StyleSpecification)
-    map.once('style.load', () => {
+    popupRef.current?.remove()
+    popupRef.current = null
+    archiveInteractionsReadyRef.current = false
+
+    let finished = false
+    const finishStyleSwitch = () => {
+      if (finished) return
+      finished = true
+      if (styleFallback !== undefined) window.clearTimeout(styleFallback)
       setMapLoading(false)
-      if (!map.getSource('terrain-source')) {
-        map.addSource('terrain-source', {
-          type: 'raster-dem',
-          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-          encoding: 'terrarium',
-          tileSize: 256,
-          maxzoom: 14
-        })
-        map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 })
-      }
       if (rebuildRef.current) rebuildRef.current(map)
-    })
+      setMapInstanceVersion(version => version + 1)
+    }
+    const styleFallback: number = window.setTimeout(finishStyleSwitch, 2500)
+    map.once('style.load', finishStyleSwitch)
+    map.setStyle(targetStyle as maplibregl.StyleSpecification)
+    return () => {
+      window.clearTimeout(styleFallback)
+      map.off('style.load', finishStyleSwitch)
+    }
   }, [mapStyle])
 
   return (
     <div className={cn('w-full h-full relative', className)}>
       <div ref={mapContainer} className="w-full h-full" />
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        {archives.map(archive => {
+          return (
+            <button
+              key={archive.id}
+              type="button"
+              data-archive-model="true"
+              ref={(node) => { archiveModelRefs.current[archive.id] = node }}
+              className="pointer-events-auto absolute left-0 top-0 cursor-pointer border-0 bg-transparent p-0 text-left transition-opacity duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#C41E3A]/30"
+              aria-label={`查看${archive.title}档案点位简介`}
+              onClick={(event) => {
+                event.stopPropagation()
+                selectArchivePoint(archive)
+              }}
+              style={{
+                opacity: 0,
+                transform: 'translate3d(-9999px, -9999px, 0) translate(-50%, -100%)',
+                visibility: 'hidden',
+                willChange: 'transform',
+              }}
+            >
+              <ArchiveModelMarker archive={archive} />
+            </button>
+          )
+        })}
+        {mapStyle === 'museum' && GUIDE_LABELS.map(label => (
+          <div
+            key={label.id}
+            data-guide-label="true"
+            ref={(node) => { guideLabelRefs.current[label.id] = node }}
+            className={`absolute left-0 top-0 flex items-center gap-1 rounded-full border bg-white/90 px-2.5 py-1 text-xs font-semibold shadow-sm transition-opacity duration-150 ${
+              label.kind === 'town'
+                ? 'border-[#C41E3A]/30 text-[#C41E3A]'
+                : label.kind === 'landmark'
+                  ? 'border-[#0369A1]/25 text-[#0369A1]'
+                  : 'border-[#D8C4A8] text-[#7A5A16]'
+            }`}
+            style={{
+              opacity: 0,
+              transform: 'translate3d(-9999px, -9999px, 0) translate(-50%, -50%)',
+              willChange: 'transform',
+            }}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${
+              label.kind === 'town'
+                ? 'bg-[#C41E3A]'
+                : label.kind === 'landmark'
+                  ? 'bg-[#0369A1]'
+                  : 'bg-[#8B6914]'
+            }`} />
+            {label.name}
+          </div>
+        ))}
+      </div>
+      <div className="absolute left-[410px] right-[360px] top-28 z-20 hidden pointer-events-none md:block">
+        <div className="border border-white/70 bg-white/90 px-3.5 py-2.5 shadow-lg shadow-black/5 backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] md:text-xs leading-tight text-[#5C5C5C]">
+            {regionConfig.regions.length > 1 ? (
+              <select
+                className="pointer-events-auto max-w-[150px] border border-[#E8DFD5] bg-white px-2 py-1 text-[#1A1A1A] outline-none sm:max-w-[220px]"
+                value={selectedRegionId || regionConfig.defaultRegion?.id || ''}
+                onChange={event => { void selectRegion(event.target.value) }}
+                aria-label="切换展示地区"
+              >
+                {regionConfig.regions.map(region => (
+                  <option key={region.id} value={region.id}>{region.fullName || region.name}</option>
+                ))}
+              </select>
+            ) : (
+              <span className="font-semibold text-[#1A1A1A]">{regionName}</span>
+            )}
+            <span>{getDisplayModeLabel(regionConfig.displayMode)}</span>
+            <span>{getMapModeLabel(regionConfig.mapMode)}</span>
+            <span className="font-semibold text-[#1A1A1A]">{archives.length} 个已发布点位</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ARCHIVE_TYPE_META.revolution.color }} />
+              {ARCHIVE_TYPE_META.revolution.label} {archiveTypeStats.revolution}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ARCHIVE_TYPE_META.government.color }} />
+              {ARCHIVE_TYPE_META.government.label} {archiveTypeStats.government}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ARCHIVE_TYPE_META.culture.color }} />
+              {ARCHIVE_TYPE_META.culture.label} {archiveTypeStats.culture}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-4 top-48 z-20 pointer-events-none md:hidden">
+        <div className="border border-white/70 bg-white/90 px-3 py-2 shadow-lg shadow-black/5 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-[#1A1A1A]">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ARCHIVE_TYPE_META.revolution.color }} />
+            <span>{archives.length} 个红色阵地</span>
+          </div>
+        </div>
+      </div>
       {mapLoading && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ backgroundColor: '#FEFAF6' }}>
           <div className="flex flex-col items-center gap-6">
@@ -710,7 +695,9 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
               <circle cx="32" cy="32" r="28" fill="none" stroke="#C41E3A" strokeWidth="3" strokeDasharray="176" strokeDashoffset="132" strokeLinecap="round" />
             </svg>
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[#C41E3A] font-serif text-lg font-bold tracking-wider">广东省苏区镇数字化档案</span>
+              <span className="text-[#C41E3A] font-serif text-lg font-bold tracking-wider">
+                {regionName === '未配置地区' ? '红色文化数字档案' : `${regionName}数字化档案`}
+              </span>
               <span className="text-[#8B6914] text-sm tracking-widest">地图加载中</span>
               <div className="flex gap-1.5 mt-3">
                 <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" />
@@ -723,4 +710,13 @@ export const GisMap: React.FC<GisMapProps> = ({ className, mapId, initialStyle, 
       )}
     </div>
   )
+}
+
+interface GisMapProps {
+  className?: string
+  mapId?: string
+  initialStyle?: string
+  onMapLoad?: (map: maplibregl.Map) => void
+  /** 历史时间锁定：传入年份时，本图仅显示该年份及以前建立的点位（用于时空对照的历史侧） */
+  timeLockYear?: number
 }

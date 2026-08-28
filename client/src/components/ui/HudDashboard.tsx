@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { BookOpen, Flag, Map, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, CloudSnow, Sun, Users, Library, ScrollText, Star, Stamp, MapPinCheck, GitCompare, Music, Mic, Camera, MapPin, Send, Tv } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { FpsOverlay } from '@/components/ui/FpsOverlay'
+import { BookOpen, Flag, Map as MapIcon, MoveHorizontal, Crosshair, Film, BookHeart, Landmark, Activity, Clock, Route, ChevronRight, CheckCircle2, PanelLeftClose, PanelLeftOpen, Menu, X, CloudRain, CloudSnow, Sun, Users, Library, ScrollText, Star, Stamp, GitCompare, Music, Mic, Camera, MapPin, Send, Tv } from 'lucide-react'
 import { HeroesPanel } from '@/components/ui/HeroesPanel'
 import { RedResourceHub } from '@/components/ui/RedResourceHub'
 import { TodaySuqu } from '@/components/ui/TodaySuqu'
@@ -17,21 +15,87 @@ import { OralHistory } from '@/components/ui/OralHistory'
 import { TourGuide } from '@/components/ui/TourGuide'
 import { RedFilmArchive } from '@/components/ui/RedFilmArchive'
 import { PeopleCoCreation } from '@/components/ui/PeopleCoCreation'
+import { asText, fetchPublishedContents, type PublicContentItem } from '@/lib/cmsContent'
+import { API_BASE } from '@/lib/env'
 
-const LEARNING_COURSES: { title: string; subtitle: string; archiveId: string; order: number }[] = [
-  { title: "第一课：政权归于人民", subtitle: "走进红屋，了解苏维埃政权的诞生", archiveId: "suqu-red-house", order: 1 },
-  { title: "第二课：信仰的底色是忠诚", subtitle: "血田泣血，见证革命先烈的赤胆忠心", archiveId: "blood-field", order: 2 },
-  { title: "第三课：群众路线生动实践", subtitle: "农会旧址，感受千百万劳苦大众的觉醒", archiveId: "zijin-farmers-association", order: 3 },
-  { title: "第四课：牺牲与担当", subtitle: "炮子村阻击战，600勇士以弱抗强护百姓", archiveId: "paozi-village-defense", order: 4 },
-  { title: "第五课：星火燎原的力量", subtitle: "红军亭，南昌起义与广州起义部队会师", archiveId: "red-army-pavilion", order: 5 },
-  { title: "第六课：深山里的红色中枢", subtitle: "县委旧址，看党的组织领导革命斗争", archiveId: "zijin-party-committee", order: 6 },
-  { title: "第七课：隐蔽战线的忠诚", subtitle: "红色交通站，绝密情报与干部的护送命脉", archiveId: "suqu-red-transport-station", order: 7 },
-  { title: "第八课：一盘棋的革命战略", subtitle: "东江特委，统一领导百万人口的东江苏区", archiveId: "dongjiang-committee", order: 8 },
-]
+const CHECKIN_VISITOR_KEY = 'suqu_checkin_visitor_id'
+
+interface LearningCourse {
+  title: string
+  subtitle: string
+  archiveId: string
+  order: number
+}
+
+interface DashboardEntry {
+  id: string
+  label: string
+  description: string
+  actionKey: DashboardActionKey
+  groupKey: string
+  groupTitle: string
+  iconKey: string
+  sectionIconKey: string
+  badgeMode: string
+  order: number
+}
+
+type DashboardActionKey =
+  | 'heroes'
+  | 'song_player'
+  | 'party_oath'
+  | 'panorama'
+  | 'long_march'
+  | 'oral_history'
+  | 'resource_hub'
+  | 'today_suqu'
+  | 'red_quiz'
+  | 'party_routes'
+  | 'passport'
+  | 'tour_guide'
+  | 'film_archive'
+  | 'cocreation'
+
+const DASHBOARD_ACTION_KEYS: ReadonlySet<string> = new Set([
+  'heroes',
+  'song_player',
+  'party_oath',
+  'panorama',
+  'long_march',
+  'oral_history',
+  'resource_hub',
+  'today_suqu',
+  'red_quiz',
+  'party_routes',
+  'passport',
+  'tour_guide',
+  'film_archive',
+  'cocreation',
+])
+
+const dashboardIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  book: BookOpen,
+  flag: Flag,
+  map: MapIcon,
+  route: Route,
+  users: Users,
+  library: Library,
+  scroll: ScrollText,
+  star: Star,
+  stamp: Stamp,
+  compare: GitCompare,
+  music: Music,
+  mic: Mic,
+  camera: Camera,
+  pin: MapPin,
+  send: Send,
+  tv: Tv,
+  chevron: ChevronRight,
+}
 
 export const HudDashboard: React.FC = () => {
-  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, showHistoricalRoute, setShowHistoricalRoute, showSovietRegion, setShowSovietRegion, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
-  const [collapsed, setCollapsed] = useState(false)
+  const { getAllArchives, currentYear, setSwipeMode, setFpsMode, isDirectorMode, setDirectorMode, setSelectedPoiId, setDetailModalOpen, mainMapInstance, selectedPoiId, weather, setWeather } = useAppStore()
+  const [collapsed, setCollapsed] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const [showHeroes, setShowHeroes] = useState(false)
   const [showResourceHub, setShowResourceHub] = useState(false)
   const [showTodaySuqu, setShowTodaySuqu] = useState(false)
@@ -47,32 +111,111 @@ export const HudDashboard: React.FC = () => {
   const [showFilmArchive, setShowFilmArchive] = useState(false)
   const [showCoCreation, setShowCoCreation] = useState(false)
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
-  const [visitedPois, setVisitedPois] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('suqu_checkin_pois')
-      return saved ? JSON.parse(saved) : []
-    } catch { return [] }
-  })
+  const [visitedPois, setVisitedPois] = useState<string[]>([])
+  const [checkinTotalCount, setCheckinTotalCount] = useState<number | null>(null)
+  const [learningCourses, setLearningCourses] = useState<LearningCourse[]>([])
+  const [dashboardEntries, setDashboardEntries] = useState<DashboardEntry[]>([])
+  const [visitorId] = useState<string>(() => getVisitorId())
 
   useEffect(() => {
-    if (selectedPoiId && !visitedPois.includes(selectedPoiId)) {
-      setVisitedPois(prev => {
-        const next = [...prev, selectedPoiId]
-        try { localStorage.setItem('suqu_checkin_pois', JSON.stringify(next)) } catch {}
-        return next
-      })
+    let cancelled = false
+    async function loadCheckinConfig() {
+      try {
+        const items = await fetchPublishedContents('checkin', 1)
+        const data = items[0]?.data || {}
+        const total = Number(data.totalCount || data.total_count)
+        if (!cancelled) setCheckinTotalCount(Number.isInteger(total) && total > 0 ? total : null)
+      } catch {
+        if (!cancelled) setCheckinTotalCount(null)
+      }
     }
-  }, [selectedPoiId])
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    loadCheckinConfig()
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
-    setCollapsed(isMobile)
-  }, [isMobile])
+    let cancelled = false
+    async function loadLearningCourses() {
+      try {
+        const items = await fetchPublishedContents('learning_course', 100)
+        const courses = items
+          .map(contentToLearningCourse)
+          .filter((course): course is LearningCourse => Boolean(course))
+          .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, 'zh-CN'))
+        if (!cancelled) setLearningCourses(courses)
+      } catch {
+        if (!cancelled) setLearningCourses([])
+      }
+    }
+    loadLearningCourses()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadDashboardEntries() {
+      try {
+        const items = await fetchPublishedContents('dashboard_entry', 100)
+        const entries = items
+          .map(contentToDashboardEntry)
+          .filter((entry): entry is DashboardEntry => Boolean(entry))
+          .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'zh-CN'))
+        if (!cancelled) setDashboardEntries(entries)
+      } catch {
+        if (!cancelled) setDashboardEntries([])
+      }
+    }
+    loadDashboardEntries()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadCheckinProgress() {
+      try {
+        const response = await fetch(`${API_BASE}/checkin/progress`, {
+          headers: { 'X-Visitor-Id': visitorId },
+        })
+        if (!response.ok) return
+        const payload = await response.json() as { visitedPois?: string[] }
+        if (!cancelled && Array.isArray(payload.visitedPois)) {
+          setVisitedPois(payload.visitedPois)
+        }
+      } catch {
+        // Local map interaction stays usable if the progress endpoint is offline.
+      }
+    }
+    loadCheckinProgress()
+    return () => { cancelled = true }
+  }, [visitorId])
+
+  useEffect(() => {
+    if (selectedPoiId && !visitedPois.includes(selectedPoiId)) {
+      const next = [...visitedPois, selectedPoiId]
+      const timer = window.setTimeout(() => setVisitedPois(next), 0)
+      void fetch(`${API_BASE}/checkin/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Visitor-Id': visitorId,
+        },
+        body: JSON.stringify({ visitedPois: next }),
+      }).catch(() => {
+        // Offline or transient backend failure should not block the tour flow.
+      })
+      return () => window.clearTimeout(timer)
+    }
+  }, [selectedPoiId, visitedPois, visitorId])
+
+  useEffect(() => {
+    const handleResize = () => {
+      const nextIsMobile = window.innerWidth < 768
+      setIsMobile(nextIsMobile)
+      setCollapsed(nextIsMobile)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   
   const currentArchives = getAllArchives().filter(a => a.year <= currentYear)
   
@@ -102,6 +245,67 @@ export const HudDashboard: React.FC = () => {
     }
   }
 
+  const getEntryBadge = (entry: DashboardEntry) => {
+    if (entry.badgeMode === 'checkin_progress') return checkinTotalCount ? `${visitedPois.length}/${checkinTotalCount}` : '未配置'
+    // toggle_state 模式无真实开关数据（原 getEntryActive 死桩恒返回 false 显示"未开启"），属假数据，不再渲染徽标
+    return ''
+  }
+
+  const handleDashboardEntryClick = (entry: DashboardEntry) => {
+    if (entry.actionKey === 'heroes') {
+      setShowHeroes(true)
+    } else if (entry.actionKey === 'song_player') {
+      setShowSongPlayer(true)
+    } else if (entry.actionKey === 'party_oath') {
+      setShowOathWall(true)
+    } else if (entry.actionKey === 'panorama') {
+      setShowPanorama(true)
+    } else if (entry.actionKey === 'long_march') {
+      setShowLongMarch(true)
+    } else if (entry.actionKey === 'oral_history') {
+      setShowOralHistory(true)
+    } else if (entry.actionKey === 'resource_hub') {
+      setShowResourceHub(true)
+    } else if (entry.actionKey === 'today_suqu') {
+      setShowTodaySuqu(true)
+    } else if (entry.actionKey === 'red_quiz') {
+      setShowRedQuiz(true)
+    } else if (entry.actionKey === 'party_routes') {
+      setShowPartyRoutes(true)
+    } else if (entry.actionKey === 'passport') {
+      setShowPassport(true)
+    } else if (entry.actionKey === 'tour_guide') {
+      setShowTourGuide(true)
+    } else if (entry.actionKey === 'film_archive') {
+      setShowFilmArchive(true)
+    } else if (entry.actionKey === 'cocreation') {
+      setShowCoCreation(true)
+    }
+
+    if (isMobile) {
+      setCollapsed(true)
+    }
+  }
+
+  const dashboardSections = Array.from(
+    dashboardEntries.reduce((groups, entry) => {
+      const existing = groups.get(entry.groupKey) || {
+        key: entry.groupKey,
+        title: entry.groupTitle,
+        iconKey: entry.sectionIconKey,
+        entries: [] as DashboardEntry[],
+        order: entry.order,
+      }
+      existing.entries.push(entry)
+      existing.order = Math.min(existing.order, entry.order)
+      groups.set(entry.groupKey, existing)
+      return groups
+    }, new Map<string, { key: string; title: string; iconKey: string; entries: DashboardEntry[]; order: number }>()),
+  ).map(([, section]) => ({
+    ...section,
+    entries: section.entries.sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'zh-CN')),
+  })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, 'zh-CN'))
+
   return (
     <>
       {/* 移动端遮罩 */}
@@ -109,11 +313,11 @@ export const HudDashboard: React.FC = () => {
         <div className="md:hidden fixed inset-0 bg-black/30 z-[45] pointer-events-auto" onClick={() => setCollapsed(true)} />
       )}
       
-      <div className="absolute top-24 left-4 flex gap-0 z-[50]">
+      <div className="fixed bottom-4 left-4 z-[70] flex gap-0 md:bottom-auto md:top-28 md:z-[50]">
         {/* 折叠/汉堡按钮 */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`pointer-events-auto self-start w-10 h-12 rounded-xl bg-white border border-[#E8DFD5] flex items-center justify-center text-[#5C5C5C] hover:text-[#C41E3A] hover:bg-[#FEFAF6] transition-all shadow-sm ${
+          className={`pointer-events-auto self-start h-12 min-w-[48px] rounded-xl bg-white border border-museum-border flex items-center justify-center text-party-ink-light hover:text-party-red hover:bg-museum-bg transition-all shadow-sm ${
             collapsed ? 'rounded-xl' : 'rounded-l-xl'
           }`}
           aria-label={collapsed ? "展开学习面板" : "折叠学习面板"}
@@ -122,13 +326,13 @@ export const HudDashboard: React.FC = () => {
         </button>
 
         {!collapsed && (
-          <div className={`flex flex-col gap-4 pointer-events-auto bg-white md:bg-transparent md:border-none border border-l-0 border-[#E8DFD5] rounded-r-2xl md:rounded-none ${isMobile ? 'w-[85vw] max-w-[360px] fixed left-4 top-20 bottom-4 shadow-2xl rounded-2xl' : 'w-80'}`} style={{ maxHeight: isMobile ? 'calc(100vh - 96px)' : 'calc(100vh - 220px)' }}>
+          <div className={`pointer-events-auto flex flex-col gap-4 border border-museum-border bg-white shadow-2xl md:border-none md:bg-transparent md:shadow-none ${isMobile ? 'fixed inset-x-4 bottom-20 top-24 rounded-2xl' : 'w-80'}`} style={{ maxHeight: isMobile ? 'calc(100dvh - 8.5rem)' : 'calc(100dvh - 12rem)' }}>
             {isMobile && (
               <div className="flex items-center justify-between px-5 pt-4 md:hidden">
-                <h2 className="text-sm font-bold text-[#1A1A1A] font-serif flex items-center gap-2">
-                  <BookHeart size={16} className="text-[#C41E3A]" /> 苏区思政大课堂
+                <h2 className="text-sm font-bold text-party-ink font-serif flex items-center gap-2">
+                  <BookHeart size={16} className="text-party-red" /> 苏区思政大课堂
                 </h2>
-                <button onClick={() => setCollapsed(true)} className="p-1.5 rounded-lg hover:bg-[#FEFAF6] text-[#5C5C5C] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="关闭面板">
+                <button onClick={() => setCollapsed(true)} className="p-1.5 rounded-lg hover:bg-museum-bg text-party-ink-light min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="关闭面板">
                   <X size={18} />
                 </button>
               </div>
@@ -137,53 +341,53 @@ export const HudDashboard: React.FC = () => {
       
       {/* 核心指标总览 */}
       <div className="museum-card p-5 rounded-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-[#C41E3A]" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-party-red" />
         
         <div className="mb-4 mt-1">
           <h3 className="font-bold flex items-center gap-3 text-base">
-            <BookHeart size={20} className="text-[#C41E3A]" />
-            <span className="text-[#1A1A1A] tracking-wide font-serif">
+            <BookHeart size={20} className="text-party-red" />
+            <span className="text-party-ink tracking-wide font-serif">
               苏区思政大课堂
             </span>
           </h3>
-          <p className="text-[11px] text-[#5C5C5C] font-medium tracking-wider mt-1 ml-8">
+          <p className="text-[11px] text-party-ink-light font-medium tracking-wider mt-1 ml-8">
             面向全体人民的党史教育阵地
           </p>
         </div>
         
         <div className="flex items-end gap-2 mb-5">
-          <div className="text-4xl font-black text-[#C41E3A] font-serif">{totalCount}</div>
-          <div className="text-sm text-[#5C5C5C] mb-1 font-medium">处红色阵地</div>
+          <div className="text-4xl font-black text-party-red font-serif">{totalCount}</div>
+          <div className="text-sm text-party-ink-light mb-1 font-medium">处红色阵地</div>
         </div>
 
         <div className="space-y-2.5">
           <div className="flex items-center justify-between group cursor-pointer">
-            <div className="flex items-center gap-2 text-sm text-[#5C5C5C]">
-              <Flag size={14} className="text-[#C41E3A]" /> 红色革命遗址
+            <div className="flex items-center gap-2 text-sm text-party-ink-light">
+              <Flag size={14} className="text-party-red" /> 红色革命遗址
             </div>
-            <span className="font-mono text-[#1A1A1A] font-bold">{redCount}</span>
+            <span className="font-mono text-party-ink font-bold">{redCount}</span>
           </div>
-          <div className="w-full h-1.5 bg-[#FEFAF6] rounded-full overflow-hidden">
-            <div className="h-full bg-[#C41E3A] transition-all duration-700" style={{ width: `${totalCount ? (redCount/totalCount)*100 : 0}%` }} />
+          <div className="w-full h-1.5 bg-museum-bg rounded-full overflow-hidden">
+            <div className="h-full bg-party-red transition-all duration-700" style={{ width: `${totalCount ? (redCount/totalCount)*100 : 0}%` }} />
           </div>
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer">
-            <div className="flex items-center gap-2 text-sm text-[#5C5C5C]">
-              <Landmark size={14} className="text-[#5C5C5C]" /> 党政服务点位
+            <div className="flex items-center gap-2 text-sm text-party-ink-light">
+              <Landmark size={14} className="text-party-ink-light" /> 党政服务点位
             </div>
-            <span className="font-mono text-[#1A1A1A] font-bold">{govCount}</span>
+            <span className="font-mono text-party-ink font-bold">{govCount}</span>
           </div>
-          <div className="w-full h-1.5 bg-[#FEFAF6] rounded-full overflow-hidden">
-            <div className="h-full bg-[#8B6914] transition-all duration-700" style={{ width: `${totalCount ? (govCount/totalCount)*100 : 0}%` }} />
+          <div className="w-full h-1.5 bg-museum-bg rounded-full overflow-hidden">
+            <div className="h-full bg-party-gold transition-all duration-700" style={{ width: `${totalCount ? (govCount/totalCount)*100 : 0}%` }} />
           </div>
 
           <div className="flex items-center justify-between pt-2 group cursor-pointer">
-            <div className="flex items-center gap-2 text-sm text-[#5C5C5C]">
-              <Activity size={14} className="text-[#8B6914]" /> 群众文化阵地
+            <div className="flex items-center gap-2 text-sm text-party-ink-light">
+              <Activity size={14} className="text-party-gold" /> 群众文化阵地
             </div>
-            <span className="font-mono text-[#1A1A1A] font-bold">{culCount}</span>
+            <span className="font-mono text-party-ink font-bold">{culCount}</span>
           </div>
-          <div className="w-full h-1.5 bg-[#FEFAF6] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-museum-bg rounded-full overflow-hidden">
             <div className="h-full bg-[#D4C5B2] transition-all duration-700" style={{ width: `${totalCount ? (culCount/totalCount)*100 : 0}%` }} />
           </div>
         </div>
@@ -191,16 +395,16 @@ export const HudDashboard: React.FC = () => {
 
       {/* 思政学习大纲 */}
       <div className="museum-card p-5 rounded-2xl">
-        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 mb-1 text-sm font-serif tracking-wider">
-          <BookOpen size={16} className="text-[#C41E3A]" />
+        <h3 className="text-party-ink font-bold flex items-center gap-2 mb-1 text-sm font-serif tracking-wider">
+          <BookOpen size={16} className="text-party-red" />
           学习路线与实践
         </h3>
-        <p className="text-xs text-[#5C5C5C] mb-4 leading-relaxed">
+        <p className="text-xs text-party-ink-light mb-4 leading-relaxed">
           按顺序点击每一课，地图将自动定位到对应红色遗址并展开深度档案。
         </p>
         
         <div className="space-y-2.5">
-          {LEARNING_COURSES.map((course) => {
+          {learningCourses.length > 0 ? learningCourses.map((course) => {
             const isActive = selectedPoiId === course.archiveId
             return (
               <button
@@ -208,43 +412,47 @@ export const HudDashboard: React.FC = () => {
                 onClick={() => { handleLearningCourseClick(course.archiveId); if (isMobile) setCollapsed(true) }}
                 className={`w-full text-left p-3 rounded-xl border transition-all duration-200 cursor-pointer group flex flex-col justify-center min-h-[44px] touch-manipulation ${
                   isActive 
-                    ? 'bg-[#FDE8EC] border-[#C41E3A]/50 shadow-sm' 
-                    : 'bg-white border-[#E8DFD5] hover:border-[#C41E3A]/30 hover:bg-[#FEFAF6]'
+                    ? 'bg-party-red-light border-party-red shadow-sm' 
+                    : 'bg-white border-museum-border hover:border-party-red hover:bg-museum-bg'
                 }`}
                 aria-label={`点击学习${course.title}`}
               >
-                <div className="flex justify-between items-center text-sm font-medium text-[#1A1A1A]">
+                <div className="flex justify-between items-center text-sm font-medium text-party-ink">
                   <span className="flex items-center gap-2">
                     {isActive ? (
-                      <CheckCircle2 size={14} className="text-[#C41E3A]" />
+                      <CheckCircle2 size={14} className="text-party-red" />
                     ) : (
-                      <ChevronRight size={14} className="text-[#C41E3A]/50 group-hover:text-[#C41E3A] group-hover:translate-x-1 transition-all" />
+                      <ChevronRight size={14} className="text-party-red group-hover:text-party-red group-hover:translate-x-1 transition-all" />
                     )}
                     {course.title}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded ${
-                    isActive ? 'bg-[#C41E3A] text-white' : 'bg-[#FDE8EC] text-[#C41E3A]'
+                    isActive ? 'bg-party-red text-white' : 'bg-party-red-light text-party-red'
                   }`}>
                     {isActive ? '学习中' : '点击学习'}
                   </span>
                 </div>
-                <p className="text-xs text-[#5C5C5C]/60 mt-1 ml-6">{course.subtitle}</p>
+                <p className="text-xs text-party-ink-light mt-1 ml-6">{course.subtitle}</p>
               </button>
             )
-          })}
+          }) : (
+            <div className="rounded-xl border border-dashed border-museum-border bg-museum-bg p-4 text-xs leading-relaxed text-party-ink-light">
+              当前暂无已审核发布的学习课程。
+            </div>
+          )}
         </div>
       </div>
 
       {/* 时空印记与体验 */}
       <div className="museum-card p-4 rounded-2xl space-y-3">
-        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
-          <Clock size={16} className="text-[#8B6914]" />
+        <h3 className="text-party-ink font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
+          <Clock size={16} className="text-party-gold" />
           时空印记与体验
         </h3>
         
         <button 
           onClick={() => { setSwipeMode(true); if (isMobile) setCollapsed(true) }}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px] touch-manipulation"
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-museum-border bg-white hover:bg-museum-bg hover:border-party-red text-party-ink-light hover:text-party-red transition-all duration-200 min-h-[44px] touch-manipulation"
         >
           <MoveHorizontal size={16} />
           <span className="text-sm font-medium">百年时空对照</span>
@@ -252,7 +460,7 @@ export const HudDashboard: React.FC = () => {
 
         <button 
           onClick={() => { setFpsMode(true); if (isMobile) setCollapsed(true) }}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] hover:border-[#C41E3A]/30 text-[#5C5C5C] hover:text-[#C41E3A] transition-all duration-200 min-h-[44px] touch-manipulation"
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-museum-border bg-white hover:bg-museum-bg hover:border-party-red text-party-ink-light hover:text-party-red transition-all duration-200 min-h-[44px] touch-manipulation"
         >
           <Crosshair size={16} />
           <span className="text-sm font-medium">重走红军路</span>
@@ -262,8 +470,8 @@ export const HudDashboard: React.FC = () => {
           onClick={() => { setDirectorMode(!isDirectorMode); if (isMobile) setCollapsed(true) }}
           className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
             isDirectorMode 
-              ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]'
-              : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
+              ? 'bg-party-red-light border-party-red text-party-red'
+              : 'bg-white hover:bg-museum-bg border-museum-border text-party-ink-light hover:text-party-red hover:border-party-red'
           }`}
         >
           <Film size={16} />
@@ -274,8 +482,8 @@ export const HudDashboard: React.FC = () => {
           onClick={() => setWeather(weather === 'clear' ? 'rain' : weather === 'rain' ? 'snow' : 'clear')}
           className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
             weather !== 'clear'
-              ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]'
-              : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
+              ? 'bg-party-red-light border-party-red text-party-red'
+              : 'bg-white hover:bg-museum-bg border-museum-border text-party-ink-light hover:text-party-red hover:border-party-red'
           }`}
         >
           {weather === 'clear' ? <CloudRain size={16} /> : weather === 'rain' ? <CloudSnow size={16} /> : <Sun size={16} />}
@@ -283,217 +491,47 @@ export const HudDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* 辅助学习工具 */}
-      <div className="museum-card p-4 rounded-2xl space-y-3">
-        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
-          <Map size={16} className="text-[#C41E3A]" />
-          辅助学习工具
-        </h3>
-        
-        <div className="flex flex-col gap-2">
-          <button 
-            onClick={() => setShowHistoricalRoute(!showHistoricalRoute)}
-            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
-              showHistoricalRoute ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Route size={14} />
-              <span className="text-sm font-medium">红军历史行军动线</span>
-            </div>
-            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${showHistoricalRoute ? 'bg-[#C41E3A]' : 'bg-[#E8DFD5]'}`} />
-          </button>
+      {dashboardSections.length > 0 ? dashboardSections.map((section) => {
+        const SectionIcon = dashboardIcons[section.iconKey] || MapIcon
+        return (
+          <div key={section.key} className="museum-card p-4 rounded-2xl space-y-3">
+            <h3 className="text-party-ink font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
+              <SectionIcon size={16} className="text-party-red" />
+              {section.title}
+            </h3>
 
-          <button 
-            onClick={() => setShowHeroes(true)}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Users size={14} />
-              <span className="text-sm font-medium">革命先驱 · 英雄谱</span>
+            <div className="flex flex-col gap-2">
+              {section.entries.map((entry) => {
+                const EntryIcon = dashboardIcons[entry.iconKey] || ChevronRight
+                const badge = getEntryBadge(entry)
+                return (
+                  <button
+                    key={entry.id}
+                    onClick={() => handleDashboardEntryClick(entry)}
+                    className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-museum-bg border-museum-border text-party-ink-light hover:text-party-red hover:border-party-red"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 text-left">
+                      <EntryIcon size={14} className="shrink-0" />
+                      <span className="text-sm font-medium truncate">{entry.label}</span>
+                    </div>
+                    {badge ? (
+                      <span className="text-xs font-bold text-party-red shrink-0 ml-3">{badge}</span>
+                    ) : (
+                      <ChevronRight size={14} className="opacity-40 shrink-0 ml-3" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => setShowSovietRegion(!showSovietRegion)}
-            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
-              showSovietRegion ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Map size={14} />
-              <span className="text-sm font-medium">东江苏区全域形势</span>
-            </div>
-            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${showSovietRegion ? 'bg-[#C41E3A]' : 'bg-[#E8DFD5]'}`} />
-          </button>
+          </div>
+        )
+      }) : (
+        <div className="museum-card p-4 rounded-2xl">
+          <div className="rounded-xl border border-dashed border-museum-border bg-museum-bg p-4 text-xs leading-relaxed text-party-ink-light">
+            暂无已审核发布的专题入口，请在后台发布后查看。
+          </div>
         </div>
-      </div>
-
-      {/* 红色互动体验 */}
-      <div className="museum-card p-4 rounded-2xl space-y-3">
-        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
-          <Music size={16} className="text-[#C41E3A]" />
-          红色互动体验
-        </h3>
-        
-        <div className="flex flex-col gap-2">
-          <button 
-            onClick={() => { setShowSongPlayer(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Music size={14} />
-              <span className="text-sm font-medium">苏区红歌馆</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowOathWall(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <ScrollText size={14} />
-              <span className="text-sm font-medium">入党誓词互动墙</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowPanorama(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Camera size={14} />
-              <span className="text-sm font-medium">红色遗址360°全景</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowLongMarch(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Flag size={14} />
-              <span className="text-sm font-medium">长征路线交互沙盘</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowOralHistory(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Mic size={14} />
-              <span className="text-sm font-medium">口述历史录音室</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-        </div>
-      </div>
-
-      {/* 红色资源文库 */}
-      <div className="museum-card p-4 rounded-2xl space-y-3">
-        <h3 className="text-[#1A1A1A] font-bold flex items-center gap-2 text-sm font-serif tracking-wider">
-          <Library size={16} className="text-[#C41E3A]" />
-          红色资源文库
-        </h3>
-        
-        <div className="flex flex-col gap-2">
-          <button 
-            onClick={() => { setShowResourceHub(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <ScrollText size={14} />
-              <span className="text-sm font-medium">红色家书 · 文献馆藏</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowTodaySuqu(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <GitCompare size={14} />
-              <span className="text-sm font-medium">今日苏区 · 今昔对比</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowRedQuiz(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Star size={14} />
-              <span className="text-sm font-medium">党史知识闯关答题</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowPartyRoutes(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <MapPinCheck size={14} />
-              <span className="text-sm font-medium">主题党日活动路线</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowPassport(true); if (isMobile) setCollapsed(true) }}
-            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation ${
-              visitedPois.length >= 16 ? 'bg-[#FDE8EC] border-[#C41E3A]/40 text-[#C41E3A]' : 'bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Stamp size={14} />
-              <span className="text-sm font-medium">红色地标打卡护照</span>
-            </div>
-            <span className="text-xs font-bold text-[#C41E3A]">{visitedPois.length}/16</span>
-          </button>
-
-          <button 
-            onClick={() => { setShowTourGuide(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <MapPin size={14} />
-              <span className="text-sm font-medium">红色文旅导览手册</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowFilmArchive(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Tv size={14} />
-              <span className="text-sm font-medium">红色影视资料库</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-
-          <button 
-            onClick={() => { setShowCoCreation(true); if (isMobile) setCollapsed(true) }}
-            className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200 min-h-[44px] touch-manipulation bg-white hover:bg-[#FEFAF6] border-[#E8DFD5] text-[#5C5C5C] hover:text-[#C41E3A] hover:border-[#C41E3A]/30"
-          >
-            <div className="flex items-center gap-2">
-              <Send size={14} />
-              <span className="text-sm font-medium">红色家书 · 薪火相传</span>
-            </div>
-            <ChevronRight size={14} className="opacity-40" />
-          </button>
-        </div>
-      </div>
+      )}
       
     </div>
     </div>
@@ -527,7 +565,7 @@ export const HudDashboard: React.FC = () => {
         }}
       />
     )}
-    {showPassport && <CheckInPassport onClose={() => setShowPassport(false)} visitedPois={visitedPois} />}
+    {showPassport && <CheckInPassport onClose={() => setShowPassport(false)} visitedPois={visitedPois} totalCount={checkinTotalCount || undefined} />}
     {showSongPlayer && <RedSongPlayer onClose={() => setShowSongPlayer(false)} />}
     {showOathWall && <PartyOathWall onClose={() => setShowOathWall(false)} />}
     {showPanorama && <RedPanorama onClose={() => setShowPanorama(false)} />}
@@ -538,4 +576,60 @@ export const HudDashboard: React.FC = () => {
     {showCoCreation && <PeopleCoCreation onClose={() => setShowCoCreation(false)} />}
     </>
   )
+}
+
+function getVisitorId() {
+  try {
+    const saved = localStorage.getItem(CHECKIN_VISITOR_KEY)
+    if (saved) return saved
+    const next = (globalThis.crypto?.randomUUID?.() || `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`)
+    localStorage.setItem(CHECKIN_VISITOR_KEY, next)
+    return next
+  } catch {
+    return `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  }
+}
+
+function contentToLearningCourse(item: PublicContentItem): LearningCourse | null {
+  const data = item.data || {}
+  const title = asText(data.title) || item.title
+  const subtitle = asText(data.subtitle) || item.summary || item.body || ''
+  const archiveId = asText(data.archiveId) || asText(data.archive_id) || asText(data.poiId) || asText(data.poi_id)
+  const order = Number(data.order ?? data.sortOrder ?? data.sort_order ?? 0)
+
+  if (!title || !subtitle || !archiveId) return null
+  return {
+    title,
+    subtitle,
+    archiveId,
+    order: Number.isFinite(order) ? order : 0,
+  }
+}
+
+function contentToDashboardEntry(item: PublicContentItem): DashboardEntry | null {
+  const data = item.data || {}
+  const actionKey = asText(data.actionKey) || asText(data.action_key)
+  if (!DASHBOARD_ACTION_KEYS.has(actionKey)) return null
+
+  const label = asText(data.label) || asText(data.title) || item.title
+  const groupKey = asText(data.groupKey) || asText(data.group_key) || item.category || 'general'
+  const groupTitle = asText(data.groupTitle) || asText(data.group_title) || item.category || '功能入口'
+  const iconKey = asText(data.iconKey) || asText(data.icon_key) || 'chevron'
+  const sectionIconKey = asText(data.sectionIconKey) || asText(data.section_icon_key) || iconKey
+  const badgeMode = asText(data.badgeMode) || asText(data.badge_mode)
+  const order = Number(data.order ?? data.sortOrder ?? data.sort_order ?? 0)
+
+  if (!label || !groupKey || !groupTitle) return null
+  return {
+    id: item.id || `${groupKey}-${actionKey}`,
+    label,
+    description: asText(data.description) || item.summary || item.body || '',
+    actionKey: actionKey as DashboardActionKey,
+    groupKey,
+    groupTitle,
+    iconKey,
+    sectionIconKey,
+    badgeMode,
+    order: Number.isFinite(order) ? order : 0,
+  }
 }

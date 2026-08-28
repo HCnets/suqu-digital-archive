@@ -1,129 +1,42 @@
-import React, { useState } from 'react'
-import { X, Film, Tv, Clapperboard, ExternalLink, Info } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { X, Film, Tv, Clapperboard, Info } from 'lucide-react'
+import { asText, fetchPublishedContents, type PublicContentItem } from '@/lib/cmsContent'
 
 interface FilmItem {
+  id: string
   title: string
   year: string
   type: '电影' | '电视剧' | '纪录片'
   description: string
   connection: string
-  imageChar: string
   accent: string
 }
 
-const FILMS: FilmItem[] = [
-  {
-    title: '红色摇篮',
-    year: '2010',
-    type: '电视剧',
-    description: '29集革命历史题材电视剧，讲述1929-1934年毛泽东、朱德、周恩来等领导红军开辟中央苏区的历史。以瑞金为中心，全面展现中华苏维埃共和国的创建历程。',
-    connection: '东江苏区与中央苏区在1931年取得联系后，成为南方游击战争的重要策应力量。苏区镇正是在此大背景下成为紫金县革命中心。',
-    imageChar: '🏛️',
-    accent: '#C41E3A'
-  },
-  {
-    title: '寻路',
-    year: '2013',
-    type: '电视剧',
-    description: '44集重大革命历史题材电视剧，全景展现1927-1932年间中国共产党人探索中国革命道路的艰难历程，从南昌起义到建立中央苏区。',
-    connection: '剧中多次展现彭湃领导的海陆丰农民运动，苏区镇作为海陆惠紫革命根据地的组成部分，与剧中历史脉络直接相连。',
-    imageChar: '🗺️',
-    accent: '#C41E3A'
-  },
-  {
-    title: '彭湃',
-    year: '2001',
-    type: '电视剧',
-    description: '以中国农民运动领袖彭湃为原型的传记电视剧，讲述他从富家少爷到革命领袖的传奇人生，以及海陆丰苏维埃政权的建立。',
-    connection: '彭湃同志1927年冬亲赴苏区镇指导工作，在红屋成立了紫金县苏维埃政府。剧中的《田仔骂田公》至今仍在苏区传唱。',
-    imageChar: '👨‍🌾',
-    accent: '#8B6914'
-  },
-  {
-    title: '闪闪的红星',
-    year: '1974',
-    type: '电影',
-    description: '经典红色儿童电影。少年潘冬子在红军离开后坚持斗争，最终成长为红军战士。插曲《映山红》《红星照我去战斗》传唱至今。',
-    connection: '影片中红军离开根据地的情节与1934年红军长征后苏区人民坚持斗争的经历高度相似，潘冬子的勇气也是苏区少年英雄的精神写照。',
-    imageChar: '⭐',
-    accent: '#C41E3A'
-  },
-  {
-    title: '长征',
-    year: '1996',
-    type: '纪录片',
-    description: '中央电视台大型文献纪录片，全景式回顾中国工农红军二万五千里长征的全过程，包含大量珍贵历史影像和当事人采访。',
-    connection: '长征途中，从东江出发的老红军战士参加了多场重要战役。苏区镇的红军后代至今珍藏着父辈的长征回忆录。',
-    imageChar: '🎖️',
-    accent: '#C41E3A'
-  },
-  {
-    title: '东江纵队',
-    year: '2019',
-    type: '纪录片',
-    description: '广东省制作的大型纪录片，还原东江纵队在抗日战争和解放战争中的历史贡献，包括大量东江地区实地拍摄内容。',
-    connection: '东江纵队的许多骨干正是1927-1934年东江苏区的老红军后代，苏区镇的红色基因通过他们延续到了抗日战争中。',
-    imageChar: '🏔️',
-    accent: '#2E7D32'
-  },
-  {
-    title: '大决战',
-    year: '2021',
-    type: '电视剧',
-    description: '建党百年献礼剧，全景展现解放战争三大战役的宏大历史画卷。毛泽东说"战争的伟力之最深厚的根源，存在于民众之中"。',
-    connection: '从苏区镇的赤卫队到三大战役的百万雄师，中国革命的每一步都是人民力量的汇聚。苏区人的儿子也参加了辽沈战役。',
-    imageChar: '⚔️',
-    accent: '#C41E3A'
-  },
-  {
-    title: '理想照耀中国',
-    year: '2021',
-    type: '电视剧',
-    description: '建党百年主题系列短剧，40个故事讲述不同时期中国共产党人的初心使命。',
-    connection: '剧中"真理的味道""劳工万岁"等单元与苏区镇的农民运动、工人运动历史一脉相承。',
-    imageChar: '🔥',
-    accent: '#C41E3A'
-  },
-  {
-    title: '建军大业',
-    year: '2017',
-    type: '电影',
-    description: '献礼建军90周年历史大片，聚焦1927年南昌起义到井冈山会师的革命历程，全明星阵容演绎建军伟业。',
-    connection: '南昌起义军余部后来进入海陆丰地区，在苏区镇红军亭与广州起义余部会师，影片中的历史正是苏区故事的起点。',
-    imageChar: '⚡',
-    accent: '#C41E3A'
-  },
-  {
-    title: '绝密使命',
-    year: '2021',
-    type: '电视剧',
-    description: '32集谍战剧，首次聚焦中央红色交通线——从上海到瑞金三千里水陆地下交通线上的绝密故事。',
-    connection: '苏区镇红色交通站是这条交通线的重要支线节点。剧中交通员的经历，与苏区镇交通员李月梅的真实故事惊人相似。',
-    imageChar: '🕵️',
-    accent: '#8B6914'
-  },
-  {
-    title: '古田军号',
-    year: '2019',
-    type: '电影',
-    description: '以一个红军小号手的视角，讲述1929年古田会议前后红军队伍的思想建设和组织建设历程。',
-    connection: '古田会议确立的"思想建党、政治建军"原则，在苏区镇的赤卫队和苏维埃政权建设中同样得到了坚决贯彻。',
-    imageChar: '📯',
-    accent: '#C41E3A'
-  },
-  {
-    title: '觉醒年代',
-    year: '2021',
-    type: '电视剧',
-    description: '43集重大革命历史题材电视剧，全景展现1915-1921年新文化运动到中国共产党成立的思想启蒙历程。',
-    connection: '李大钊、陈独秀等先驱播下的革命火种，经彭湃等人传递到海陆丰、播撒到苏区镇。觉醒的不仅是知识分子，更是千千万万的贫苦农民。',
-    imageChar: '🌅',
-    accent: '#C41E3A'
-  },
-]
-
 export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [expanded, setExpanded] = useState<number | null>(null)
+  const [films, setFilms] = useState<FilmItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadFilms() {
+      setLoading(true)
+      try {
+        const items = await fetchPublishedContents('film', 100)
+        const cmsFilms = items.map(contentToFilm).filter(Boolean) as FilmItem[]
+        if (!cancelled) {
+          setFilms(cmsFilms)
+          setExpanded(null)
+        }
+      } catch {
+        if (!cancelled) setFilms([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    loadFilms()
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className="fixed inset-0 z-[85] pointer-events-auto animate-in fade-in duration-300">
@@ -147,16 +60,26 @@ export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) =
               <div>
                 <h3 className="text-sm font-bold text-[#1A1A1A] font-serif">影视中的苏区记忆</h3>
                 <p className="text-xs text-[#5C5C5C] mt-1">
-                  收录 8 部与东江苏区、海陆丰革命及中国革命密切相关的影视作品。每部作品均附"与苏区的关联"说明。
+                  当前收录 {films.length} 部已审核发布的红色影视资料。每部作品均须附“与苏区的关联”说明。
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {FILMS.map((film, i) => (
+          {loading ? (
+            <div className="py-16 text-center">
+              <div className="w-10 h-10 rounded-full border-2 border-[#E8DFD5] border-t-[#C41E3A] animate-spin mx-auto mb-4" />
+              <p className="text-sm text-[#5C5C5C]">正在读取已审核发布的红色影视资料</p>
+            </div>
+          ) : films.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#E8DFD5] bg-[#FEFAF6] p-5 text-sm leading-relaxed text-[#5C5C5C]">
+              当前暂无已审核发布的红色影视资料。
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {films.map((film, i) => (
               <div
-                key={i}
+                key={film.id}
                 className={`rounded-xl border transition-all duration-300 overflow-hidden ${
                   expanded === i ? 'border-[#C41E3A]/40 shadow-sm' : 'border-[#E8DFD5]'
                 }`}
@@ -167,7 +90,7 @@ export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) =
                   style={{ borderLeft: `4px solid ${film.accent}` }}
                 >
                   <div className="flex items-center gap-3">
-                  {/* CSS 电影海报卡片 —— 替代 emoji */}
+                  {/* CSS 电影海报卡片 */}
                   <div className="w-14 h-20 rounded-lg flex-shrink-0 flex flex-col items-center justify-center relative overflow-hidden" style={{ backgroundColor: `${film.accent}15`, border: `1.5px solid ${film.accent}30` }}>
                     <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: film.accent, opacity: 0.6 }} />
                     <span className="text-[9px] font-black font-serif tracking-widest leading-tight text-center px-1" style={{ color: film.accent }}>
@@ -191,17 +114,38 @@ export const RedFilmArchive: React.FC<{ onClose: () => void }> = ({ onClose }) =
                     <div className="p-3 rounded-lg bg-[#FDE8EC] border border-[#C41E3A]/20">
                       <div className="flex items-center gap-1 mb-1">
                         <Info size={10} className="text-[#C41E3A]" />
-                        <span className="text-[10px] font-bold text-[#C41E3A]">与苏区镇的关联</span>
+                        <span className="text-[10px] font-bold text-[#C41E3A]">关联说明</span>
                       </div>
                       <p className="text-xs text-[#5C5C5C] leading-relaxed">{film.connection}</p>
                     </div>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
+}
+
+function contentToFilm(item: PublicContentItem): FilmItem | null {
+  const data = item.data || {}
+  const title = asText(data.title) || item.title
+  const year = asText(data.year) || asText(data.years) || ''
+  const type = normalizeFilmType(asText(data.type) || item.category || '')
+  const description = asText(data.description) || item.summary || ''
+  const connection = asText(data.connection) || asText(data.legacy) || item.body || ''
+  const accent = asText(data.accent) || '#C41E3A'
+
+  if (!title || !year || !type || !description || !connection) return null
+  return { id: item.id || title, title, year, type, description, connection, accent }
+}
+
+function normalizeFilmType(value: string): FilmItem['type'] | '' {
+  if (value === '电影' || value === '电视剧' || value === '纪录片') return value
+  if (value.includes('纪录')) return '纪录片'
+  if (value.includes('片') || value.includes('电影')) return '电影'
+  return '电视剧'
 }

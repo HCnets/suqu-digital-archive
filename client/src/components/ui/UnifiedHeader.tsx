@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowLeft, AudioLines, Database } from 'lucide-react'
+import { ArrowLeft, AudioLines, Database, Landmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -24,57 +24,68 @@ export const UnifiedHeader: React.FC<HeaderProps> = ({
   return (
     <header
       className={cn(
-        'w-full flex items-start justify-between px-6 py-4 pointer-events-auto',
+        'w-full flex flex-col gap-3 px-4 py-3 pointer-events-auto sm:py-4 md:flex-row md:items-start md:justify-between md:px-6',
         className
       )}
     >
-      <div className="flex flex-col gap-1 max-w-[72ch]">
-        <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-[#C41E3A] font-medium">
-          红色党建思政实践平台
-        </p>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#1A1A1A] font-serif">
-          {title}
-        </h1>
-        {description && (
-          <p className="text-sm text-[#5C5C5C]/90 font-medium tracking-wide leading-relaxed">
-            {description}
-          </p>
-        )}
+      <div className="flex min-w-0 max-w-[760px] items-start gap-3">
+        <div className="mt-0.5 hidden h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-party-red bg-white/95 text-party-red shadow-sm shadow-black/5 sm:flex">
+          <Landmark size={22} strokeWidth={1.8} />
+        </div>
+        <div className="min-w-0 border-l-4 border-party-red bg-white/92 px-3 py-2 shadow-sm shadow-black/5 sm:border-l-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="rounded-sm bg-party-red-dark px-2 py-1 text-[11px] font-bold leading-none text-white">
+              苏区镇红色阵地
+            </span>
+            <span className="hidden h-1 w-1 rounded-full bg-party-gold sm:inline-flex" />
+            <span className="hidden text-xs font-semibold leading-none text-[#7A5A16] sm:inline">
+              数字化档案导览
+            </span>
+          </div>
+          <h1 className="max-w-full break-words text-[1.75rem] font-black leading-tight text-[#171717] font-display title-balance">
+            {title}
+          </h1>
+          {description && (
+            <p className="hidden max-w-[64ch] text-sm font-semibold leading-6 text-[#4F4A45] sm:block">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 self-start md:gap-3 md:self-auto">
         {onOpenAdmin && (
           <button
             onClick={onOpenAdmin}
-            className="flex items-center gap-2 px-4 min-h-[44px] rounded-lg transition-all duration-200 border border-[#E8DFD5] bg-white hover:bg-[#FEFAF6] text-[#5C5C5C]"
+            className="flex min-h-[44px] items-center gap-2 rounded-lg border border-museum-border bg-white/95 px-4 text-[#4F4A45] shadow-sm shadow-black/5 transition-colors duration-200 hover:bg-museum-bg"
             aria-label="打开档案录入中心"
           >
             <Database size={16} />
-            <span className="text-sm font-medium">录入中心</span>
+            <span className="hidden text-sm font-semibold sm:inline">录入中心</span>
           </button>
         )}
         {onAutoTour && (
           <button
             onClick={onAutoTour}
             className={cn(
-              'flex items-center gap-2 px-4 min-h-[44px] rounded-lg transition-all duration-200 border',
+              'flex min-h-[44px] items-center gap-2 rounded-lg border px-4 shadow-sm shadow-black/5 transition-colors duration-200',
               isTouring 
-                ? 'bg-[#FDE8EC] text-[#C41E3A] border-[#C41E3A]/40'
-                : 'bg-white hover:bg-[#FEFAF6] text-[#5C5C5C] border-[#E8DFD5]'
+                ? 'bg-party-red-light text-party-red border-party-red'
+                : 'bg-white/95 hover:bg-museum-bg text-[#4F4A45] border-museum-border'
             )}
             aria-label={isTouring ? '停止自动讲解' : '启动自动讲解'}
           >
             <AudioLines size={16} />
-            <span className="text-sm font-medium">{isTouring ? '讲解进行中' : '自动讲解'}</span>
+            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline">{isTouring ? '讲解进行中' : '自动讲解'}</span>
           </button>
         )}
         {onBack && (
           <button
             onClick={onBack}
-            className="flex items-center justify-center rounded-full p-2 transition-all duration-200 bg-white border border-[#E8DFD5] hover:bg-[#FEFAF6] min-w-[44px] min-h-[44px]"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-museum-border bg-white/95 p-2 shadow-sm shadow-black/5 transition-colors duration-200 hover:bg-museum-bg"
             aria-label="返回"
           >
-            <ArrowLeft className="w-[20px] h-[20px] text-[#5C5C5C]" />
+            <ArrowLeft className="w-[20px] h-[20px] text-party-ink-light" />
           </button>
         )}
       </div>

@@ -1,58 +1,75 @@
-import React, { useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { UnifiedHeader } from '@/components/ui/UnifiedHeader'
 import { GisMap } from '@/components/map/GisMap'
-import { ArchiveDetailModal } from '@/components/ui/ArchiveDetailModal'
 import { TimeSlider } from '@/components/ui/TimeSlider'
 import { HudDashboard } from '@/components/ui/HudDashboard'
-import { IndoorBimMode } from '@/components/ui/IndoorBimMode'
-import { RelicShowcaseMode } from '@/components/ui/RelicShowcaseMode'
-import { SwipeMode } from '@/components/ui/SwipeMode'
-import { FpsOverlay } from '@/components/ui/FpsOverlay'
-import { WeatherSystem } from '@/components/ui/WeatherSystem'
-import { RightDataPanel } from '@/components/ui/RightDataPanel'
-import { DirectorModeController } from '@/components/ui/DirectorModeController'
+import { Footer } from '@/components/ui/Footer'
 import { useAppStore } from '@/store'
-import { BookOpenText, Layers, Globe, X } from 'lucide-react'
+import { shouldUseBackend } from '@/lib/env'
+import { BookOpenText, Layers, Globe, MapPin, X } from 'lucide-react'
+import type maplibregl from 'maplibre-gl'
+
+// 非首屏组件懒加载
+const ArchiveDetailModal = lazy(() => import('@/components/ui/ArchiveDetailModal').then(m => ({ default: m.ArchiveDetailModal })))
+const IndoorBimMode = lazy(() => import('@/components/ui/IndoorBimMode').then(m => ({ default: m.IndoorBimMode })))
+const RelicShowcaseMode = lazy(() => import('@/components/ui/RelicShowcaseMode').then(m => ({ default: m.RelicShowcaseMode })))
+const SwipeMode = lazy(() => import('@/components/ui/SwipeMode').then(m => ({ default: m.SwipeMode })))
+const FpsOverlay = lazy(() => import('@/components/ui/FpsOverlay').then(m => ({ default: m.FpsOverlay })))
+const WeatherSystem = lazy(() => import('@/components/ui/WeatherSystem').then(m => ({ default: m.WeatherSystem })))
+const RightDataPanel = lazy(() => import('@/components/ui/RightDataPanel').then(m => ({ default: m.RightDataPanel })))
+const DirectorModeController = lazy(() => import('@/components/ui/DirectorModeController').then(m => ({ default: m.DirectorModeController })))
 
 function App() {
-  const { fetchArchives, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, setDirectorMode, isDirectorMode, mapStyle, setMapStyle, isIndoorMode, setMainMapInstance } = useAppStore()
+  const { fetchArchives, fetchRegionConfig, regionConfig, selectedPoiId, setSelectedPoiId, getArchiveData, setDetailModalOpen, setDirectorMode, isDirectorMode, mapStyle, setMapStyle, isIndoorMode, setMainMapInstance } = useAppStore()
   
   const activeArchive = selectedPoiId ? getArchiveData(selectedPoiId) : null
   
   const [showIntro, setShowIntro] = useState(true)
+  const offlineMode = !shouldUseBackend()
+  const regionDisplayName = regionConfig.defaultRegion?.fullName || regionConfig.defaultRegion?.name || ''
+  const appTitle = regionDisplayName ? `${regionDisplayName}数字化档案` : '红色文化数字档案'
+  const introTitle = '苏区镇红色阵地数字化档案'
+  const handleMapLoad = useCallback((map: maplibregl.Map) => {
+    setMainMapInstance(map)
+  }, [setMainMapInstance])
 
   useEffect(() => {
-    fetchArchives()
+    void Promise.all([fetchRegionConfig(), fetchArchives()])
     const timer = setTimeout(() => {
       setShowIntro(false)
-    }, 3500)
+    }, 1200)
     return () => clearTimeout(timer)
-  }, [])
+  }, [fetchArchives, fetchRegionConfig])
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ backgroundColor: '#FEFAF6' }}>
+    <div className="relative h-[100dvh] w-screen overflow-hidden" style={{ backgroundColor: '#FEFAF6' }}>
       {/* GIS Map Layer */}
       <div className="absolute inset-0 z-0">
-        <GisMap onMapLoad={(map) => setMainMapInstance(map)} />
+        <GisMap onMapLoad={handleMapLoad} />
       </div>
 
       {/* UI Layer */}
-      <div className="absolute inset-0 z-10 pointer-events-none flex flex-col">
+      <div className="absolute inset-x-0 top-0 z-40 pointer-events-none">
+        {offlineMode && (
+          <div className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full border border-[#8B6914]/30 bg-[#FFF8E1]/90 text-[#8B6914] text-xs font-medium whitespace-nowrap shadow-sm">
+            离线演示模式：未连接数据服务，展示内容为静态示例，实时档案/地图数据不可用。
+          </div>
+        )}
         {/* Top Header */}
         <UnifiedHeader 
-          title="广东省苏区镇数字化档案" 
-          description="传承红色基因 · 弘扬苏区精神 —— 面向全体人民的红色党建与思政实践数字展厅"
+          title={appTitle}
+          description="AI赋能红色传承 · 后台审核发布 · 红色阵地数字导览"
           onAutoTour={() => setDirectorMode(!isDirectorMode)}
           isTouring={isDirectorMode}
         />
 
         {/* Map Style Switcher */}
-        <div className="absolute top-24 right-6 pointer-events-auto">
-          <div className="museum-card p-1.5 rounded-2xl flex flex-col gap-2">
+        <div className="absolute right-4 top-[calc(100%+0.75rem)] pointer-events-auto md:right-[360px]">
+          <div className="museum-card flex gap-2 rounded-xl p-1.5 md:flex-col">
             <button
               onClick={() => setMapStyle('museum')}
               className={`p-3 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center transition-all duration-200 ${
-                mapStyle === 'museum' ? 'bg-[#C41E3A] text-white shadow-sm' : 'hover:bg-[#FDE8EC] text-[#5C5C5C]'
+                mapStyle === 'museum' ? 'bg-party-red text-white shadow-sm' : 'hover:bg-party-red-light text-party-ink-light'
               }`}
               title="博物馆导览底图"
               aria-label="切换到博物馆明亮底图"
@@ -62,7 +79,7 @@ function App() {
             <button
               onClick={() => setMapStyle('satellite')}
               className={`p-3 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center transition-all duration-200 ${
-                mapStyle === 'satellite' ? 'bg-[#8B6914] text-white shadow-sm' : 'hover:bg-[#FFF8E1] text-[#5C5C5C]'
+                mapStyle === 'satellite' ? 'bg-party-gold text-white shadow-sm' : 'hover:bg-party-gold-light text-party-ink-light'
               }`}
               title="遗址实景底图"
               aria-label="切换到遗址实景底图"
@@ -73,7 +90,9 @@ function App() {
         </div>
 
         {/* 底部时间轴 */}
-        <TimeSlider />
+        <div className={activeArchive ? 'hidden md:block' : ''}>
+          <TimeSlider />
+        </div>
       </div>
 
       {/* 左侧 HUD — 提升到 root 层级，避免被 RightDataPanel 的 stacking context 压制 */}
@@ -81,40 +100,42 @@ function App() {
 
       {/* POI 信息卡 */}
       {!showIntro && activeArchive && (
-        <div className="absolute bottom-28 md:bottom-20 right-6 md:right-24 md:left-auto z-[60] pointer-events-auto">
-          <div className="museum-card p-4 md:p-6 rounded-2xl w-full md:max-w-md transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden shadow-xl shadow-black/5">
+        <div className="fixed inset-x-4 bottom-20 z-[60] pointer-events-auto md:inset-x-auto md:bottom-24 md:right-[360px] md:w-[380px]">
+          <div className="museum-card max-h-[42dvh] overflow-y-auto rounded-2xl p-4 shadow-xl shadow-black/5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 md:max-h-[calc(100dvh-12rem)] md:p-5">
             <div className={`absolute top-0 left-0 w-full h-1 ${
-              activeArchive.type === 'revolution' ? 'bg-[#C41E3A]' :
-              activeArchive.type === 'government' ? 'bg-[#5C5C5C]' : 'bg-[#8B6914]'
+              activeArchive.type === 'revolution' ? 'bg-party-red' :
+              activeArchive.type === 'government' ? 'bg-party-ink-light' : 'bg-party-gold'
             }`} />
 
             <div className="flex justify-between items-start mb-3 relative z-10 mt-1">
               <div className="flex items-center gap-3">
                 <span className={`w-3 h-3 rounded-full border-2 ${
-                  activeArchive.type === 'revolution' ? 'bg-[#C41E3A] border-[#C41E3A]' :
-                  activeArchive.type === 'government' ? 'bg-[#5C5C5C] border-[#5C5C5C]' : 'bg-[#8B6914] border-[#8B6914]'
+                  activeArchive.type === 'revolution' ? 'bg-party-red border-party-red' :
+                  activeArchive.type === 'government' ? 'bg-party-ink-light border-party-ink-light' : 'bg-party-gold border-party-gold'
                 }`} />
-                <h2 className="text-lg font-bold text-[#1A1A1A] tracking-wide font-serif">{activeArchive.title}</h2>
+                <h2 className="text-lg font-bold leading-snug text-party-ink font-display">{activeArchive.title}</h2>
               </div>
               <button 
                 onClick={(e) => { e.stopPropagation(); setSelectedPoiId(null) }}
-                className="text-[#5C5C5C]/40 hover:text-[#5C5C5C] transition-colors rounded-full p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/80 hover:bg-white"
+                className="text-party-ink-light hover:text-party-ink-light transition-colors rounded-full p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/80 hover:bg-white"
                 aria-label="关闭当前档案简介"
               >
                 <X size={16} />
               </button>
             </div>
-            <p className="text-[#5C5C5C] leading-relaxed text-sm font-serif">
+            <p className="text-sm leading-relaxed text-party-ink-light font-reading">
               {activeArchive.description}
             </p>
             
-            <div className="mt-3 flex gap-4 text-xs text-[#5C5C5C]/70 font-mono bg-[#FEFAF6] p-2.5 rounded-lg border border-[#E8DFD5]">
-              <span>LNG: {activeArchive.longitude.toFixed(4)}</span>
-              <span>LAT: {activeArchive.latitude.toFixed(4)}</span>
-              <span className="ml-auto text-[#C41E3A] font-medium">{activeArchive.year}</span>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-party-ink-light bg-museum-bg p-2.5 rounded-lg border border-museum-border">
+              <span className="flex items-center gap-1">
+                <MapPin size={13} className="text-party-red" />
+                地图定位已记录
+              </span>
+              <span className="ml-auto text-party-red font-medium">{activeArchive.year} 年</span>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#E8DFD5] flex justify-end">
+            <div className="mt-4 pt-4 border-t border-museum-border flex justify-end">
               <button 
                 onClick={(e) => { e.stopPropagation(); setDetailModalOpen(true) }}
                 className="party-btn-primary group flex items-center gap-2 px-5 min-h-[44px]"
@@ -128,35 +149,65 @@ function App() {
         </div>
       )}
       
-      <ArchiveDetailModal />
-      {isIndoorMode && <IndoorBimMode />}
-      <RelicShowcaseMode />
-      <SwipeMode />
-      <FpsOverlay />
-      <RightDataPanel />
-      <DirectorModeController />
-      <WeatherSystem />
+      <Suspense fallback={
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-museum-bg backdrop-blur-sm pointer-events-none">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-party-red animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-party-red animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 rounded-full bg-party-red animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <p className="text-xs font-medium text-party-ink-light">加载中...</p>
+          </div>
+        </div>
+      }>
+        <ArchiveDetailModal />
+        {isIndoorMode && <IndoorBimMode />}
+        <RelicShowcaseMode />
+        <SwipeMode />
+        <FpsOverlay />
+        <RightDataPanel />
+        <DirectorModeController />
+        <WeatherSystem />
+      </Suspense>
+
+      {/* 页脚信息条 */}
+      <Footer />
 
       {/* 开场幕布 */}
       {showIntro && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none" style={{ backgroundColor: '#FEFAF6' }}>
-          <div className="text-center space-y-6 animate-in slide-in-from-bottom-8 duration-1000">
-            <div className="w-16 h-16 mx-auto mb-8" style={{ color: '#C41E3A' }}>
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden pointer-events-none" style={{ backgroundColor: '#FEFAF6' }}>
+          <div className="absolute inset-x-0 top-[18%] h-px bg-party-gold-line" />
+          <div className="absolute inset-x-0 bottom-[20%] h-px bg-party-gold-line" />
+          <div className="w-full max-w-4xl px-6 text-center animate-in fade-in slide-in-from-bottom-6 duration-500">
+            <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-party-gold-line bg-white/70 shadow-lg shadow-black/5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ backgroundColor: '#C41E3A', color: '#FFFFFF' }}>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+              </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-black tracking-[0.2em] font-serif" style={{ color: '#C41E3A' }}>
-              广东省苏区镇数字化档案
-            </h1>
-            <h2 className="text-xl md:text-2xl tracking-[0.5em] font-light mt-4" style={{ color: '#8B6914' }}>
-              传承红色基因 · 弘扬苏区精神
-            </h2>
-            <p className="mt-8 text-sm md:text-base tracking-[0.15em] font-serif leading-relaxed max-w-xl" style={{ color: '#8B6914' }}>
-              坚定信念 · 求真务实 · 一心为民 · 清正廉洁 · 艰苦奋斗 · 争创一流 · 无私奉献
+            <p className="mx-auto mb-4 inline-flex rounded-md border border-party-gold bg-white/75 px-3 py-1.5 text-xs font-semibold shadow-sm shadow-black/5" style={{ color: '#8B6914' }}>
+              红色党建思政实践平台
             </p>
-            <p className="mt-12 text-sm tracking-[0.22em]" style={{ color: '#5C5C5C' }}>
-              正在整理苏区史料与实践路线...
+            <h1 className="mx-auto max-w-3xl text-4xl font-black leading-tight font-display title-balance md:text-5xl" style={{ color: '#1A1A1A' }}>
+              {introTitle}
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 md:text-base" style={{ color: '#5C5C5C' }}>
+              聚焦苏区镇革命旧址、政权机关与群众文化阵地，呈现经后台审核发布的红色档案。
+            </p>
+            <div className="mx-auto mt-9 flex max-w-xl items-center justify-center gap-3 text-xs font-semibold" style={{ color: '#8B6914' }}>
+              <span>档案审核</span>
+              <span className="h-px w-10 bg-party-gold-line" />
+              <span>地图定位</span>
+              <span className="h-px w-10 bg-party-gold-line" />
+              <span>阵地导览</span>
+            </div>
+            <div className="mx-auto mt-10 h-1.5 w-56 overflow-hidden rounded-full bg-museum-border">
+              <div className="h-full w-2/3 rounded-full bg-party-red animate-pulse" />
+            </div>
+            <p className="mt-5 text-xs font-medium" style={{ color: '#5C5C5C' }}>
+              正在准备苏区镇红色阵地导览
             </p>
           </div>
         </div>

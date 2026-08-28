@@ -8,10 +8,11 @@ export const IndoorBimMode: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null)
 
   const archive = selectedPoiId ? getArchiveData(selectedPoiId) : null
-  const buildingName = archive?.title || '苏区镇政府大楼'
+  const buildingName = archive?.title || '未选择档案点位'
 
   useEffect(() => {
     if (!mountRef.current) return
+    const mountEl = mountRef.current
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#FEFAF6')
@@ -21,7 +22,7 @@ export const IndoorBimMode: React.FC = () => {
     
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    mountRef.current.appendChild(renderer.domElement)
+    mountEl.appendChild(renderer.domElement)
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
     scene.add(ambientLight)
@@ -106,15 +107,15 @@ export const IndoorBimMode: React.FC = () => {
       window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(animationId)
       window.speechSynthesis?.cancel()
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement)
+      if (renderer.domElement.parentNode === mountEl) {
+        mountEl.removeChild(renderer.domElement)
       }
       renderer.dispose()
     }
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[200] animate-in fade-in zoom-in-95 duration-700 flex flex-col" style={{ backgroundColor: '#FEFAF6' }}>
+    <div className="fixed inset-0 z-[200] animate-in fade-in zoom-in-95 duration-700 flex flex-col bg-museum-bg">
       <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-[#C41E3A] border border-[#C41E3A]/30 bg-[#FDE8EC] px-3 py-1 rounded-full w-fit">
@@ -125,7 +126,7 @@ export const IndoorBimMode: React.FC = () => {
             {buildingName} — 建筑结构三维浏览
           </h2>
           <p className="text-[#5C5C5C] text-sm">
-            请在 3D 空间中观察建筑的墙体承重、柱网布局与核心数据节点
+            当前为程序化室内结构占位，用于交互预览；不代表真实测绘 BIM 模型。
           </p>
         </div>
 
@@ -139,6 +140,11 @@ export const IndoorBimMode: React.FC = () => {
       </div>
 
       <div ref={mountRef} className="w-full h-full absolute inset-0" />
+
+      <div className="absolute top-20 right-5 z-10 pointer-events-none bg-white/90 border border-[#E8DFD5] rounded-full px-3 py-1.5 text-xs text-[#5C5C5C] shadow-sm flex items-center gap-1.5">
+        <Layers size={12} className="text-[#8B6914]" />
+        <span>示意模型 · 非真实测绘</span>
+      </div>
 
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-6 z-10 pointer-events-none">
         <div className="museum-card px-6 py-3 rounded-2xl flex items-center gap-4">
